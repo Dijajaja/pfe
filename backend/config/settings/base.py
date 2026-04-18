@@ -29,6 +29,8 @@ INSTALLED_APPS = [
     "core",
     "referentials",
     "dossiers",
+    "payments",
+    "reports",
 ]
 
 MIDDLEWARE = [

@@ -52,6 +52,12 @@ class DossierBourse(models.Model):
     )
     date_soumission = models.DateTimeField(null=True, blank=True)
     commentaire_admin = models.TextField(blank=True)
+    montant_bourse = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Montant de la bourse (utilisé pour générer les paiements une fois le dossier validé).",
+    )
     cree_le = models.DateTimeField(auto_now_add=True)
     modifie_le = models.DateTimeField(auto_now=True)
 

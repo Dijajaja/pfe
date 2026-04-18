@@ -8,6 +8,8 @@ urlpatterns = [
     path("api/v1/auth/", include("accounts.urls")),
     path("api/v1/", include("referentials.urls")),
     path("api/v1/", include("dossiers.urls")),
+    path("api/v1/", include("payments.urls")),
+    path("api/v1/", include("reports.urls")),
 ]
 
 if settings.DEBUG:
