@@ -35,9 +35,16 @@ if ($versionDirs.Count -eq 0) {
     exit 1
 }
 
-$psql = Join-Path $versionDirs[0].FullName "bin\psql.exe"
-if (-not (Test-Path $psql)) {
-    Write-Host "psql introuvable : $psql" -ForegroundColor Red
+$psql = $null
+foreach ($dir in $versionDirs) {
+    $candidate = Join-Path $dir.FullName "bin\psql.exe"
+    if (Test-Path $candidate) {
+        $psql = $candidate
+        break
+    }
+}
+if (-not $psql) {
+    Write-Host "psql introuvable sous $pgRoot (bin\\psql.exe manquant)." -ForegroundColor Red
     exit 1
 }
 
