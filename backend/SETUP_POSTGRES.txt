@@ -1,0 +1,65 @@
+================================================================================
+PostgreSQL sous Windows — installation et liaison au projet PFE (backend Django)
+================================================================================
+
+1) INSTALLER POSTGRESQL
+-----------------------
+   Option A — winget (invite de commandes ou PowerShell en administrateur si besoin) :
+     winget install PostgreSQL.PostgreSQL.16 --source winget
+
+   Option B — installateur officiel (EDB) :
+     https://www.enterprisedb.com/downloads/postgres-postgresql-downloads
+     Choisir Windows x86-64, version 16 ou 17.
+
+   Pendant l’installation, noter impérativement :
+     - le mot de passe du superutilisateur « postgres » ;
+     - le port (par défaut 5432).
+
+   Vérifier que le service tourne : Panneau de configuration > Outils d’administration
+   > Services > service « postgresql-x64-… » = Démarré.
+
+
+2) CRÉER LA BASE DE DONNÉES DU PROJET
+-------------------------------------
+   Le projet utilise par défaut une base nommée : cnou_bourses
+
+   Méthode simple (PowerShell), en adaptant le chemin si votre version n’est pas 16 :
+
+     cd chemin\vers\pfe\backend
+     $env:PGPASSWORD = "le_mot_de_passe_postgres"
+     & "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -h 127.0.0.1 -p 5432 -d postgres -f scripts\create_database.sql
+
+   Ou utiliser le script :
+
+     $env:PGPASSWORD = "le_mot_de_passe_postgres"
+     .\scripts\setup_postgres_windows.ps1
+
+
+3) CONFIGURER LE BACKEND DJANGO
+-------------------------------
+   Dans le dossier backend :
+
+     copy .env.example .env
+
+   Éditer .env et renseigner au minimum :
+     DB_PASSWORD = le même mot de passe que pour l’utilisateur postgres (ou celui
+     d’un utilisateur dédié que vous avez créé dans PostgreSQL).
+
+   Si vous utilisez un autre nom d’utilisateur ou de base, ajuster aussi :
+     DB_USER, DB_NAME, DB_HOST, DB_PORT
+
+
+4) MIGRATIONS
+-------------
+   Activer le venv du projet, puis depuis backend :
+
+     pip install -r requirements.txt
+     python manage.py migrate
+
+
+5) VÉRIFICATION
+---------------
+     python manage.py check
+     python manage.py runserver
+
+================================================================================
