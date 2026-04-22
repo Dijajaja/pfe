@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { authApi } from "../../lib/api";
+import { ETABLISSEMENTS_MAURITANIE, getFilieresPourEtablissement } from "../../data/mauritanieUniversite";
 
 export function RegisterPage() {
   const { t } = useTranslation();
@@ -18,8 +19,25 @@ export function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const filieresPourEtablissement = useMemo(
+    () => getFilieresPourEtablissement(form.etablissement),
+    [form.etablissement]
+  );
+
   function setField(key, value) {
     setForm((f) => ({ ...f, [key]: value }));
+  }
+
+  function setEtablissement(value) {
+    setForm((f) => {
+      if (!value) {
+        return { ...f, etablissement: "", filiere: "" };
+      }
+      const filieres = getFilieresPourEtablissement(value);
+      const allowed = new Set(filieres.map((x) => x.value));
+      const filiere = f.filiere && allowed.has(f.filiere) ? f.filiere : "";
+      return { ...f, etablissement: value, filiere };
+    });
   }
 
   async function onSubmit(e) {
@@ -30,7 +48,7 @@ export function RegisterPage() {
       await authApi.register(form);
       navigate("/auth/login", { replace: true });
     } catch (err) {
-      setError("Inscription impossible. Vérifie les champs ou l’e-mail.");
+      setError(t("registerErrorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -40,7 +58,7 @@ export function RegisterPage() {
     <div className="row justify-content-center">
       <div className="col-12 col-md-10 col-lg-7">
         <h2 className="mb-1">{t("register")}</h2>
-        <p className="text-muted">Crée ton compte étudiant.</p>
+        <p className="text-muted">{t("registerLead")}</p>
 
         {error ? <div className="alert alert-danger">{error}</div> : null}
 
@@ -68,7 +86,7 @@ export function RegisterPage() {
           </div>
 
           <div className="col-12 col-md-4">
-            <label className="form-label">Matricule</label>
+            <label className="form-label">{t("fieldMatricule")}</label>
             <input
               className="form-control"
               value={form.matricule}
@@ -77,22 +95,46 @@ export function RegisterPage() {
             />
           </div>
           <div className="col-12 col-md-4">
-            <label className="form-label">Établissement</label>
-            <input
-              className="form-control"
+            <label className="form-label">{t("fieldEtablissement")}</label>
+            <select
+              className="form-select"
               value={form.etablissement}
-              onChange={(e) => setField("etablissement", e.target.value)}
+              onChange={(e) => setEtablissement(e.target.value)}
               required
-            />
+            >
+              <option value="">{t("selectPlaceholder")}</option>
+              {ETABLISSEMENTS_MAURITANIE.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.value}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="col-12 col-md-4">
-            <label className="form-label">Filière</label>
-            <input
-              className="form-control"
+            <label className="form-label">{t("fieldFiliere")}</label>
+            <select
+              className="form-select"
               value={form.filiere}
               onChange={(e) => setField("filiere", e.target.value)}
               required
-            />
+              aria-describedby="register-filiere-hint"
+            >
+              {!form.etablissement ? (
+                <option value="">{t("selectEtablissementFirstFiliere")}</option>
+              ) : (
+                <>
+                  <option value="">{t("selectPlaceholder")}</option>
+                  {filieresPourEtablissement.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.value}
+                    </option>
+                  ))}
+                </>
+              )}
+            </select>
+            <div id="register-filiere-hint" className="form-text">
+              {t("registerFiliereHint")}
+            </div>
           </div>
 
           <div className="col-12 d-flex gap-2">

@@ -49,6 +49,14 @@ const resources = {
       eligMsgHorsNkc: "Éligible — baccalauréat obtenu hors Nouakchott.",
       eligMsgNkcL3: "Éligible — baccalauréat obtenu à Nouakchott et niveau actuel L3.",
       eligMsgNkcPasL3: "Non éligible — baccalauréat obtenu à Nouakchott : le niveau L3 est requis.",
+      registerLead: "Crée ton compte étudiant.",
+      registerErrorGeneric: "Inscription impossible. Vérifie les champs ou l’e-mail.",
+      fieldMatricule: "Matricule",
+      fieldEtablissement: "Établissement",
+      fieldFiliere: "Filière",
+      selectEtablissementFirstFiliere: "Choisis d’abord ton établissement.",
+      registerFiliereHint:
+        "Les filières affichées dépendent de l’établissement (liste indicative, à valider avec le CNOU).",
     },
   },
   ar: {
@@ -96,6 +104,14 @@ const resources = {
       eligMsgHorsNkc: "مؤهل — بكالوريا خارج نواكشوط.",
       eligMsgNkcL3: "مؤهل — بكالوريا في نواكشوط والمستوى الحالي L3.",
       eligMsgNkcPasL3: "غير مؤهل — بكالوريا في نواكشوط: يلزم المستوى L3.",
+      registerLead: "أنشئ حسابك كطالب.",
+      registerErrorGeneric: "تعذر التسجيل. تحقق من الحقول أو البريد.",
+      fieldMatricule: "الرقم الجامعي (المتريكول)",
+      fieldEtablissement: "المؤسّسة",
+      fieldFiliere: "الشعبة / التخصص",
+      selectEtablissementFirstFiliere: "اختر المؤسّسة أولاً.",
+      registerFiliereHint:
+        "الشعب المعروضة تتبع المؤسّسة المختارة (قائمة إرشادية يُرجى اعتماد قائمة CNOU النهائية).",
     },
   },
 };
