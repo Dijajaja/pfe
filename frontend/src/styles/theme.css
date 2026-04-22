@@ -1,0 +1,111 @@
+:root{
+  --sehily-petrole:#0f4f4c;
+  --sehily-vert-pro:#1f6d64;
+  --sehily-corail:#e07a63;
+  --sehily-creme:#f5f2ec;
+  --sehily-sable:#ece3d7;
+  --sehily-bg:var(--sehily-creme);
+  --sehily-surface:#ffffff;
+  --sehily-border:rgba(15,79,76,.16);
+  --sehily-text:#173b3a;
+  --sehily-text-muted:rgba(23,59,58,.68);
+}
+
+html,body,#root{
+  height:100%;
+}
+
+body{
+  background:var(--sehily-bg);
+  color:var(--sehily-text);
+}
+
+.sehily-surface{
+  background:var(--sehily-surface);
+  border:1px solid var(--sehily-border);
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(15,79,76,.06);
+}
+
+.sehily-btn-primary{
+  --bs-btn-bg:var(--sehily-petrole);
+  --bs-btn-border-color:var(--sehily-petrole);
+  --bs-btn-hover-bg:color-mix(in srgb, var(--sehily-petrole) 88%, #ffffff);
+  --bs-btn-hover-border-color:color-mix(in srgb, var(--sehily-petrole) 88%, #ffffff);
+  --bs-btn-color:#fff;
+  font-weight:600;
+}
+
+.sehily-btn-secondary{
+  --bs-btn-bg:#fff;
+  --bs-btn-border-color:var(--sehily-petrole);
+  --bs-btn-hover-bg:var(--sehily-creme);
+  --bs-btn-hover-border-color:var(--sehily-petrole);
+  --bs-btn-color:var(--sehily-petrole);
+  font-weight:600;
+}
+
+.sehily-btn-accent{
+  --bs-btn-bg:var(--sehily-corail);
+  --bs-btn-border-color:var(--sehily-corail);
+  --bs-btn-hover-bg:color-mix(in srgb, var(--sehily-corail) 90%, #ffffff);
+  --bs-btn-hover-border-color:color-mix(in srgb, var(--sehily-corail) 90%, #ffffff);
+  --bs-btn-color:#fff;
+  font-weight:600;
+}
+
+.sehily-badge{
+  border-radius:999px;
+  padding:.35rem .6rem;
+  font-weight:600;
+  font-size:.85rem;
+  display:inline-flex;
+  align-items:center;
+  gap:.35rem;
+}
+.sehily-badge--ok{
+  background:color-mix(in srgb, var(--sehily-vert-pro) 12%, #fff);
+  border:1px solid color-mix(in srgb, var(--sehily-vert-pro) 30%, #fff);
+  color:var(--sehily-vert-pro);
+}
+.sehily-badge--warn{
+  background:color-mix(in srgb, var(--sehily-sable) 70%, #fff);
+  border:1px solid color-mix(in srgb, var(--sehily-sable) 95%, #c9b9a1);
+  color:#6b5a45;
+}
+.sehily-badge--danger{
+  background:color-mix(in srgb, var(--sehily-corail) 15%, #fff);
+  border:1px solid color-mix(in srgb, var(--sehily-corail) 32%, #fff);
+  color:#b44e37;
+}
+
+.sehily-link{
+  color:var(--sehily-corail);
+  text-decoration:none;
+  font-weight:600;
+}
+.sehily-link:hover{ text-decoration:underline; }
+
+.text-muted{
+  color:var(--sehily-text-muted)!important;
+}
+
+.sehily-rtl{
+  direction:rtl;
+}
+
+.sehily-code{
+  background:#123d3a;
+  color:#f7f5ef;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  padding:1rem;
+  font-size:.9rem;
+  overflow:auto;
+}
+
+.table{
+  --bs-table-color:var(--sehily-text);
+  --bs-table-bg:transparent;
+  --bs-table-border-color:var(--sehily-border);
+}
