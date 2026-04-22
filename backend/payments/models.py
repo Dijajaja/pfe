@@ -92,3 +92,33 @@ class Paiement(models.Model):
 
     def __str__(self) -> str:
         return f"Paiement #{self.pk} — {self.montant} ({self.statut})"
+
+
+class PartenaireOperationLog(models.Model):
+    """
+    Journal idempotent des confirmations partenaire.
+    Une même clé ne doit pas produire des effets différents.
+    """
+
+    partenaire = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="operation_logs_partenaire",
+        limit_choices_to={"role": "PARTENAIRE"},
+    )
+    idempotency_key = models.CharField(max_length=128)
+    request_hash = models.CharField(max_length=64)
+    response_data = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("partenaire", "idempotency_key"),
+                name="uniq_partenaire_idempotency_key",
+            )
+        ]
+        ordering = ("-created_at",)
+
+    def __str__(self) -> str:
+        return f"{self.partenaire_id}:{self.idempotency_key}"

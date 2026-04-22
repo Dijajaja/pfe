@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import logoWeb from "../assets/logo-web.png";
 import { setLanguage } from "../i18n/setup";
+import { FallbackBanner } from "../components/ui/FallbackBanner";
 
 export function PublicLayout() {
   const { t, i18n } = useTranslation();
@@ -36,6 +37,7 @@ export function PublicLayout() {
       </header>
 
       <div className="sehily-surface p-4">
+        <FallbackBanner />
         <Outlet />
       </div>
 

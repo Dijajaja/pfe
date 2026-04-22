@@ -47,3 +47,30 @@ class InscriptionEtudiantSerializer(serializers.Serializer):
         user = User.objects.create_user(password=password, role=User.Role.ETUDIANT, **validated_data)
         EtudiantProfile.objects.create(user=user, **profile_data)
         return user
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "email",
+            "role",
+            "is_active",
+            "first_name",
+            "last_name",
+            "date_creation",
+        )
+        read_only_fields = ("id", "date_creation")
+
+
+class AdminUserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("role", "is_active", "first_name", "last_name")
+
+    def validate_role(self, value):
+        allowed = {choice[0] for choice in User.Role.choices}
+        if value not in allowed:
+            raise serializers.ValidationError("Rôle invalide.")
+        return value

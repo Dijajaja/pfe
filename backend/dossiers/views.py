@@ -1,8 +1,12 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
+from rest_framework import generics, viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from accounts.models import User
+from accounts.permissions import IsAdmin
+from accounts.permissions import IsEtudiant
 from dossiers.models import DossierBourse, Document, MessageReclamation, Reclamation
 from dossiers.permissions import (
     MessageReclamationPermission,
@@ -86,3 +90,72 @@ class MessageReclamationViewSet(viewsets.ModelViewSet):
         if role == User.Role.ETUDIANT:
             return qs.filter(reclamation__etudiant=user)
         return qs.none()
+
+
+class AdminDossiersAliasListView(generics.ListAPIView):
+    """
+    Vue alias stricte admin pour /api/admin/dossiers/
+    """
+
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = DossierBourseSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ("statut", "annee_universitaire")
+    queryset = DossierBourse.objects.select_related(
+        "etudiant",
+        "instructeur",
+        "annee_universitaire",
+    ).prefetch_related("documents")
+
+
+class AdminDossiersAliasDetailView(generics.UpdateAPIView):
+    """
+    Vue alias stricte admin pour PATCH /api/admin/dossiers/{id}/
+    """
+
+    permission_classes = (IsAuthenticated, IsAdmin)
+    serializer_class = DossierBourseSerializer
+    queryset = DossierBourse.objects.select_related(
+        "etudiant",
+        "instructeur",
+        "annee_universitaire",
+    ).prefetch_related("documents")
+
+
+class EtudiantEligibiliteView(APIView):
+    """
+    Endpoint métier alias: GET /api/etudiant/eligibilite/
+    Règles simplifiées côté backend (placeholder configurable).
+    """
+
+    permission_classes = (IsAuthenticated, IsEtudiant)
+
+    def get(self, request):
+        dernier = (
+            DossierBourse.objects.filter(etudiant=request.user)
+            .order_by("-cree_le")
+            .first()
+        )
+        if not dernier:
+            return Response(
+                {
+                    "eligible": True,
+                    "message": "Aucun dossier antérieur. Vous pouvez déposer une demande.",
+                }
+            )
+
+        if dernier.statut == "REJETE":
+            return Response(
+                {
+                    "eligible": True,
+                    "message": "Votre dernier dossier est rejeté. Vous pouvez soumettre un nouveau dossier.",
+                }
+            )
+
+        return Response(
+            {
+                "eligible": True,
+                "message": f"Dernier dossier au statut {dernier.statut}.",
+                "dernier_dossier_id": dernier.id,
+            }
+        )

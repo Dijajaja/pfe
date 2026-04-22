@@ -1,3 +1,7 @@
+import hashlib
+import json
+
+from django.db import IntegrityError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, status, viewsets
@@ -7,7 +11,7 @@ from rest_framework.views import APIView
 
 from accounts.permissions import IsAdmin, IsEtudiant, IsPartenaire
 
-from .models import ListeBeneficiaires, Paiement
+from .models import ListeBeneficiaires, Paiement, PartenaireOperationLog
 from .serializers import (
     GenererListeSerializer,
     ListeBeneficiairesSerializer,
@@ -108,11 +112,61 @@ class PartnerConfirmationView(APIView):
     def post(self, request):
         ser = PartenaireConfirmationSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        count, errors = confirmer_paiements(
-            updates=ser.validated_data["operations"],
-            utilisateur_partenaire_id=request.user.id,
-        )
-        return Response({"mis_a_jour": count, "erreurs": errors})
+        operations = ser.validated_data["operations"]
+        key = request.headers.get("X-Idempotency-Key", "").strip()
+
+        if not key:
+            count, errors = confirmer_paiements(
+                updates=operations,
+                utilisateur_partenaire_id=request.user.id,
+            )
+            return Response({"mis_a_jour": count, "erreurs": errors, "idempotent": False})
+
+        payload = json.dumps(operations, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+        payload_hash = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+        existing = PartenaireOperationLog.objects.filter(
+            partenaire_id=request.user.id,
+            idempotency_key=key,
+        ).first()
+        if existing:
+            if existing.request_hash != payload_hash:
+                return Response(
+                    {"detail": "Conflit idempotence: même clé avec payload différent."},
+                    status=status.HTTP_409_CONFLICT,
+                )
+            data = existing.response_data or {}
+            data["idempotent"] = True
+            return Response(data, status=status.HTTP_200_OK)
+
+        with transaction.atomic():
+            count, errors = confirmer_paiements(
+                updates=operations,
+                utilisateur_partenaire_id=request.user.id,
+            )
+            response_payload = {
+                "mis_a_jour": count,
+                "erreurs": errors,
+                "idempotent": False,
+            }
+            try:
+                PartenaireOperationLog.objects.create(
+                    partenaire_id=request.user.id,
+                    idempotency_key=key,
+                    request_hash=payload_hash,
+                    response_data=response_payload,
+                )
+            except IntegrityError:
+                # Course concurrente: relit le log et renvoie la réponse persistée.
+                race = PartenaireOperationLog.objects.get(
+                    partenaire_id=request.user.id,
+                    idempotency_key=key,
+                )
+                data = race.response_data or {}
+                data["idempotent"] = True
+                return Response(data, status=status.HTTP_200_OK)
+
+        return Response(response_payload, status=status.HTTP_200_OK)
 
 
 class StudentPaiementViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -123,3 +177,25 @@ class StudentPaiementViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         return Paiement.objects.filter(
             dossier__etudiant=self.request.user
         ).select_related("liste", "dossier", "annee_universitaire")
+
+
+class MauriposteDossiersView(APIView):
+    """
+    Endpoint métier alias: GET /api/mauriposte/dossiers/
+    Retourne les paiements/lots visibles par le partenaire connecté.
+    """
+
+    permission_classes = [IsPartenaire]
+
+    def get(self, request):
+        qs = Paiement.objects.select_related(
+            "liste", "dossier", "annee_universitaire"
+        ).filter(
+            liste__partenaire_id=request.user.id
+        )
+        if not qs.exists():
+            qs = Paiement.objects.select_related(
+                "liste", "dossier", "annee_universitaire"
+            ).filter(liste__partenaire__isnull=True)
+        data = PaiementSerializer(qs, many=True).data
+        return Response(data)
