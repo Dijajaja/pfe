@@ -1,15 +1,19 @@
 const DEFAULT_LABELS = {
   VALIDE: "Validé",
+  PAYE: "Payé",
+  ENVOYE: "Envoyé",
   REJETE: "Rejeté",
   SOUMIS: "Soumis",
   EN_INSTRUCTION: "En instruction",
-  EFFECTUE: "Confirmé",
+  EFFECTUE: "Payé",
   EN_ATTENTE: "En attente",
 };
 
 const DEFAULT_CLASSES = {
   VALIDE: "sehily-badge sehily-badge--ok",
   EFFECTUE: "sehily-badge sehily-badge--ok",
+  PAYE: "sehily-badge sehily-badge--ok",
+  ENVOYE: "sehily-badge sehily-badge--warn",
   REJETE: "sehily-badge sehily-badge--danger",
   SOUMIS: "sehily-badge sehily-badge--warn",
   EN_INSTRUCTION: "sehily-badge sehily-badge--warn",

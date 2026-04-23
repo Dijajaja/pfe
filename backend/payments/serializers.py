@@ -8,6 +8,7 @@ from .models import ListeBeneficiaires, Paiement, StatutPaiement
 class PaiementSerializer(serializers.ModelSerializer):
     dossier_id = serializers.IntegerField(source="dossier.id", read_only=True)
     liste_reference = serializers.UUIDField(source="liste.reference", read_only=True)
+    envoye_par_id = serializers.IntegerField(source="envoye_par.id", read_only=True)
 
     class Meta:
         model = Paiement
@@ -20,12 +21,18 @@ class PaiementSerializer(serializers.ModelSerializer):
             "annee_universitaire",
             "montant",
             "statut",
+            "date_envoi",
+            "envoye_par",
+            "envoye_par_id",
             "date_operation",
             "reference_externe",
         )
         read_only_fields = (
             "liste_reference",
             "dossier_id",
+            "date_envoi",
+            "envoye_par",
+            "envoye_par_id",
             "date_operation",
         )
 

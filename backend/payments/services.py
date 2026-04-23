@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from accounts.models import User
 from dossiers.models import DossierBourse, StatutDossier
 from referentials.models import AnneeUniversitaire
 
@@ -96,6 +98,13 @@ def confirmer_paiements(
             count += 1
             continue
 
+        if statut == StatutPaiement.EFFECTUE and p.statut not in (
+            StatutPaiement.ENVOYE,
+            StatutPaiement.EFFECTUE,
+        ):
+            errors.append(f"Paiement {pk} : non envoyé par CNOU.")
+            continue
+
         p.statut = statut
         p.reference_externe = ref or p.reference_externe
         if statut == StatutPaiement.EFFECTUE:
@@ -105,3 +114,63 @@ def confirmer_paiements(
         count += 1
 
     return count, errors
+
+
+def choisir_partenaire_mauripost(partenaire_id: int | None = None) -> User:
+    qs = User.objects.filter(role=User.Role.PARTENAIRE, is_active=True).order_by("id")
+    if partenaire_id is not None:
+        try:
+            return qs.get(id=partenaire_id)
+        except User.DoesNotExist as exc:
+            raise ValidationError("Partenaire introuvable.") from exc
+
+    preferred = qs.filter(email__icontains="mauripost").first()
+    if preferred:
+        return preferred
+    fallback = qs.first()
+    if fallback:
+        return fallback
+    raise ValidationError("Aucun partenaire actif disponible.")
+
+
+@transaction.atomic
+def envoyer_dossier_a_mauripost(
+    *,
+    dossier: DossierBourse,
+    admin_user: User,
+    partenaire_id: int | None = None,
+) -> tuple[Paiement, bool]:
+    if dossier.statut != StatutDossier.VALIDE:
+        raise ValidationError("Seuls les dossiers validés peuvent être envoyés.")
+
+    partenaire = choisir_partenaire_mauripost(partenaire_id)
+    existing = (
+        Paiement.objects.select_related("liste")
+        .filter(dossier=dossier, liste__partenaire=partenaire)
+        .order_by("-id")
+        .first()
+    )
+    if existing:
+        return existing, False
+
+    montant = dossier.montant_bourse
+    if montant <= 0:
+        raise ValidationError("Montant de bourse invalide pour créer un paiement.")
+
+    liste = ListeBeneficiaires.objects.create(
+        annee_universitaire=dossier.annee_universitaire,
+        partenaire=partenaire,
+        periode=f"Envoi CNOU {timezone.localdate().isoformat()}",
+    )
+    paiement = Paiement(
+        liste=liste,
+        dossier=dossier,
+        annee_universitaire=dossier.annee_universitaire,
+        montant=montant,
+        statut=StatutPaiement.ENVOYE,
+        date_envoi=timezone.now(),
+        envoye_par=admin_user,
+    )
+    paiement.full_clean()
+    paiement.save()
+    return paiement, True

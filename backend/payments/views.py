@@ -4,12 +4,14 @@ import json
 from django.db import IntegrityError, transaction
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsAdmin, IsEtudiant, IsPartenaire
+from dossiers.models import DossierBourse, DossierHistorique
 
 from .models import ListeBeneficiaires, Paiement, PartenaireOperationLog
 from .serializers import (
@@ -18,7 +20,7 @@ from .serializers import (
     PartenaireConfirmationSerializer,
     PaiementSerializer,
 )
-from .services import confirmer_paiements, generer_liste_beneficiaires
+from .services import confirmer_paiements, envoyer_dossier_a_mauripost, generer_liste_beneficiaires
 
 
 class AdminListeBeneficiairesViewSet(
@@ -191,11 +193,60 @@ class MauriposteDossiersView(APIView):
         qs = Paiement.objects.select_related(
             "liste", "dossier", "annee_universitaire"
         ).filter(
-            liste__partenaire_id=request.user.id
+            liste__partenaire_id=request.user.id,
+            statut__in=["ENVOYE", "EFFECTUE"],
         )
         if not qs.exists():
             qs = Paiement.objects.select_related(
                 "liste", "dossier", "annee_universitaire"
-            ).filter(liste__partenaire__isnull=True)
+            ).filter(
+                liste__partenaire__isnull=True,
+                statut__in=["ENVOYE", "EFFECTUE"],
+            )
         data = PaiementSerializer(qs, many=True).data
         return Response(data)
+
+
+class AdminSendMauripostView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, dossier_id: int):
+        partenaire_id = request.data.get("partenaire_id")
+        if partenaire_id in ("", None):
+            partenaire_id = None
+        else:
+            try:
+                partenaire_id = int(partenaire_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": "partenaire_id invalide."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        dossier = get_object_or_404(
+            DossierBourse.objects.select_related("annee_universitaire", "etudiant"),
+            pk=dossier_id,
+        )
+        try:
+            paiement, created = envoyer_dossier_a_mauripost(
+                dossier=dossier,
+                admin_user=request.user,
+                partenaire_id=partenaire_id,
+            )
+        except DjangoValidationError as exc:
+            return Response(
+                {"detail": exc.message},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if created:
+            DossierHistorique.objects.create(
+                dossier=dossier,
+                ancien_statut=dossier.statut,
+                nouveau_statut=dossier.statut,
+                commentaire=f"Dossier envoyé à Mauripost (paiement #{paiement.id}).",
+                auteur=request.user,
+            )
+        data = PaiementSerializer(paiement).data
+        data["created"] = created
+        return Response(data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)

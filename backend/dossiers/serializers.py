@@ -10,6 +10,7 @@ from dossiers.models import (
     Reclamation,
     StatutDossier,
 )
+from payments.models import Paiement, StatutPaiement
 from referentials.models import AnneeUniversitaire
 
 
@@ -32,6 +33,8 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class DossierBourseSerializer(serializers.ModelSerializer):
     documents = DocumentSerializer(many=True, read_only=True)
+    statut_paiement = serializers.SerializerMethodField()
+    workflow_statut = serializers.SerializerMethodField()
     annee_universitaire = serializers.PrimaryKeyRelatedField(
         queryset=AnneeUniversitaire.objects.filter(actif=True),
     )
@@ -44,8 +47,11 @@ class DossierBourseSerializer(serializers.ModelSerializer):
             "instructeur",
             "annee_universitaire",
             "statut",
+            "statut_paiement",
+            "workflow_statut",
             "date_soumission",
             "commentaire_admin",
+            "montant_bourse",
             "cree_le",
             "modifie_le",
             "documents",
@@ -58,6 +64,23 @@ class DossierBourseSerializer(serializers.ModelSerializer):
             "modifie_le",
             "documents",
         )
+
+    def get_statut_paiement(self, obj):
+        paiement = (
+            Paiement.objects.filter(dossier=obj)
+            .order_by("-id")
+            .values_list("statut", flat=True)
+            .first()
+        )
+        return paiement or None
+
+    def get_workflow_statut(self, obj):
+        paiement_statut = self.get_statut_paiement(obj)
+        if paiement_statut == StatutPaiement.EFFECTUE:
+            return "PAYE"
+        if paiement_statut == StatutPaiement.ENVOYE:
+            return "ENVOYE"
+        return obj.statut
 
     def create(self, validated_data):
         request = self.context.get("request")

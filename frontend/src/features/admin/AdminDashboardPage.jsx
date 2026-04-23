@@ -372,7 +372,7 @@ export function AdminDashboardPage() {
                     <td>{d.date_soumission || d.created_at?.slice(0, 10) || "-"}</td>
                     <td>{Number(d.montant_bourse || 0).toLocaleString()} MRU</td>
                     <td>
-                      <StatusBadge status={d.statut} />
+                      <StatusBadge status={d.workflow_statut || d.statut} />
                     </td>
                     <td>
                       <button

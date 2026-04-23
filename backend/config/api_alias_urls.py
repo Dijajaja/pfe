@@ -17,6 +17,7 @@ from dossiers.views import (
     ReclamationViewSet,
 )
 from payments.views import (
+    AdminSendMauripostView,
     AdminPaiementViewSet,
     MauriposteDossiersView,
     PartnerConfirmationView,
@@ -51,6 +52,7 @@ urlpatterns = [
     # Admin CNOU alias
     path("admin/dossiers/", AdminDossiersAliasListView.as_view(), name="alias-admin-dossiers"),
     path("admin/dossiers/<int:pk>/", AdminDossiersAliasDetailView.as_view(), name="alias-admin-dossiers-patch"),
+    path("admin/dossiers/<int:dossier_id>/envoyer-mauripost/", AdminSendMauripostView.as_view(), name="alias-admin-dossiers-send-mauripost"),
     path("admin/paiements/", admin_paiements_list, name="alias-admin-paiements"),
     path("admin/reports/dashboard/", AdminDashboardView.as_view(), name="alias-admin-dashboard"),
     path("admin/exports/paiements.xlsx", AdminExportPaiementsView.as_view(), name="alias-admin-export-paiements"),

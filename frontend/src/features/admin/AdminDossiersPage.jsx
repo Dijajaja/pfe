@@ -77,6 +77,8 @@ export function AdminDossiersPage() {
       etudiant: d.etudiant || d.etudiant_email || `Utilisateur #${d.etudiant}`,
       annee: d.annee_universitaire,
       statut: d.statut,
+      workflowStatut: d.workflow_statut || d.statut,
+      statutPaiement: d.statut_paiement || null,
       montant: Number(d.montant_bourse || 0),
       dateSoumission: d.date_soumission || d.cree_le || null,
     }));
@@ -94,12 +96,22 @@ export function AdminDossiersPage() {
     },
     onError: (err) => pushError(getApiErrorMessage(err, "Échec mise à jour dossier.")),
   });
+  const sendMutation = useMutation({
+    mutationFn: ({ id }) => adminApi.sendDossierToMauripost(id),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["admin", "dossiers"] });
+      await qc.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+      await qc.invalidateQueries({ queryKey: ["admin", "paiements"] });
+      pushSuccess("Dossier envoyé à Mauripost.");
+    },
+    onError: (err) => pushError(getApiErrorMessage(err, "Échec envoi à Mauripost.")),
+  });
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const base = rows.filter((r) => {
-      const searchOk = `${r.numero} ${r.etudiant} ${r.statut}`.toLowerCase().includes(q);
-      const statusOk = statusFilter === "ALL" ? true : r.statut === statusFilter;
+      const searchOk = `${r.numero} ${r.etudiant} ${r.workflowStatut}`.toLowerCase().includes(q);
+      const statusOk = statusFilter === "ALL" ? true : r.workflowStatut === statusFilter;
       return searchOk && statusOk;
     });
     return [...base].sort((a, b) => {
@@ -135,6 +147,11 @@ export function AdminDossiersPage() {
     setModalOpen(true);
   }
 
+  function sendToMauripost() {
+    if (!selectedId || !selected) return;
+    sendMutation.mutate({ id: selectedId });
+  }
+
   if (dossiersQuery.isError) return <div className="alert alert-danger">{getApiErrorMessage(dossiersQuery.error, "Erreur chargement dossiers.")}</div>;
   if (dossiersQuery.isLoading) return <LoadingSkeleton lines={8} />;
 
@@ -159,6 +176,8 @@ export function AdminDossiersPage() {
               <option value="SOUMIS">Soumis</option>
               <option value="EN_INSTRUCTION">En instruction</option>
               <option value="VALIDE">Validé</option>
+              <option value="ENVOYE">Envoyé</option>
+              <option value="PAYE">Payé</option>
               <option value="REJETE">Rejeté</option>
             </select>
             <select className="form-select form-select-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
@@ -193,7 +212,7 @@ export function AdminDossiersPage() {
                     <td>{r.numero}</td>
                     <td>{r.etudiant}</td>
                     <td>{r.montant.toLocaleString()} MRU</td>
-                    <td><StatusBadge status={r.statut} /></td>
+                    <td><StatusBadge status={r.workflowStatut} /></td>
                   </tr>
                 ))}
                 {!pagedRows.length ? (
@@ -232,7 +251,11 @@ export function AdminDossiersPage() {
               <div className="small text-muted">Montant</div>
               <div className="fw-semibold mb-2">{selected.montant.toLocaleString()} MRU</div>
               <div className="small text-muted">Statut actuel</div>
-              <div className="fw-semibold mb-3"><StatusBadge status={selected.statut} /></div>
+              <div className="fw-semibold mb-2"><StatusBadge status={selected.workflowStatut} /></div>
+              <div className="small text-muted mb-3">
+                Statut dossier: <strong>{selected.statut}</strong>
+                {selected.statutPaiement ? ` | Paiement: ${selected.statutPaiement}` : ""}
+              </div>
 
               <textarea
                 className="form-control mb-3"
@@ -251,6 +274,12 @@ export function AdminDossiersPage() {
                 <button className="btn sehily-btn-secondary" onClick={() => openModal("EN_INSTRUCTION")} disabled={updateMutation.isPending}>
                   Instruire
                 </button>
+                {selected.statut === "VALIDE" && selected.workflowStatut === "VALIDE" ? (
+                  <button className="btn sehily-btn-primary d-flex align-items-center" onClick={sendToMauripost} disabled={sendMutation.isPending}>
+                    {sendMutation.isPending ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
+                    <span className="ms-1">Envoyer à Mauripost</span>
+                  </button>
+                ) : null}
               </div>
             </>
           ) : (

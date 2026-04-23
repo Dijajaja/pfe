@@ -11,6 +11,7 @@ from referentials.models import AnneeUniversitaire
 class StatutPaiement(models.TextChoices):
     EN_ATTENTE = "EN_ATTENTE", "En attente"
     EN_COURS = "EN_COURS", "En cours"
+    ENVOYE = "ENVOYE", "Envoyé"
     EFFECTUE = "EFFECTUE", "Effectué"
     ECHEC = "ECHEC", "Échec"
 
@@ -65,6 +66,15 @@ class Paiement(models.Model):
         default=StatutPaiement.EN_ATTENTE,
     )
     date_operation = models.DateTimeField(null=True, blank=True)
+    date_envoi = models.DateTimeField(null=True, blank=True)
+    envoye_par = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="paiements_envoyes",
+        limit_choices_to={"role": "ADMIN"},
+    )
     reference_externe = models.CharField(max_length=128, blank=True)
 
     class Meta:

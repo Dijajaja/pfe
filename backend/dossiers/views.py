@@ -32,7 +32,7 @@ class DossierBourseViewSet(viewsets.ModelViewSet):
             "etudiant",
             "instructeur",
             "annee_universitaire",
-        ).prefetch_related("documents")
+        ).prefetch_related("documents", "paiements")
         user = self.request.user
         role = getattr(user, "role", None)
         if role == User.Role.ADMIN:
@@ -105,7 +105,7 @@ class AdminDossiersAliasListView(generics.ListAPIView):
         "etudiant",
         "instructeur",
         "annee_universitaire",
-    ).prefetch_related("documents")
+    ).prefetch_related("documents", "paiements")
 
 
 class AdminDossiersAliasDetailView(generics.UpdateAPIView):
@@ -119,7 +119,7 @@ class AdminDossiersAliasDetailView(generics.UpdateAPIView):
         "etudiant",
         "instructeur",
         "annee_universitaire",
-    ).prefetch_related("documents")
+    ).prefetch_related("documents", "paiements")
 
 
 class EtudiantEligibiliteView(APIView):

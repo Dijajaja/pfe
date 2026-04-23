@@ -106,6 +106,10 @@ export const adminApi = {
     const r = await api.patch(`/api/admin/dossiers/${id}/`, payload);
     return r.data;
   },
+  async sendDossierToMauripost(id, payload = {}) {
+    const r = await api.post(`/api/admin/dossiers/${id}/envoyer-mauripost/`, payload);
+    return r.data;
+  },
   async listPaiements(params = {}) {
     return withFallback(async () => {
       const r = await api.get("/api/admin/paiements/", { params });
@@ -149,8 +153,8 @@ export const partnerApi = {
     }, () => {
       const first = partnerBatches[0];
       return [
-        { id: 1, dossier_id: 101, liste_reference: first.id, montant: 32000, statut: "EN_ATTENTE" },
-        { id: 2, dossier_id: 102, liste_reference: first.id, montant: 32000, statut: "EN_ATTENTE" },
+        { id: 1, dossier_id: 101, liste_reference: first.id, montant: 32000, statut: "ENVOYE" },
+        { id: 2, dossier_id: 102, liste_reference: first.id, montant: 32000, statut: "ENVOYE" },
       ];
     }, "GET /api/mauriposte/dossiers/");
   },

@@ -51,7 +51,7 @@ class PaiementsPartnerIdempotenceTests(TestCase):
             dossier=self.dossier,
             annee_universitaire=self.annee,
             montant=Decimal("2000.00"),
-            statut=StatutPaiement.EN_ATTENTE,
+            statut=StatutPaiement.ENVOYE,
         )
 
     def test_partner_can_list_mauriposte_alias(self):
@@ -64,6 +64,40 @@ class PaiementsPartnerIdempotenceTests(TestCase):
         self.client.force_authenticate(self.admin)
         response = self.client.get("/api/mauriposte/dossiers/")
         self.assertEqual(response.status_code, 403)
+
+    def test_admin_can_send_validated_dossier_to_mauripost(self):
+        dossier_2 = DossierBourse.objects.create(
+            etudiant=self.etudiant,
+            annee_universitaire=self.annee,
+            statut=StatutDossier.VALIDE,
+            montant_bourse=Decimal("3000.00"),
+        )
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(
+            f"/api/admin/dossiers/{dossier_2.id}/envoyer-mauripost/",
+            data={},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        created = Paiement.objects.get(id=response.data["id"])
+        self.assertEqual(created.statut, StatutPaiement.ENVOYE)
+        self.assertEqual(created.envoye_par_id, self.admin.id)
+        self.assertIsNotNone(created.date_envoi)
+
+    def test_admin_cannot_send_non_validated_dossier(self):
+        dossier_2 = DossierBourse.objects.create(
+            etudiant=self.etudiant,
+            annee_universitaire=self.annee,
+            statut=StatutDossier.SOUMIS,
+            montant_bourse=Decimal("3000.00"),
+        )
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(
+            f"/api/admin/dossiers/{dossier_2.id}/envoyer-mauripost/",
+            data={},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
 
     def test_confirmation_idempotent_same_key_same_payload(self):
         self.client.force_authenticate(self.partenaire)

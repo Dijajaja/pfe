@@ -113,7 +113,7 @@ export function PartnerBatchesPage() {
   });
 
   const payments = useMemo(() => enrichPayments(partnerQuery.data || []), [partnerQuery.data]);
-  const waitingPayments = payments.filter((p) => p.statut !== "EFFECTUE");
+  const waitingPayments = payments.filter((p) => p.statut === "ENVOYE");
   const completedPayments = payments.filter((p) => p.statut === "EFFECTUE");
   const assignedCount = payments.length;
   const confirmedCount = completedPayments.length;
@@ -125,16 +125,16 @@ export function PartnerBatchesPage() {
   const waitingPct = Math.round((waitingCount / chartTotal) * 100);
   const inProgressCount = Math.max(0, assignedCount - confirmedCount - waitingCount);
   const inProgressPct = Math.round((inProgressCount / chartTotal) * 100);
-  const rejectedCount = Math.max(0, Math.round(assignedCount * 0.03));
-  const rejectedPct = Math.round((rejectedCount / chartTotal) * 100);
+  const rejectedCount = 0;
+  const rejectedPct = 0;
   const trendSeries = useMemo(() => buildSeries(confirmedCount), [confirmedCount]);
 
   const notifications = useMemo(() => {
     const list = [
       {
         id: "pending",
-        title: `${waitingCount} paiements en attente`,
-        message: "Veuillez traiter les paiements dans les plus brefs délais.",
+        title: `${waitingCount} paiements envoyés à traiter`,
+        message: "Flux CNOU -> Mauripost en attente de confirmation partenaire.",
         type: "warning",
       },
       {
@@ -223,9 +223,8 @@ export function PartnerBatchesPage() {
           <div className="d-flex gap-2 flex-wrap">
             <select className="form-select form-select-sm" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}>
               <option value="ALL">Tous statuts</option>
-              <option value="EN_ATTENTE">En attente</option>
-              <option value="EFFECTUE">Confirmé</option>
-              <option value="EN_COURS">En cours</option>
+              <option value="ENVOYE">Envoyé</option>
+              <option value="EFFECTUE">Payé</option>
             </select>
             <select className="form-select form-select-sm" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               <option value="date_desc">Date (récent)</option>
@@ -266,7 +265,7 @@ export function PartnerBatchesPage() {
                     <td>
                       <button
                         className="btn btn-sm sehily-btn-primary d-flex align-items-center gap-2"
-                        disabled={p.statut === "EFFECTUE" || confirmMutation.isPending}
+                        disabled={p.statut !== "ENVOYE" || confirmMutation.isPending}
                         onClick={() => openProcessModal(p)}
                       >
                         {confirmMutation.isPending && selectedPayment?.id === p.id ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
@@ -449,9 +448,9 @@ export function PartnerBatchesPage() {
       </div>
       <div className="col-12 col-md-6 col-xl-3">
         <DashboardKpiCard
-          label="En attente de traitement"
+          label="Paiements envoyés"
           value={waitingCount.toLocaleString()}
-          subLabel="à confirmer"
+          subLabel="à payer par Mauripost"
           tone="warning"
           icon={FiClock}
           variant="partner"
@@ -459,7 +458,7 @@ export function PartnerBatchesPage() {
       </div>
       <div className="col-12 col-md-6 col-xl-3">
         <DashboardKpiCard
-          label="Paiements confirmés"
+          label="Paiements payés"
           value={confirmedCount.toLocaleString()}
           subLabel="traités avec succès"
           tone="success"
@@ -481,7 +480,7 @@ export function PartnerBatchesPage() {
         <DashboardKpiCard
           label="Aujourd'hui"
           value={todayConfirmed.toLocaleString()}
-          subLabel="paiements confirmés"
+          subLabel="paiements payés"
           tone="neutral"
           icon={FiTrendingUp}
           variant="partner"
@@ -504,9 +503,9 @@ export function PartnerBatchesPage() {
             </div>
             <div className="col-12 col-md-6">
               <ul className="list-unstyled mb-0 admin-legend-list">
-                <li><span className="admin-dot admin-dot-warning" /><span>En attente</span><strong>{waitingCount}</strong></li>
-                <li><span className="admin-dot admin-dot-success" /><span>Confirmés</span><strong>{confirmedCount}</strong></li>
-                <li><span className="admin-dot admin-dot-info" /><span>En cours</span><strong>{inProgressCount}</strong></li>
+                <li><span className="admin-dot admin-dot-warning" /><span>Envoyés</span><strong>{waitingCount}</strong></li>
+                <li><span className="admin-dot admin-dot-success" /><span>Payés</span><strong>{confirmedCount}</strong></li>
+                <li><span className="admin-dot admin-dot-info" /><span>En traitement</span><strong>{inProgressCount}</strong></li>
                 <li><span className="admin-dot admin-dot-danger" /><span>Échoués</span><strong>{rejectedCount}</strong></li>
               </ul>
             </div>
@@ -517,7 +516,7 @@ export function PartnerBatchesPage() {
       <div className="col-12 col-xl-7">
         <div className="sehily-surface p-3">
           <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="fw-bold">Évolution des paiements confirmés</div>
+            <div className="fw-bold">Évolution des paiements payés</div>
             <div className="small text-muted">6 derniers mois</div>
           </div>
           <DashboardLineChart
