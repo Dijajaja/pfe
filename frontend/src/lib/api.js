@@ -4,6 +4,10 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000",
   timeout: 20000,
 });
+const refreshClient = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000",
+  timeout: 20000,
+});
 
 function getTokens() {
   const raw = localStorage.getItem("sehily_tokens");
@@ -25,6 +29,61 @@ function clearTokens() {
 
 let refreshPromise = null;
 
+function parseJwt(token) {
+  if (!token) return null;
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    return JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpired(token, skewSeconds = 20) {
+  const payload = parseJwt(token);
+  if (!payload?.exp) return true;
+  const now = Math.floor(Date.now() / 1000);
+  return payload.exp <= now + skewSeconds;
+}
+
+export async function refreshAccessToken() {
+  const tokens = getTokens();
+  if (!tokens?.refresh || isTokenExpired(tokens.refresh, 0)) {
+    clearTokens();
+    throw new Error("Session expirée. Veuillez vous reconnecter.");
+  }
+  if (!refreshPromise) {
+    refreshPromise = refreshClient
+      .post("/api/auth/refresh/", { refresh: tokens.refresh })
+      .then((r) => {
+        const next = { ...tokens, access: r.data.access };
+        setTokens(next);
+        return next;
+      })
+      .catch((e) => {
+        clearTokens();
+        throw e;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
+export async function ensureValidAccessToken() {
+  const tokens = getTokens();
+  if (!tokens?.access && !tokens?.refresh) {
+    throw new Error("Aucun token de session.");
+  }
+  if (tokens?.access && !isTokenExpired(tokens.access)) {
+    return tokens.access;
+  }
+  const next = await refreshAccessToken();
+  return next.access;
+}
+
 api.interceptors.request.use((config) => {
   const tokens = getTokens();
   if (tokens?.access) {
@@ -43,32 +102,8 @@ api.interceptors.response.use(
       throw error;
     }
 
-    const tokens = getTokens();
-    if (!tokens?.refresh) {
-      clearTokens();
-      throw error;
-    }
-
     original.__isRetryRequest = true;
-
-    if (!refreshPromise) {
-      refreshPromise = api
-        .post("/api/v1/auth/token/refresh/", { refresh: tokens.refresh })
-        .then((r) => {
-          const next = { ...tokens, access: r.data.access };
-          setTokens(next);
-          return next;
-        })
-        .catch((e) => {
-          clearTokens();
-          throw e;
-        })
-        .finally(() => {
-          refreshPromise = null;
-        });
-    }
-
-    const nextTokens = await refreshPromise;
+    const nextTokens = await refreshAccessToken();
     original.headers = original.headers || {};
     original.headers.Authorization = `Bearer ${nextTokens.access}`;
     return api.request(original);
@@ -76,14 +111,15 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-  register: (payload) => api.post("/api/v1/auth/inscription/", payload),
-  login: (payload) => api.post("/api/v1/auth/token/", payload),
-  me: () => api.get("/api/v1/auth/moi/"),
+  register: (payload) => api.post("/api/auth/register/", payload),
+  login: (payload) => api.post("/api/auth/login/", payload),
+  me: () => api.get("/api/auth/me/"),
 };
 
 export const tokenStore = {
   get: getTokens,
   set: setTokens,
   clear: clearTokens,
+  isAccessExpired: (token) => isTokenExpired(token),
 };
 

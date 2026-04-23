@@ -1,14 +1,24 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { adminUsers as usersSeed } from "../data/mockData";
 import { adminApi } from "../api/webFeaturesApi";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
+import { useAppToast } from "../../components/ui/AppToastProvider";
+import { getApiErrorMessage } from "../../lib/apiError";
+
+const PAGE_SIZE = 8;
 
 export function AdminUsersPage() {
+  const qc = useQueryClient();
+  const { pushError, pushSuccess, pushInfo } = useAppToast();
   const [users, setUsers] = useState(usersSeed);
   const [draft, setDraft] = useState({ email: "", role: "ETUDIANT" });
   const [importFeedback, setImportFeedback] = useState("");
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: adminApi.listUsers,
@@ -16,18 +26,58 @@ export function AdminUsersPage() {
 
   useEffect(() => {
     const data = usersQuery.data;
-    if (Array.isArray(data) && data.length) setUsers(data);
+    if (Array.isArray(data)) {
+      const normalized = data.map((u) => ({
+        ...u,
+        actif: u.actif ?? u.is_active ?? true,
+      }));
+      setUsers(normalized);
+    }
   }, [usersQuery.data]);
 
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, payload }) => adminApi.updateUser(id, payload),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      pushSuccess("Utilisateur mis à jour.");
+    },
+    onError: (err) => pushError(getApiErrorMessage(err, "Impossible de mettre à jour l’utilisateur.")),
+  });
+
+  const importMutation = useMutation({
+    mutationFn: (file) => adminApi.importUsersCsv(file),
+    onSuccess: async (result) => {
+      await qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      setImportFeedback(
+        `Import terminé: ${result.imported ?? 0} créé(s), ${result.updated ?? 0} mis à jour, ${result.errors?.length ?? 0} erreur(s).`
+      );
+      pushSuccess("Import CSV terminé.");
+    },
+    onError: (err) => {
+      const msg = getApiErrorMessage(err, "Import CSV impossible.");
+      setImportFeedback(msg);
+      pushError(msg);
+    },
+  });
+
   function toggleActive(id) {
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, actif: !u.actif } : u)));
+    const current = users.find((u) => u.id === id);
+    if (!current) return;
+    updateUserMutation.mutate({
+      id,
+      payload: { is_active: !current.actif },
+    });
   }
 
   function onCreate(e) {
     e.preventDefault();
-    if (!draft.email.trim()) return;
+    if (!draft.email.trim()) {
+      pushInfo("L’endpoint création utilisateur n’est pas encore exposé côté backend.");
+      return;
+    }
     setUsers((prev) => [...prev, { id: Date.now(), email: draft.email, role: draft.role, actif: true }]);
     setDraft({ email: "", role: "ETUDIANT" });
+    pushInfo("Création locale ajoutée (endpoint création backend non disponible).");
   }
 
   function parseCsvText(text) {
@@ -50,38 +100,80 @@ export function AdminUsersPage() {
 
   async function onImportCsv(file) {
     if (!file) return;
-    try {
-      const text = await file.text();
-      const parsed = parseCsvText(text);
-      if (!parsed.length) {
-        setImportFeedback("Aucune ligne valide trouvée dans le CSV.");
-        return;
+    if (importMutation.isPending) return;
+    // Endpoint réel disponible; fallback local seulement en mode démo.
+    if (import.meta.env.VITE_ENABLE_API_FALLBACK === "true") {
+      try {
+        const text = await file.text();
+        const parsed = parseCsvText(text);
+        if (!parsed.length) {
+          setImportFeedback("Aucune ligne valide trouvée dans le CSV.");
+          return;
+        }
+        setUsers((prev) => [...prev, ...parsed]);
+        setImportFeedback(`${parsed.length} étudiant(s) importé(s) depuis le CSV.`);
+      } catch (e) {
+        setImportFeedback(e.message || "Import CSV impossible.");
       }
-      setUsers((prev) => [...prev, ...parsed]);
-      setImportFeedback(`${parsed.length} étudiant(s) importé(s) depuis le CSV.`);
-    } catch (e) {
-      setImportFeedback(e.message || "Import CSV impossible.");
+      return;
     }
+    importMutation.mutate(file);
   }
 
   if (usersQuery.isLoading) {
     return <LoadingSkeleton lines={6} />;
   }
+  if (usersQuery.isError) {
+    return <div className="alert alert-danger">{getApiErrorMessage(usersQuery.error, "Erreur chargement utilisateurs.")}</div>;
+  }
+
+  const q = search.trim().toLowerCase();
+  const filteredUsers = users.filter((u) => {
+    const searchOk = `${u.email} ${u.role}`.toLowerCase().includes(q);
+    const roleOk = roleFilter === "ALL" ? true : u.role === roleFilter;
+    const activeOk = activeFilter === "ALL" ? true : activeFilter === "ACTIVE" ? u.actif : !u.actif;
+    return searchOk && roleOk && activeOk;
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedUsers = filteredUsers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div className="row g-4">
       <div className="col-12">
         <h1 className="h4 mb-1">Admin — Utilisateurs</h1>
-        <div className="text-muted">Liste étudiants inscrits + CRUD simple + activation/désactivation.</div>
-        <div className="alert alert-warning mt-2 mb-0">
-          Endpoint backend users admin non exposé pour l’instant : cette page reste en mode local UI.
-        </div>
+        <div className="text-muted">Gestion des utilisateurs, activation/désactivation, import CSV CNOU.</div>
       </div>
 
       <div className="col-12 col-lg-7">
         <div className="sehily-surface p-3">
+          <div className="d-flex gap-2 mb-3 flex-wrap">
+            <input
+              className="form-control form-control-sm"
+              placeholder="Rechercher (email, rôle)..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            />
+            <select className="form-select form-select-sm" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}>
+              <option value="ALL">Rôle: Tous</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="ETUDIANT">ETUDIANT</option>
+              <option value="PARTENAIRE">PARTENAIRE</option>
+            </select>
+            <select className="form-select form-select-sm" value={activeFilter} onChange={(e) => { setActiveFilter(e.target.value); setPage(1); }}>
+              <option value="ALL">État: Tous</option>
+              <option value="ACTIVE">Actifs</option>
+              <option value="INACTIVE">Inactifs</option>
+            </select>
+          </div>
+          {usersQuery.isFetching ? (
+            <div className="d-flex align-items-center gap-2 small text-muted mb-2">
+              <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+              Actualisation en cours...
+            </div>
+          ) : null}
           <div className="table-responsive">
-            <table className="table align-middle">
+            <table className="table align-middle admin-table-hover">
               <thead>
                 <tr>
                   <th>Email</th>
@@ -91,20 +183,39 @@ export function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
+                {pagedUsers.map((u) => (
                   <tr key={u.id}>
                     <td>{u.email}</td>
                     <td>{u.role}</td>
                     <td>{u.actif ? "Oui" : "Non"}</td>
                     <td>
-                      <button className="btn btn-sm sehily-btn-secondary" onClick={() => toggleActive(u.id)}>
+                      <button className="btn btn-sm sehily-btn-secondary d-flex align-items-center gap-2" onClick={() => toggleActive(u.id)} disabled={updateUserMutation.isPending}>
+                        {updateUserMutation.isPending ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
                         {u.actif ? "Désactiver" : "Activer"}
                       </button>
                     </td>
                   </tr>
                 ))}
+                {!pagedUsers.length ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-4 text-muted">
+                      Aucun utilisateur disponible
+                    </td>
+                  </tr>
+                ) : null}
               </tbody>
             </table>
+          </div>
+          <div className="d-flex justify-content-between align-items-center mt-3">
+            <small className="text-muted">Page {currentPage}/{totalPages}</small>
+            <div className="btn-group btn-group-sm">
+              <button className="btn sehily-btn-secondary" disabled={currentPage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                Précédent
+              </button>
+              <button className="btn sehily-btn-secondary" disabled={currentPage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
+                Suivant
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -143,8 +254,15 @@ export function AdminUsersPage() {
             className="form-control"
             type="file"
             accept=".csv,text/csv"
+            disabled={importMutation.isPending}
             onChange={(e) => onImportCsv(e.target.files?.[0])}
           />
+          {importMutation.isPending ? (
+            <div className="d-flex align-items-center gap-2 small text-muted">
+              <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+              Import en cours...
+            </div>
+          ) : null}
           {importFeedback ? <div className="alert alert-info mb-0 py-2">{importFeedback}</div> : null}
         </div>
       </div>

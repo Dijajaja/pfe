@@ -43,9 +43,10 @@ export function useEffectiveRole() {
   const demoRole = getDemoRole();
   const me = useCurrentUser();
   const apiRole = normalizeRole(me.data?.role);
+  const hasSession = !!tokenStore.get()?.access || !!tokenStore.get()?.refresh;
   return {
-    // Priorité au rôle backend réel quand il est disponible.
-    role: apiRole || demoRole || "ETUDIANT",
+    // En session authentifiée, le rôle doit toujours venir du backend.
+    role: apiRole || (hasSession ? null : demoRole || "ETUDIANT"),
     user: me.data || null,
     isLoading: me.isLoading,
   };

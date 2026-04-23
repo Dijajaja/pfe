@@ -109,18 +109,18 @@ def importer_etudiants(fichier_csv):
       <div className="col-12">
         <div className="sehily-surface p-3">
           <h2 className="h6 mb-3">6) API Django (backend)</h2>
-          <pre className="sehily-code mb-0">{`POST   /api/v1/auth/inscription/           -> inscription
-POST   /api/v1/auth/token/                 -> connexion (JWT)
-POST   /api/v1/auth/token/refresh/         -> refresh token
-GET    /api/v1/dossiers/                   -> liste/filtre dossiers
-POST   /api/v1/dossiers/                   -> soumettre une demande
-PATCH  /api/v1/dossiers/{id}/              -> accepter/rejeter (admin) ou soumettre (étudiant)
-POST   /api/v1/documents/                  -> upload document
-GET    /api/v1/me/paiements/               -> paiements étudiant
-GET    /api/v1/admin/reports/dashboard/    -> dashboard CNOU
-GET    /api/v1/admin/paiements/            -> paiements (CNOU)
-GET    /api/v1/partner/listes/{reference}/ -> dossiers validés (partenaire)
-POST   /api/v1/partner/paiements/confirmer/-> confirmation paiement`}</pre>
+          <pre className="sehily-code mb-0">{`POST   /api/auth/register/                 -> inscription
+POST   /api/auth/login/                    -> connexion (JWT)
+POST   /api/auth/refresh/                  -> refresh token
+GET    /api/demande/                       -> liste/filtre dossiers
+POST   /api/demande/                       -> soumettre une demande
+PATCH  /api/demande/{id}/                  -> mise à jour dossier
+POST   /api/documents/upload/              -> upload document
+GET    /api/etudiant/paiements/            -> paiements étudiant
+GET    /api/admin/reports/dashboard/       -> dashboard CNOU
+GET    /api/admin/paiements/               -> paiements (CNOU)
+GET    /api/mauriposte/dossiers/           -> paiements visibles partenaire
+POST   /api/mauriposte/paiement/           -> confirmation paiement`}</pre>
         </div>
       </div>
     </div>

@@ -7,6 +7,8 @@ import { EligibilitePage } from "../app/EligibilitePage";
 import { DemarchesPage } from "../app/DemarchesPage";
 import { GuidePfePage } from "../app/GuidePfePage";
 import { RoleLandingPage } from "../app/RoleLandingPage";
+import { NotificationsCenterPage } from "../app/NotificationsCenterPage";
+import { MessagesCenterPage } from "../app/MessagesCenterPage";
 import { StudentDashboardPage } from "../features/student/StudentDashboardPage";
 import { StudentDossierPage } from "../features/student/StudentDossierPage";
 import { StudentSuiviPage } from "../features/student/StudentSuiviPage";
@@ -29,8 +31,8 @@ export const router = createBrowserRouter([
   { path: "/admin/dossiers", element: <Navigate to="/app/admin/dossiers" replace /> },
   { path: "/admin/etudiants", element: <Navigate to="/app/admin/users" replace /> },
   { path: "/admin/exports", element: <Navigate to="/app/admin/exports" replace /> },
-  { path: "/mauriposte", element: <Navigate to="/app/partner/batches" replace /> },
-  { path: "/mauriposte/dashboard", element: <Navigate to="/app/partner/batches" replace /> },
+  { path: "/mauriposte", element: <Navigate to="/app/partner/dashboard" replace /> },
+  { path: "/mauriposte/dashboard", element: <Navigate to="/app/partner/dashboard" replace /> },
   {
     element: <PublicLayout />,
     children: [
@@ -58,6 +60,8 @@ export const router = createBrowserRouter([
           { index: true, element: <RoleLandingPage /> },
           { path: "demarches", element: <DemarchesPage /> },
           { path: "guide-pfe", element: <GuidePfePage /> },
+          { path: "notifications-center", element: <NotificationsCenterPage /> },
+          { path: "messages-center", element: <MessagesCenterPage /> },
           {
             path: "student",
             element: <RequireRole allow={["ETUDIANT"]} />,
@@ -82,7 +86,17 @@ export const router = createBrowserRouter([
           {
             path: "partner",
             element: <RequireRole allow={["PARTENAIRE"]} />,
-            children: [{ path: "batches", element: <PartnerBatchesPage /> }],
+            children: [
+              { index: true, element: <Navigate to="/app/partner/dashboard" replace /> },
+              { path: "batches", element: <PartnerBatchesPage /> },
+              { path: "dashboard", element: <PartnerBatchesPage /> },
+              { path: "to-process", element: <PartnerBatchesPage /> },
+              { path: "completed", element: <PartnerBatchesPage /> },
+              { path: "history", element: <PartnerBatchesPage /> },
+              { path: "reports", element: <PartnerBatchesPage /> },
+              { path: "notifications", element: <PartnerBatchesPage /> },
+              { path: "settings", element: <PartnerBatchesPage /> },
+            ],
           },
           { path: "*", element: <NotFoundPage /> },
         ],
