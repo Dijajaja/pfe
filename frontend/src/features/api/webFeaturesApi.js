@@ -1,4 +1,5 @@
 import { api } from "../../lib/api";
+import { endpoints } from "../../lib/endpoints";
 import { adminKpis, adminUsers, partnerBatches } from "../data/mockData";
 import { shouldUseFallback } from "../../lib/apiError";
 import { markFallbackEndpoint } from "../../app/fallbackMode";
@@ -25,31 +26,31 @@ async function withFallback(requestFn, fallbackValue, endpointTag) {
 export const referentialApi = {
   async listAnneesActives() {
     return withFallback(async () => {
-      const r = await api.get("/api/referentiels/annees-universitaires/", {
+      const r = await api.get(endpoints.referentials.anneesUniversitaires, {
         params: { actif: true },
       });
       return results(r.data);
-    }, [], "GET /api/referentiels/annees-universitaires/");
+    }, [], `GET ${endpoints.referentials.anneesUniversitaires}`);
   },
 };
 
 export const studentApi = {
   async listDossiers(params = {}) {
     return withFallback(async () => {
-      const r = await api.get("/api/demande/", { params });
+      const r = await api.get(endpoints.demande.listCreate, { params });
       return { results: results(r.data) };
-    }, { results: [] }, "GET /api/demande/");
+    }, { results: [] }, `GET ${endpoints.demande.listCreate}`);
   },
   async createDossier(payload) {
-    const r = await api.post("/api/demande/", payload);
+    const r = await api.post(endpoints.demande.listCreate, payload);
     return r.data;
   },
   async updateDossier(id, payload) {
-    const r = await api.patch(`/api/demande/${id}/`, payload);
+    const r = await api.patch(endpoints.demande.detail(id), payload);
     return r.data;
   },
   async listDocuments(dossierId) {
-    const r = await api.get("/api/documents/", { params: { dossier: dossierId } });
+    const r = await api.get(endpoints.documents.list, { params: { dossier: dossierId } });
     return results(r.data);
   },
   async uploadDocument({ dossier, type_piece, fichier }) {
@@ -57,29 +58,29 @@ export const studentApi = {
     form.append("dossier", dossier);
     form.append("type_piece", type_piece);
     form.append("fichier", fichier);
-    const r = await api.post("/api/documents/upload/", form, {
+    const r = await api.post(endpoints.documents.upload, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return r.data;
   },
   async listPaiements() {
     return withFallback(async () => {
-      const r = await api.get("/api/etudiant/paiements/");
+      const r = await api.get(endpoints.etudiant.paiements);
       return results(r.data);
-    }, [], "GET /api/etudiant/paiements/");
+    }, [], `GET ${endpoints.etudiant.paiements}`);
   },
   async listReclamations() {
     return withFallback(async () => {
-      const r = await api.get("/api/etudiant/reclamations/");
+      const r = await api.get(endpoints.etudiant.reclamations);
       return results(r.data);
-    }, [], "GET /api/etudiant/reclamations/");
+    }, [], `GET ${endpoints.etudiant.reclamations}`);
   },
 };
 
 export const adminApi = {
   async getDashboard(annee) {
     return withFallback(async () => {
-      const r = await api.get("/api/admin/reports/dashboard/", {
+      const r = await api.get(endpoints.admin.dashboard, {
         params: annee ? { annee_universitaire: annee } : {},
       });
       return r.data;
@@ -94,51 +95,51 @@ export const adminApi = {
         total: adminKpis.paiementsEffectues + 50,
         EFFECTUE: adminKpis.paiementsEffectues,
       },
-    }, "GET /api/admin/reports/dashboard/");
+    }, `GET ${endpoints.admin.dashboard}`);
   },
   async listDossiers(params = {}) {
     return withFallback(async () => {
-      const r = await api.get("/api/admin/dossiers/", { params });
+      const r = await api.get(endpoints.admin.dossiers, { params });
       return results(r.data);
-    }, [], "GET /api/admin/dossiers/");
+    }, [], `GET ${endpoints.admin.dossiers}`);
   },
   async updateDossier(id, payload) {
-    const r = await api.patch(`/api/admin/dossiers/${id}/`, payload);
+    const r = await api.patch(endpoints.admin.dossierDetail(id), payload);
     return r.data;
   },
   async sendDossierToMauripost(id, payload = {}) {
-    const r = await api.post(`/api/admin/dossiers/${id}/envoyer-mauripost/`, payload);
+    const r = await api.post(endpoints.admin.envoyerMauripost(id), payload);
     return r.data;
   },
   async listPaiements(params = {}) {
     return withFallback(async () => {
-      const r = await api.get("/api/admin/paiements/", { params });
+      const r = await api.get(endpoints.admin.paiements, { params });
       return results(r.data);
-    }, [], "GET /api/admin/paiements/");
+    }, [], `GET ${endpoints.admin.paiements}`);
   },
   async exportPaiementsXlsx(annee) {
     return withFallback(async () => {
-      const r = await api.get("/api/admin/exports/paiements.xlsx", {
+      const r = await api.get(endpoints.admin.exportPaiementsXlsx, {
         params: annee ? { annee_universitaire: annee } : {},
         responseType: "blob",
       });
       return r.data;
-    }, new Blob(["Fallback export indisponible côté backend."], { type: "text/plain;charset=utf-8" }), "GET /api/admin/exports/paiements.xlsx");
+    }, new Blob(["Fallback export indisponible côté backend."], { type: "text/plain;charset=utf-8" }), `GET ${endpoints.admin.exportPaiementsXlsx}`);
   },
   async listUsers() {
     return withFallback(async () => {
-      const r = await api.get("/api/admin/users/");
+      const r = await api.get(endpoints.admin.users);
       return results(r.data);
-    }, adminUsers, "GET /api/admin/users/");
+    }, adminUsers, `GET ${endpoints.admin.users}`);
   },
   async updateUser(id, payload) {
-    const r = await api.patch(`/api/admin/users/${id}/`, payload);
+    const r = await api.patch(endpoints.admin.userDetail(id), payload);
     return r.data;
   },
   async importUsersCsv(file) {
     const form = new FormData();
     form.append("file", file);
-    const r = await api.post("/api/admin/users/import-csv/", form, {
+    const r = await api.post(endpoints.admin.usersImportCsv, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return r.data;
@@ -148,7 +149,7 @@ export const adminApi = {
 export const partnerApi = {
   async listOperationalPaiements() {
     return withFallback(async () => {
-      const r = await api.get("/api/mauriposte/dossiers/");
+      const r = await api.get(endpoints.mauriposte.dossiers);
       return results(r.data);
     }, () => {
       const first = partnerBatches[0];
@@ -156,7 +157,7 @@ export const partnerApi = {
         { id: 1, dossier_id: 101, liste_reference: first.id, montant: 32000, statut: "ENVOYE" },
         { id: 2, dossier_id: 102, liste_reference: first.id, montant: 32000, statut: "ENVOYE" },
       ];
-    }, "GET /api/mauriposte/dossiers/");
+    }, `GET ${endpoints.mauriposte.dossiers}`);
   },
   async getListeByReference(reference) {
     const rows = await this.listOperationalPaiements();
@@ -167,7 +168,7 @@ export const partnerApi = {
     };
   },
   async confirmPaiements(operations) {
-    const r = await api.post("/api/mauriposte/paiement/", { operations });
+    const r = await api.post(endpoints.mauriposte.paiement, { operations });
     return r.data;
   },
 };

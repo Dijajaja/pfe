@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { authApi } from "../../lib/api";
+import { getApiErrorMessage } from "../../lib/apiError";
 import { ETABLISSEMENTS_MAURITANIE, getFilieresPourEtablissement } from "../../data/mauritanieUniversite";
 
 export function RegisterPage() {
@@ -48,7 +49,7 @@ export function RegisterPage() {
       await authApi.register(form);
       navigate("/auth/login", { replace: true });
     } catch (err) {
-      setError(t("registerErrorGeneric"));
+      setError(getApiErrorMessage(err, t("registerErrorGeneric")));
     } finally {
       setLoading(false);
     }

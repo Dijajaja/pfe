@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import { login } from "../../app/auth";
+import { getApiErrorMessage } from "../../lib/apiError";
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -20,7 +21,7 @@ export function LoginPage() {
       await login(email, password);
       navigate("/app", { replace: true });
     } catch (err) {
-      setError("Identifiants incorrects ou serveur indisponible.");
+      setError(getApiErrorMessage(err, "Identifiants incorrects ou serveur indisponible."));
     } finally {
       setLoading(false);
     }

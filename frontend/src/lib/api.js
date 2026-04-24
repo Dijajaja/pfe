@@ -1,11 +1,25 @@
+/**
+ * Client Axios unique pour Django REST (JWT + routes métier).
+ * Base URL : `VITE_API_BASE_URL` (sans slash final). Chemins : `endpoints.js`
+ * et `backend/config/api_alias_urls.py`.
+ */
 import axios from "axios";
 
+import { endpoints } from "./endpoints";
+
+function normalizeBaseUrl(url) {
+  const raw = url || "http://127.0.0.1:8000";
+  return String(raw).replace(/\/+$/, "");
+}
+
+const baseURL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000",
+  baseURL,
   timeout: 20000,
 });
 const refreshClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000",
+  baseURL,
   timeout: 20000,
 });
 
@@ -55,9 +69,12 @@ export async function refreshAccessToken() {
   }
   if (!refreshPromise) {
     refreshPromise = refreshClient
-      .post("/api/auth/refresh/", { refresh: tokens.refresh })
+      .post(endpoints.auth.refresh, { refresh: tokens.refresh })
       .then((r) => {
-        const next = { ...tokens, access: r.data.access };
+        const next = {
+          access: r.data.access,
+          refresh: r.data.refresh ?? tokens.refresh,
+        };
         setTokens(next);
         return next;
       })
@@ -111,9 +128,9 @@ api.interceptors.response.use(
 );
 
 export const authApi = {
-  register: (payload) => api.post("/api/auth/register/", payload),
-  login: (payload) => api.post("/api/auth/login/", payload),
-  me: () => api.get("/api/auth/me/"),
+  register: (payload) => api.post(endpoints.auth.register, payload),
+  login: (payload) => api.post(endpoints.auth.login, payload),
+  me: () => api.get(endpoints.auth.me),
 };
 
 export const tokenStore = {
