@@ -658,3 +658,219 @@ body{
   box-shadow:0 20px 40px rgba(15,79,76,.18);
   padding:1rem;
 }
+
+.public-header{
+  background:#fff;
+  border:1px solid var(--sehily-border);
+  border-radius:14px;
+  box-shadow:0 8px 24px rgba(15,79,76,.06);
+  padding:.7rem .9rem;
+  position:sticky;
+  top:.6rem;
+  z-index:30;
+}
+
+.public-nav-link{
+  text-decoration:none;
+  color:var(--sehily-text);
+  font-weight:600;
+  font-size:.94rem;
+  padding:.2rem .35rem;
+  border-radius:8px;
+  transition:background-color .16s ease, color .16s ease;
+}
+
+.public-nav-link:hover{
+  background:var(--sehily-creme);
+  color:var(--sehily-petrole);
+}
+
+.public-home{
+  display:grid;
+  gap:1.2rem;
+}
+
+.public-chip{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid var(--sehily-border);
+  background:color-mix(in srgb, var(--sehily-creme) 66%, #fff);
+  color:var(--sehily-petrole);
+  border-radius:999px;
+  padding:.35rem .7rem;
+  font-size:.8rem;
+  font-weight:600;
+}
+
+.public-hero{
+  border:1px solid var(--sehily-border);
+  border-radius:16px;
+  padding:1rem;
+  background:linear-gradient(135deg, color-mix(in srgb, var(--sehily-creme) 62%, #fff) 0%, #fff 48%, color-mix(in srgb, #d9ebe9 48%, #fff) 100%);
+}
+
+.public-hero-title{
+  font-size:clamp(1.7rem, 2.2vw, 2.55rem);
+  line-height:1.15;
+  font-weight:800;
+  color:#113f3d;
+}
+
+.public-hero-visual{
+  border:1px solid var(--sehily-border);
+  border-radius:16px;
+  background:#fff;
+  padding:1rem;
+  box-shadow:0 10px 24px rgba(15,79,76,.08);
+}
+
+.public-hero-metrics{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.4rem;
+}
+
+.public-status-card{
+  border-radius:12px;
+  border:1px solid var(--sehily-border);
+  background:#fff;
+  padding:.6rem;
+  height:100%;
+  transition:transform .16s ease, box-shadow .16s ease;
+}
+
+.public-status-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(15,79,76,.08);
+}
+
+.public-status-card--ok{ border-color:color-mix(in srgb, #198754 35%, #fff); }
+.public-status-card--danger{ border-color:color-mix(in srgb, #dc3545 35%, #fff); }
+.public-status-card--warn{ border-color:color-mix(in srgb, #e1b94f 45%, #fff); }
+
+.public-step-card,
+.public-benefit-card,
+.public-status-detail{
+  border:1px solid var(--sehily-border);
+  border-radius:14px;
+  background:#fff;
+  padding:.9rem;
+  transition:transform .16s ease, box-shadow .16s ease;
+  animation:publicFadeUp .5s ease both;
+}
+
+.public-step-card:hover,
+.public-benefit-card:hover,
+.public-status-detail:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(15,79,76,.08);
+}
+
+.public-step-card{
+  position:relative;
+  padding-top:1.2rem;
+}
+
+.public-step-number{
+  position:absolute;
+  top:.5rem;
+  right:.6rem;
+  font-size:.72rem;
+  font-weight:700;
+  color:var(--sehily-petrole);
+  background:color-mix(in srgb, var(--sehily-creme) 70%, #fff);
+  border:1px solid var(--sehily-border);
+  border-radius:999px;
+  min-width:22px;
+  height:22px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.public-step-icon,
+.public-benefit-icon{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  background:color-mix(in srgb, var(--sehily-petrole) 12%, #fff);
+  color:var(--sehily-petrole);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:.45rem;
+}
+
+.public-status-detail--ok{
+  background:color-mix(in srgb, #198754 8%, #fff);
+}
+
+.public-status-detail--danger{
+  background:color-mix(in srgb, #dc3545 7%, #fff);
+}
+
+.public-status-detail--warn{
+  background:color-mix(in srgb, #f2be2f 14%, #fff);
+}
+
+.public-faq .accordion-item{
+  border:1px solid var(--sehily-border);
+  border-radius:12px!important;
+  overflow:hidden;
+  margin-bottom:.55rem;
+}
+
+.public-faq .accordion-button{
+  font-weight:600;
+  color:var(--sehily-text);
+  background:#fff;
+}
+
+.public-faq .accordion-button:not(.collapsed){
+  color:var(--sehily-petrole);
+  background:color-mix(in srgb, var(--sehily-creme) 65%, #fff);
+  box-shadow:none;
+}
+
+.public-footer{
+  background:linear-gradient(180deg, #0b4d48 0%, #083a36 100%);
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  color:#fff;
+  padding:1rem;
+}
+
+.public-fade-up{
+  animation:publicFadeUp .55s ease both;
+}
+
+@keyframes publicFadeUp{
+  from{
+    opacity:0;
+    transform:translateY(8px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@media (max-width: 991.98px){
+  .public-header{
+    position:static;
+  }
+}
+
+@media (max-width: 767.98px){
+  .public-hero{
+    padding:.9rem;
+  }
+
+  .public-hero-visual{
+    padding:.75rem;
+  }
+
+  .public-hero-title{
+    font-size:1.85rem;
+  }
+}
