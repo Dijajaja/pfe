@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 
 import { fetchMe, login } from "../../app/auth";
+import { getHomePathForRole, normalizeRole } from "../../app/session";
 import { getApiErrorMessage } from "../../lib/apiError";
 
 export function LoginPage() {
@@ -17,19 +18,6 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function normalizeRole(role) {
-    const value = String(role || "").trim().toUpperCase();
-    if (!value) return null;
-    if (value === "ADMIN_CNOU") return "ADMIN";
-    return value;
-  }
-
-  function getRoleHome(role) {
-    if (role === "ADMIN") return "/app/admin/dashboard";
-    if (role === "PARTENAIRE") return "/app/partner/dashboard";
-    return "/app/student/dashboard";
-  }
-
   async function onSubmit(e) {
     e.preventDefault();
     setError("");
@@ -39,7 +27,7 @@ export function LoginPage() {
       try {
         const me = await fetchMe();
         const role = normalizeRole(me?.role);
-        navigate(getRoleHome(role), { replace: true });
+        navigate(getHomePathForRole(role), { replace: true });
       } catch {
         // Fallback sûr si le profil n'est pas encore disponible.
         navigate("/app", { replace: true });

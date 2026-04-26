@@ -5,9 +5,20 @@ import { authApi, tokenStore } from "../lib/api";
 const DEMO_ROLE_KEY = "sehily_demo_role";
 
 export function normalizeRole(role) {
-  if (!role) return null;
-  if (role === "ADMIN_CNOU") return "ADMIN";
-  return role;
+  if (role == null || role === "") return null;
+  const s = String(role).trim();
+  if (!s) return null;
+  if (s === "ADMIN_CNOU" || s.toUpperCase() === "ADMIN_CNOU") return "ADMIN";
+  return s.toUpperCase();
+}
+
+/** Espace d’accueil après login (évite d’afficher /403 en boucle). */
+export function getHomePathForRole(role) {
+  const r = normalizeRole(role);
+  if (r === "ADMIN") return "/app/admin/dashboard";
+  if (r === "PARTENAIRE") return "/app/partner/dashboard";
+  if (r === "ETUDIANT") return "/app/student/dashboard";
+  return "/app";
 }
 
 export function getDemoRole() {

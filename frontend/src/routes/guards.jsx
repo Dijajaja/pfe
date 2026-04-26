@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { ensureValidAccessToken, tokenStore } from "../lib/api";
-import { useEffectiveRole } from "../app/session";
+import { getHomePathForRole, useEffectiveRole } from "../app/session";
 
 export function RequireAuth() {
   const location = useLocation();
@@ -72,7 +72,7 @@ export function RequireRole({ allow }) {
   }
 
   if (!allow.includes(role)) {
-    return <Navigate to="/403" replace />;
+    return <Navigate to={getHomePathForRole(role)} replace />;
   }
   return <Outlet />;
 }

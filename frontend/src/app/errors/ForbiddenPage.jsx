@@ -1,27 +1,32 @@
-import { Link } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
-import { useEffectiveRole } from "../session";
+import { getHomePathForRole, useEffectiveRole } from "../session";
+import { tokenStore } from "../../lib/api";
 
+/**
+ * Plus d’écran 403 bloquant : on renvoie vers l’espace du rôle (ou l’accueil / login).
+ * L’URL /403 reste valide mais ne sert plus de page d’erreur statique pour les comptes connectés.
+ */
 export function ForbiddenPage() {
-  const { role } = useEffectiveRole();
+  const { role, isLoading } = useEffectiveRole();
+  const hasSession = !!tokenStore.get()?.access;
 
-  const backToApp =
-    role === "ADMIN"
-      ? "/app/admin/dashboard"
-      : role === "PARTENAIRE"
-        ? "/app/partner/dashboard"
-        : role === "ETUDIANT"
-          ? "/app/student/dashboard"
-          : "/app";
+  if (hasSession && isLoading) {
+    return (
+      <div className="p-4 text-center">
+        <div className="spinner-border spinner-border-sm me-2" role="status" />
+        Redirection…
+      </div>
+    );
+  }
 
-  return (
-    <div className="text-center py-4">
-      <h1 className="h3 mb-2">403 — Accès interdit</h1>
-      <p className="text-muted mb-3">Ton rôle actuel n’a pas la permission d’accéder à cette page.</p>
-      <Link to={backToApp} className="btn sehily-btn-primary">
-        Retour à l’espace app
-      </Link>
-    </div>
-  );
+  if (hasSession && role) {
+    return <Navigate to={getHomePathForRole(role)} replace />;
+  }
+
+  if (hasSession) {
+    return <Navigate to="/auth/login" replace />;
+  }
+
+  return <Navigate to="/" replace />;
 }
-
