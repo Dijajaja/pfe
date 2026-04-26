@@ -1398,6 +1398,7 @@ body{
   position:absolute;
   inset:0;
   background:
+    radial-gradient(circle at 50% -8%, rgba(16,185,129,.22), transparent 36%),
     radial-gradient(circle at 8% 20%, rgba(15,118,110,.12), transparent 32%),
     radial-gradient(circle at 90% 88%, rgba(16,185,129,.10), transparent 34%);
   pointer-events:none;
@@ -1411,7 +1412,7 @@ body{
 
 .login-pro-marketing{
   border-radius:24px;
-  padding:1rem .6rem 1rem .1rem;
+  padding:1rem .6rem 1rem .6rem;
 }
 
 .login-pro-marketing-card{
