@@ -122,6 +122,14 @@ const ALL_FILIERE_VALUES = [
   "Sociologie",
   "Télécommunications / Réseaux",
   "Télé-informatique",
+  "Banques & Assurances",
+  "Finance & Comptabilité",
+  "Gestion des Ressources Humaines",
+  "Techniques Commerciales et Marketing",
+  "Développement Informatique",
+  "Informatique de Gestion",
+  "Réseaux informatiques et Télécommunications",
+  "Statistique Appliquée à l'Economie",
 ];
 
 export const FILIERES_MAURITANIE = [...ALL_FILIERE_VALUES]
@@ -231,6 +239,21 @@ const GESTION_COMPTA = [
   "Administration publique",
 ];
 
+/** Filières proposées à l'ISCAE — Nouakchott (grille 4+4, ordre d'affichage). */
+const ISCAE_FILIERES = [
+  "Banques & Assurances",
+  "Finance & Comptabilité",
+  "Gestion des Ressources Humaines",
+  "Techniques Commerciales et Marketing",
+  "Développement Informatique",
+  "Informatique de Gestion",
+  "Réseaux informatiques et Télécommunications",
+  "Statistique Appliquée à l'Economie",
+];
+
+export const ISCAE_FILIERES_COLONNE_GAUCHE = ISCAE_FILIERES.slice(0, 4);
+export const ISCAE_FILIERES_COLONNE_DROITE = ISCAE_FILIERES.slice(4, 8);
+
 const LANGUES = [
   "Langue anglaise",
   "Langue et littérature françaises",
@@ -311,7 +334,7 @@ function filiereKeysForEtablissement(etablissement) {
   if (n.includes("islamologie") || n.includes("histoire et d'islamologie")) return ISLAMO_HIST;
   if (n.includes("institut superieur d'informatique")) return NUMERIQUE_TIC;
   if (n.includes("iset") && n.includes("rosso")) return INGENIERIE_AGRO;
-  if (n.includes("iscae")) return GESTION_COMPTA;
+  if (n.includes("iscae")) return ISCAE_FILIERES;
   if (n.includes("formation de professeurs")) return FORMATION_ENSEIGNEMENT;
   if (n.includes("isgi")) return INGENIERIE;
   if (n.includes("institut superieur de l'environnement")) return ENV_MER;
@@ -338,11 +361,22 @@ function toSortedOptions(values) {
 }
 
 /**
+ * @param {string} etablissement
+ * @returns {boolean}
+ */
+export function isEtablissementIscae(etablissement) {
+  return normalizeKey(etablissement).includes("iscae");
+}
+
+/**
  * Filières affichées pour l’établissement choisi (tri alphabétique FR).
  * @param {string} etablissement — valeur exacte du select établissement
  * @returns {{ value: string }[]}
  */
 export function getFilieresPourEtablissement(etablissement) {
+  if (isEtablissementIscae(etablissement)) {
+    return ISCAE_FILIERES.map((value) => ({ value }));
+  }
   const keys = filiereKeysForEtablissement(etablissement);
   if (!keys) return [];
   return toSortedOptions(keys);

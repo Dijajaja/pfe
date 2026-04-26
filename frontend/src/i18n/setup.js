@@ -58,8 +58,6 @@ const resources = {
       fieldEtablissement: "Établissement",
       fieldFiliere: "Filière",
       selectEtablissementFirstFiliere: "Choisis d’abord ton établissement.",
-      registerFiliereHint:
-        "Les filières affichées dépendent de l’établissement (liste indicative, à valider avec le CNOU).",
     },
   },
   ar: {
@@ -116,8 +114,6 @@ const resources = {
       fieldEtablissement: "المؤسّسة",
       fieldFiliere: "الشعبة / التخصص",
       selectEtablissementFirstFiliere: "اختر المؤسّسة أولاً.",
-      registerFiliereHint:
-        "الشعب المعروضة تتبع المؤسّسة المختارة (قائمة إرشادية يُرجى اعتماد قائمة CNOU النهائية).",
     },
   },
 };

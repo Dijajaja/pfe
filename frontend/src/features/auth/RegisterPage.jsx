@@ -169,15 +169,17 @@ export function RegisterPage() {
                 </div>
               </div>
               <div className="col-12 col-md-4">
-                <label className="form-label fw-semibold">{t("fieldFiliere")}</label>
+                <label className="form-label fw-semibold" htmlFor="register-filiere">
+                  {t("fieldFiliere")}
+                </label>
                 <div className="login-pro-input-wrap">
                   <GraduationCap size={18} className="login-pro-input-icon" />
                   <select
+                    id="register-filiere"
                     className="form-select login-pro-input"
                     value={form.filiere}
                     onChange={(e) => setField("filiere", e.target.value)}
                     required
-                    aria-describedby="register-filiere-hint"
                   >
                     {!form.etablissement ? (
                       <option value="">{t("selectEtablissementFirstFiliere")}</option>
@@ -192,9 +194,6 @@ export function RegisterPage() {
                       </>
                     )}
                   </select>
-                </div>
-                <div id="register-filiere-hint" className="form-text">
-                  {t("registerFiliereHint")}
                 </div>
               </div>
 
