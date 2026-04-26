@@ -38,8 +38,8 @@ export function DashboardLineChart({
           const y = height - (tick / maxValue) * (height - 20) - 10;
           return (
             <g key={idx}>
-              <line x1="10" y1={y} x2={width - 10} y2={y} stroke="rgba(15,79,76,.12)" strokeWidth="1" />
-              <text x="2" y={y - 2} fontSize="10" fill="rgba(23,59,58,.65)">
+              <line x1="10" y1={y} x2={width - 10} y2={y} stroke="rgba(26,92,74,.12)" strokeWidth="1" />
+              <text x="2" y={y - 2} fontSize="10" fill="rgba(30,63,56,.65)">
                 {tick}
               </text>
             </g>

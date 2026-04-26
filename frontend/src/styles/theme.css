@@ -1,12 +1,12 @@
 :root{
-  --sehily-petrole:#0f4f4c;
-  --sehily-vert-pro:#1f6d64;
-  --sehily-corail:#e07a63;
-  --sehily-creme:#f5f2ec;
-  --sehily-sable:#ece3d7;
+  --sehily-petrole:#1a5c4a;
+  --sehily-vert-pro:#2e8b6e;
+  --sehily-corail:#e8694a;
+  --sehily-creme:#f5f0e8;
+  --sehily-sable:#ede8df;
   --sehily-bg:var(--sehily-creme);
   --sehily-surface:#ffffff;
-  --sehily-border:rgba(15,79,76,.16);
+  --sehily-border:rgba(26,92,74,.16);
   --sehily-text:#173b3a;
   --sehily-text-muted:rgba(23,59,58,.68);
 }
@@ -24,7 +24,7 @@ body{
   background:var(--sehily-surface);
   border:1px solid var(--sehily-border);
   border-radius:16px;
-  box-shadow:0 8px 24px rgba(15,79,76,.06);
+  box-shadow:0 8px 24px rgba(26,92,74,.06);
 }
 
 .sehily-btn-primary{
@@ -126,7 +126,7 @@ body{
 }
 
 .sehily-skeleton{
-  background:linear-gradient(90deg, rgba(15,79,76,.10) 25%, rgba(15,79,76,.18) 37%, rgba(15,79,76,.10) 63%);
+  background:linear-gradient(90deg, rgba(26,92,74,.10) 25%, rgba(26,92,74,.18) 37%, rgba(26,92,74,.10) 63%);
   background-size:400% 100%;
   border-radius:8px;
   animation:sehilyShimmer 1.4s ease infinite;
@@ -298,7 +298,7 @@ body{
 
 .admin-quick-action:hover{
   transform:translateY(-1px);
-  box-shadow:0 8px 16px rgba(15,79,76,.10);
+  box-shadow:0 8px 16px rgba(26,92,74,.10);
 }
 
 .admin-quick-action-icon{
@@ -332,7 +332,7 @@ body{
   font-weight:700;
   color:#fff;
   background:var(--sehily-petrole);
-  box-shadow:0 4px 10px rgba(15,79,76,.28);
+  box-shadow:0 4px 10px rgba(26,92,74,.28);
 }
 
 .admin-quick-action-primary{ color:var(--sehily-petrole); }
@@ -379,7 +379,7 @@ body{
   background:#fff;
   border-radius:14px;
   border:1px solid var(--sehily-border);
-  box-shadow:0 20px 40px rgba(15,79,76,.18);
+  box-shadow:0 20px 40px rgba(26,92,74,.18);
   padding:1rem;
 }
 
@@ -388,7 +388,7 @@ body{
 }
 
 .app-sidebar{
-  background:linear-gradient(180deg, #0b4d48 0%, #083a36 100%);
+  background:linear-gradient(180deg, #1a5c4a 0%, #14493b 100%);
   border:1px solid rgba(255,255,255,.09);
   border-radius:18px;
   box-shadow:0 18px 36px rgba(7,42,40,.34);
@@ -415,7 +415,7 @@ body{
   justify-content:center;
   font-size:.75rem;
   font-weight:700;
-  color:#0b4d48;
+  color:#1a5c4a;
   background:#d8f1ed;
 }
 
@@ -655,7 +655,7 @@ body{
   background:#fff;
   border-radius:14px;
   border:1px solid var(--sehily-border);
-  box-shadow:0 20px 40px rgba(15,79,76,.18);
+  box-shadow:0 20px 40px rgba(26,92,74,.18);
   padding:1rem;
 }
 
@@ -663,7 +663,7 @@ body{
   background:#fff;
   border:1px solid var(--sehily-border);
   border-radius:16px;
-  box-shadow:0 10px 24px rgba(15,79,76,.07);
+  box-shadow:0 10px 24px rgba(26,92,74,.07);
   padding:.65rem 1rem;
   position:sticky;
   top:.6rem;
@@ -762,7 +762,7 @@ body{
   border-radius:22px;
   padding:1.35rem;
   background:radial-gradient(circle at 85% 15%, rgba(15,118,110,.08) 0%, rgba(15,118,110,0) 36%), #fff;
-  box-shadow:0 16px 36px rgba(15,79,76,.1);
+  box-shadow:0 16px 36px rgba(26,92,74,.1);
 }
 
 .public-hero-title{
@@ -785,7 +785,7 @@ body{
   gap:.35rem;
   border:1px solid rgba(15,118,110,.2);
   background:rgba(15,118,110,.08);
-  color:#0f766e;
+  color:#2e8b6e;
   border-radius:999px;
   padding:.32rem .62rem;
   font-size:.82rem;
@@ -806,7 +806,7 @@ body{
 
 .public-cta-btn--outline{
   background:#fff;
-  color:#0f766e;
+  color:#2e8b6e;
 }
 
 .public-hero-visual{
@@ -814,7 +814,7 @@ body{
   border-radius:20px;
   background:#fff;
   padding:1.15rem;
-  box-shadow:0 18px 32px rgba(15,79,76,.12);
+  box-shadow:0 18px 32px rgba(26,92,74,.12);
   overflow:hidden;
 }
 
@@ -829,7 +829,7 @@ body{
   border-radius:16px;
   background:#fff;
   padding:.9rem;
-  box-shadow:0 10px 22px rgba(15,79,76,.08);
+  box-shadow:0 10px 22px rgba(26,92,74,.08);
 }
 
 .public-trust-pills{
@@ -860,15 +860,15 @@ body{
   align-items:flex-start;
   gap:.7rem;
   max-width:420px;
-  box-shadow:0 8px 16px rgba(15,79,76,.06);
+  box-shadow:0 8px 16px rgba(26,92,74,.06);
 }
 
 .public-eligibility-icon{
   width:34px;
   height:34px;
   border-radius:10px;
-  background:color-mix(in srgb, #10B981 18%, #fff);
-  color:#10B981;
+  background:color-mix(in srgb, #2e8b6e 18%, #fff);
+  color:#2e8b6e;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -898,7 +898,7 @@ body{
   border-radius:8px;
   background:#fff;
   border:1px solid #e5e7eb;
-  color:#0f766e;
+  color:#2e8b6e;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -938,7 +938,7 @@ body{
   border-color:var(--sehily-petrole);
   background:color-mix(in srgb, var(--sehily-petrole) 10%, #fff);
   color:var(--sehily-petrole);
-  box-shadow:0 6px 12px rgba(15,79,76,.08);
+  box-shadow:0 6px 12px rgba(26,92,74,.08);
 }
 
 .public-feedback{
@@ -1039,7 +1039,7 @@ body{
   border:1px solid var(--sehily-border);
   border-radius:14px;
   background:#fff;
-  box-shadow:0 14px 30px rgba(15,79,76,.2);
+  box-shadow:0 14px 30px rgba(26,92,74,.2);
   padding:.62rem .72rem;
   max-width:196px;
 }
@@ -1060,7 +1060,7 @@ body{
 }
 
 .public-stats-strip{
-  background:linear-gradient(180deg, #0b4d48 0%, #083a36 100%);
+  background:linear-gradient(180deg, #1a5c4a 0%, #14493b 100%);
   border-radius:16px;
   border:1px solid rgba(255,255,255,.14);
   padding:1.05rem;
@@ -1112,7 +1112,7 @@ body{
 
 .public-status-card:hover{
   transform:translateY(-2px);
-  box-shadow:0 8px 20px rgba(15,79,76,.08);
+  box-shadow:0 8px 20px rgba(26,92,74,.08);
 }
 
 .public-status-card--ok{ border-color:color-mix(in srgb, #198754 35%, #fff); }
@@ -1134,7 +1134,7 @@ body{
 .public-benefit-card:hover,
 .public-status-detail:hover{
   transform:translateY(-4px);
-  box-shadow:0 14px 28px rgba(15,79,76,.12);
+  box-shadow:0 14px 28px rgba(26,92,74,.12);
   border-color:color-mix(in srgb, var(--sehily-petrole) 25%, #fff);
 }
 
@@ -1156,7 +1156,7 @@ body{
     top:50%;
     width:16px;
     height:2px;
-    background:#0f766e;
+    background:#2e8b6e;
     opacity:.55;
     transform:translateY(-50%);
   }
@@ -1236,7 +1236,7 @@ body{
   border-radius:16px;
   background:#fff;
   padding:1rem;
-  box-shadow:0 10px 24px rgba(15,79,76,.08);
+  box-shadow:0 10px 24px rgba(26,92,74,.08);
   text-align:center;
 }
 
@@ -1245,8 +1245,8 @@ body{
   height:54px;
   margin:0 auto .6rem;
   border-radius:999px;
-  background:color-mix(in srgb, #10B981 20%, #fff);
-  color:#0f766e;
+  background:color-mix(in srgb, #2e8b6e 20%, #fff);
+  color:#2e8b6e;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -1255,7 +1255,7 @@ body{
 }
 
 .public-footer{
-  background:linear-gradient(180deg, #0b4d48 0%, #083a36 100%);
+  background:linear-gradient(180deg, #1a5c4a 0%, #14493b 100%);
   border-radius:18px;
   border:1px solid rgba(255,255,255,.12);
   color:#fff;
@@ -1428,7 +1428,7 @@ body{
   gap:.4rem;
   border:1px solid rgba(15,118,110,.2);
   background:rgba(15,118,110,.08);
-  color:#0f766e;
+  color:#2e8b6e;
   border-radius:999px;
   padding:.35rem .7rem;
   font-size:.78rem;
@@ -1448,7 +1448,7 @@ body{
 }
 
 .login-pro-title span{
-  color:#0f766e;
+  color:#2e8b6e;
   box-shadow:inset 0 -0.38em 0 rgba(16,185,129,.28);
   border-radius:4px;
   padding:0 .04em;
@@ -1479,7 +1479,7 @@ body{
 }
 
 .login-pro-list svg{
-  color:#10b981;
+  color:#2e8b6e;
 }
 
 .login-pro-metrics{
@@ -1489,22 +1489,22 @@ body{
 }
 
 .login-pro-metrics span{
-  border:1px solid rgba(15,79,76,.12);
+  border:1px solid rgba(26,92,74,.12);
   background:#fff;
   border-radius:999px;
   padding:.32rem .62rem;
   font-size:.74rem;
   font-weight:700;
-  color:#0f766e;
+  color:#2e8b6e;
 }
 
 .login-pro-card{
   background:#fff;
-  border:1px solid rgba(15,79,76,.12);
-  border-top:8px solid #0b4d48;
+  border:1px solid rgba(26,92,74,.12);
+  border-top:8px solid #1a5c4a;
   border-radius:28px;
   padding:1.45rem 1.35rem;
-  box-shadow:0 20px 40px rgba(15,79,76,.12);
+  box-shadow:0 20px 40px rgba(26,92,74,.12);
   height:100%;
 }
 
@@ -1536,7 +1536,7 @@ body{
 }
 
 .login-pro-input:focus{
-  border-color:#0f766e;
+  border-color:#2e8b6e;
 }
 
 .login-pro-eye{
@@ -1559,12 +1559,12 @@ body{
 }
 
 .login-pro-remember input{
-  accent-color:#0f766e;
+  accent-color:#2e8b6e;
 }
 
 .login-pro-submit{
-  background:#0b4d48;
-  border-color:#0b4d48;
+  background:#1a5c4a;
+  border-color:#1a5c4a;
   color:#fff;
   border-radius:14px;
   min-height:50px;
@@ -1584,13 +1584,13 @@ body{
 
 .login-pro-forgot{
   text-decoration:none;
-  color:#0f766e;
+  color:#2e8b6e;
   font-weight:700;
   font-size:.88rem;
 }
 
 .login-pro-register{
-  color:#0f766e;
+  color:#2e8b6e;
   text-decoration:none;
   font-weight:800;
 }
