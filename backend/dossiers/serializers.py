@@ -50,6 +50,8 @@ class DossierBourseSerializer(serializers.ModelSerializer):
             "statut_paiement",
             "workflow_statut",
             "date_soumission",
+            "numero_cni",
+            "telephone",
             "commentaire_admin",
             "montant_bourse",
             "cree_le",

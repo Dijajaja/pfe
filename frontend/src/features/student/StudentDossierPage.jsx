@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { IdCard, Phone, User } from "lucide-react";
 
 import { referentialApi, studentApi } from "../api/webFeaturesApi";
 import { useAppToast } from "../../components/ui/AppToastProvider";
@@ -9,17 +10,46 @@ import { getApiErrorMessage } from "../../lib/apiError";
 const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg"];
 const MAX_SIZE = 5 * 1024 * 1024;
 
+const sectionTitleClass = "fw-bold mb-2";
+const sectionTitleStyle = { color: "var(--sehily-petrole)", fontSize: "1rem" };
+
 function toMb(size) {
   return `${(size / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function InfoField({ icon, label, children }) {
+  return (
+    <div
+      className="d-flex align-items-stretch gap-2 rounded-3 p-2 border w-100"
+      style={{ background: "color-mix(in srgb, var(--sehily-creme) 70%, #fff)", borderColor: "var(--sehily-border)" }}
+    >
+      <div
+        className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle"
+        style={{
+          width: 44,
+          height: 44,
+          background: "color-mix(in srgb, var(--sehily-vert-pro) 22%, #fff)",
+          color: "var(--sehily-vert-pro)",
+        }}
+      >
+        {icon}
+      </div>
+      <div className="flex-grow-1 min-w-0 d-flex flex-column justify-content-center">
+        <div className="text-muted text-uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.04em" }}>
+          {label}
+        </div>
+        <div className="mt-1">{children}</div>
+      </div>
+    </div>
+  );
 }
 
 export function StudentDossierPage() {
   const qc = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
   const [form, setForm] = useState({
-    annee_universitaire: "",
-    statut: "BROUILLON",
-    commentaire: "",
+    numero_cni: "",
+    telephone: "",
   });
   const [typePiece, setTypePiece] = useState("CNI");
   const [files, setFiles] = useState([]);
@@ -36,30 +66,49 @@ export function StudentDossierPage() {
 
   const dossiers = dossiersQuery.data?.results || dossiersQuery.data || [];
   const currentDossier = dossiers[0] || null;
+  const activeAnnees = anneesQuery.data || [];
 
-  const saveMutation = useMutation({
-    mutationFn: async (payload) => {
-      if (currentDossier) {
-        return studentApi.updateDossier(currentDossier.id, payload);
-      }
-      return studentApi.createDossier(payload);
-    },
-    onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["student", "dossiers"] });
-      setFeedback("Dossier enregistré avec succès.");
-      pushSuccess("Dossier enregistré avec succès.");
-    },
-    onError: (err) => {
-      const msg = getApiErrorMessage(err, "Erreur lors de l’enregistrement du dossier.");
-      setFeedback(msg);
-      pushError(msg);
-    },
-  });
+  useEffect(() => {
+    if (!currentDossier) return;
+    setForm((f) => ({
+      ...f,
+      numero_cni: currentDossier.numero_cni ?? "",
+      telephone: currentDossier.telephone ?? "",
+    }));
+  }, [currentDossier?.id]);
 
-  const uploadMutation = useMutation({
+  function resolveAnneeUniversitaire() {
+    const fromDossier = currentDossier?.annee_universitaire;
+    if (fromDossier != null && fromDossier !== "") return Number(fromDossier);
+    if (activeAnnees[0]?.id != null) return Number(activeAnnees[0].id);
+    return null;
+  }
+
+  function buildPayloadSoemis() {
+    const anneeId = resolveAnneeUniversitaire();
+    if (anneeId == null) return null;
+    return {
+      annee_universitaire: anneeId,
+      statut: "SOUMIS",
+      numero_cni: form.numero_cni,
+      telephone: form.telephone,
+    };
+  }
+
+  const soumettreMutation = useMutation({
     mutationFn: async () => {
-      const dossierId = currentDossier?.id;
-      if (!dossierId) throw new Error("Crée d’abord un dossier.");
+      const payload = buildPayloadSoemis();
+      if (!payload) {
+        const err = new Error("ANNEE_MANQUANTE");
+        throw err;
+      }
+      let dossier;
+      if (currentDossier) {
+        dossier = await studentApi.updateDossier(currentDossier.id, payload);
+      } else {
+        dossier = await studentApi.createDossier(payload);
+      }
+      const dossierId = dossier.id;
       for (const fichier of files) {
         await studentApi.uploadDocument({
           dossier: dossierId,
@@ -67,15 +116,22 @@ export function StudentDossierPage() {
           fichier,
         });
       }
-      return true;
+      return dossierId;
     },
-    onSuccess: () => {
-      setFeedback("Documents envoyés avec succès.");
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["student", "dossiers"] });
       setFiles([]);
-      pushSuccess("Documents envoyés.");
+      setFeedback("Dossier soumis avec succès.");
+      pushSuccess("Dossier soumis avec succès.");
     },
-    onError: (e) => {
-      const msg = getApiErrorMessage(e, "Erreur upload documents.");
+    onError: (err) => {
+      if (err?.message === "ANNEE_MANQUANTE") {
+        const msg = "Aucune année universitaire active. Réessayez plus tard ou contactez l’administration.";
+        setFeedback(msg);
+        pushInfo(msg);
+        return;
+      }
+      const msg = getApiErrorMessage(err, "Erreur lors de la soumission du dossier.");
       setFeedback(msg);
       pushError(msg);
     },
@@ -107,21 +163,6 @@ export function StudentDossierPage() {
     onFileInput(e.dataTransfer.files);
   }
 
-  function onSubmit(e) {
-    e.preventDefault();
-    setFeedback("");
-    saveMutation.mutate({
-      annee_universitaire: Number(selectedAnnee),
-      statut: form.statut,
-      commentaire_admin: form.commentaire,
-    });
-  }
-
-  const totalSize = useMemo(() => files.reduce((s, f) => s + f.size, 0), [files]);
-
-  const activeAnnees = anneesQuery.data || [];
-  const selectedAnnee = form.annee_universitaire || currentDossier?.annee_universitaire || "";
-
   if (anneesQuery.isLoading || dossiersQuery.isLoading) {
     return <LoadingSkeleton lines={8} />;
   }
@@ -129,110 +170,126 @@ export function StudentDossierPage() {
   return (
     <div className="row g-4">
       <div className="col-12">
-        <h1 className="h4 mb-1">Dossier étudiant</h1>
-        <div className="text-muted">Création/édition + dépôt documents avec validation formats.</div>
-      </div>
+        <p
+          className="mb-3 small"
+          style={{ color: "color-mix(in srgb, var(--sehily-vert-pro) 75%, var(--sehily-text))" }}
+        >
+          Renseignez vos informations et déposez les pièces (formats validés — image ou PDF pour la CNI).
+        </p>
 
-      <div className="col-12 col-lg-7">
-        <form className="sehily-surface p-3 d-grid gap-3" onSubmit={onSubmit}>
-          <div>
-            <label className="form-label">Année universitaire</label>
-            <select
-              className="form-select"
-              value={selectedAnnee}
-              onChange={(e) => setForm((f) => ({ ...f, annee_universitaire: e.target.value }))}
-              required
-            >
-              <option value="">-- choisir --</option>
-              {activeAnnees.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.libelle}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="form-label">Statut étudiant</label>
-            <select
-              className="form-select"
-              value={form.statut}
-              onChange={(e) => setForm((f) => ({ ...f, statut: e.target.value }))}
-              required
-            >
-              <option value="BROUILLON">BROUILLON</option>
-              <option value="SOUMIS">SOUMIS</option>
-            </select>
-          </div>
-          <div>
-            <label className="form-label">Commentaire</label>
-            <textarea
-              className="form-control"
-              rows={3}
-              value={form.commentaire}
-              onChange={(e) => setForm((f) => ({ ...f, commentaire: e.target.value }))}
-            />
-          </div>
-          <div className="d-flex gap-2">
-            <button className="btn sehily-btn-primary" type="submit" disabled={saveMutation.isPending}>
-              Sauvegarder
-            </button>
-            <button
-              className="btn sehily-btn-accent"
-              type="button"
-              disabled={saveMutation.isPending}
-              onClick={() =>
-                saveMutation.mutate({
-                  annee_universitaire: Number(selectedAnnee),
-                  statut: "SOUMIS",
-                  commentaire_admin: form.commentaire,
-                })
-              }
-            >
-              Soumettre dossier
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="col-12 col-lg-5">
-        <div className="sehily-surface p-3">
-          <div className="fw-bold mb-2">Documents</div>
+        {/* Barre titre au-dessus du cadre blanc du formulaire */}
+        <div
+          className="d-flex align-items-center gap-3 py-3 px-3 px-md-4 w-100"
+          style={{
+            background: "var(--sehily-vert-pro)",
+            color: "#fff",
+            borderTopLeftRadius: "0.75rem",
+            borderTopRightRadius: "0.75rem",
+          }}
+        >
           <div
-            className="border rounded-3 p-3 mb-3"
-            onDrop={onDrop}
-            onDragOver={(e) => e.preventDefault()}
-            style={{ borderStyle: "dashed", background: "var(--sehily-creme)" }}
+            className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle"
+            style={{
+              width: 40,
+              height: 40,
+              background: "rgba(255, 255, 255, 0.2)",
+              color: "#fff",
+            }}
+            aria-hidden
           >
-            <div className="small mb-2">Glisse-dépose ici (PDF/JPG/PNG, max 5 MB)</div>
-            <select className="form-select form-select-sm mb-2" value={typePiece} onChange={(e) => setTypePiece(e.target.value)}>
-              <option value="CNI">CNI</option>
-              <option value="BAC">Baccalauréat</option>
-              <option value="INSCRIPTION">Attestation d’inscription</option>
-              <option value="RELEVE">Relevé</option>
-            </select>
-            <input className="form-control" type="file" multiple onChange={(e) => onFileInput(e.target.files)} />
+            <User size={22} strokeWidth={2} />
           </div>
-
-          <div className="small text-muted mb-2">
-            {files.length} fichier(s) — taille totale: {toMb(totalSize)}
-          </div>
-          <ul className="list-group">
-            {files.map((f, idx) => (
-              <li key={`${f.name}-${idx}`} className="list-group-item d-flex justify-content-between">
-                <span>{f.name}</span>
-                <span className="text-muted small">{toMb(f.size)}</span>
-              </li>
-            ))}
-          </ul>
-          <button
-            className="btn sehily-btn-primary mt-3"
-            disabled={!files.length || uploadMutation.isPending}
-            onClick={() => uploadMutation.mutate()}
-          >
-            Envoyer les documents
-          </button>
+          <h1 className="h5 mb-0 fw-semibold text-white">Dossier étudiant</h1>
         </div>
-      </div>
+
+        <div
+          className="sehily-surface w-100 border-0 p-3 p-md-4"
+          style={{
+            borderBottomLeftRadius: "0.75rem",
+            borderBottomRightRadius: "0.75rem",
+            boxShadow: "0 8px 32px rgba(15, 79, 76, 0.12), 0 2px 8px rgba(15, 79, 76, 0.06)",
+          }}
+        >
+            <div className="row g-3 g-lg-4 align-items-stretch">
+              <div className="col-12 col-md-6 d-flex flex-column gap-3">
+                <InfoField
+                  label="CNI"
+                  icon={<IdCard size={20} strokeWidth={2} aria-hidden />}
+                >
+                  <input
+                    className="form-control form-control-sm"
+                    value={form.numero_cni}
+                    onChange={(e) => setForm((f) => ({ ...f, numero_cni: e.target.value }))}
+                    placeholder="Numéro de la carte d’identité"
+                    autoComplete="off"
+                  />
+                </InfoField>
+                <InfoField
+                  label="Numéro de téléphone"
+                  icon={<Phone size={20} strokeWidth={2} aria-hidden />}
+                >
+                  <input
+                    className="form-control form-control-sm"
+                    type="tel"
+                    value={form.telephone}
+                    onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))}
+                    placeholder="Ex. 45 XX XX XX"
+                    autoComplete="tel"
+                  />
+                </InfoField>
+              </div>
+
+              <div className="col-12 col-md-6 d-flex flex-column">
+                <div className={sectionTitleClass} style={sectionTitleStyle}>
+                  Type de document
+                </div>
+                <select
+                  className="form-select mb-3"
+                  value={typePiece}
+                  onChange={(e) => setTypePiece(e.target.value)}
+                >
+                  <option value="CNI">CNI (carte d’identité / scan)</option>
+                  <option value="BAC">Baccalauréat</option>
+                  <option value="INSCRIPTION">Attestation d’inscription</option>
+                  <option value="RELEVE">Relevé</option>
+                </select>
+
+                <div className={sectionTitleClass} style={sectionTitleStyle}>
+                  Documents
+                </div>
+                <div
+                  className="border rounded-3 p-3 d-flex flex-column flex-grow-1"
+                  onDrop={onDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                  style={{ borderStyle: "dashed", background: "var(--sehily-creme)", minHeight: 160 }}
+                >
+                  <div className="small text-muted mb-2">Glissez-déposez ici (PDF / JPG / PNG, max 5 MB)</div>
+                  <input
+                    className="form-control mt-auto"
+                    type="file"
+                    accept="application/pdf,image/png,image/jpeg"
+                    multiple
+                    onChange={(e) => onFileInput(e.target.files)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="d-flex justify-content-end pt-3 mt-1">
+              <button
+                className="btn sehily-btn-accent"
+                type="button"
+                disabled={soumettreMutation.isPending}
+                onClick={() => {
+                  setFeedback("");
+                  soumettreMutation.mutate();
+                }}
+              >
+                Soumettre dossier
+              </button>
+            </div>
+          </div>
+        </div>
 
       {feedback ? (
         <div className="col-12">
@@ -242,4 +299,3 @@ export function StudentDossierPage() {
     </div>
   );
 }
-

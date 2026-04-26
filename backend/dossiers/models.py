@@ -51,6 +51,8 @@ class DossierBourse(models.Model):
         default=StatutDossier.BROUILLON,
     )
     date_soumission = models.DateTimeField(null=True, blank=True)
+    numero_cni = models.CharField("numéro CNI", max_length=64, blank=True)
+    telephone = models.CharField("téléphone", max_length=32, blank=True)
     commentaire_admin = models.TextField(blank=True)
     montant_bourse = models.DecimalField(
         max_digits=12,
