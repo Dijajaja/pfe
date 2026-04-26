@@ -1,3 +1,6 @@
+import { api } from "./api";
+import { endpoints } from "./endpoints";
+
 const NOUAKCHOTT = "nouakchott";
 
 function normalizeWilaya(wilaya) {
@@ -54,4 +57,14 @@ export function evaluerEligibilite({ dateNaissance, wilayaBac, niveau }) {
     code: "NOUAKCHOTT_PAS_L3",
     i18nKey: "eligMsgNkcPasL3",
   };
+}
+
+export async function evaluerEligibiliteBackend({ nni, dateNaissance, wilayaBac, niveau }) {
+  const r = await api.post(endpoints.public.eligibilite, {
+    nni,
+    date_naissance: dateNaissance,
+    wilaya_bac: wilayaBac,
+    niveau,
+  });
+  return r.data;
 }

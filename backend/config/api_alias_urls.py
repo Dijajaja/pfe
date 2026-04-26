@@ -14,6 +14,7 @@ from dossiers.views import (
     DocumentViewSet,
     DossierBourseViewSet,
     EtudiantEligibiliteView,
+    PublicEligibiliteView,
     ReclamationViewSet,
 )
 from payments.views import (
@@ -42,6 +43,7 @@ urlpatterns = [
     path("auth/me/", MoiView.as_view(), name="alias-auth-me"),
     # Étudiant alias
     path("etudiant/eligibilite/", EtudiantEligibiliteView.as_view(), name="alias-etudiant-eligibilite"),
+    path("public/eligibilite/", PublicEligibiliteView.as_view(), name="alias-public-eligibilite"),
     path("etudiant/paiements/", etudiant_paiements_list, name="alias-etudiant-paiements"),
     path("etudiant/reclamations/", reclamation_list, name="alias-etudiant-reclamations"),
     path("demande/", demande_list_create, name="alias-demande-list-create"),

@@ -59,3 +59,20 @@ class RbacAliasEndpointsTests(TestCase):
         self.client.force_authenticate(self.admin)
         response = self.client.get("/api/etudiant/eligibilite/")
         self.assertEqual(response.status_code, 403)
+
+    def test_public_eligibilite_endpoint_returns_result(self):
+        response = self.client.post(
+            "/api/public/eligibilite/",
+            {
+                "nni": "1234567890",
+                "date_naissance": "2005-01-10",
+                "wilaya_bac": "Nouakchott",
+                "niveau": "L2",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("ok", response.data)
+        self.assertIn("i18nKey", response.data)
+        self.assertEqual(response.data["ok"], False)
+        self.assertEqual(response.data["i18nKey"], "eligMsgNkcPasL3")

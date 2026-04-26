@@ -15,6 +15,9 @@ export const endpoints = {
   referentials: {
     anneesUniversitaires: "/api/referentiels/annees-universitaires/",
   },
+  public: {
+    eligibilite: "/api/public/eligibilite/",
+  },
   etudiant: {
     eligibilite: "/api/etudiant/eligibilite/",
     paiements: "/api/etudiant/paiements/",

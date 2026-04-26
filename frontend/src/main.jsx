@@ -7,6 +7,7 @@ import { RouterProvider } from "react-router-dom";
 import { AppToastProvider } from "./components/ui/AppToastProvider";
 
 import "./styles/theme.css";
+import "./index.css";
 import { router } from "./routes/router";
 import "./i18n/setup";
 

@@ -1,0 +1,149 @@
+import { Link } from "react-router-dom";
+import { FiArrowRight, FiCheckCircle, FiShield, FiZap, FiLock, FiBell } from "react-icons/fi";
+import { motion as Motion } from "motion/react";
+
+export function HeroSection() {
+  return (
+    <section className="relative pt-32 pb-20 overflow-hidden" id="home">
+      <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -z-10" />
+      <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl -z-10" />
+
+      <div className="container-custom">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <Motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-primary/20">
+              <FiShield size={14} />
+              Nouveau: Suivi de dossier en temps réel
+            </span>
+
+            <h1 className="text-5xl md:text-7xl font-display font-extrabold text-slate-900 leading-[1.1] mb-6">
+              Votre bourse, <br />
+              <span className="text-primary italic">notre engagement</span>
+            </h1>
+
+            <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
+              Une plateforme digitale moderne pour simplifier vos démarches et vous accompagner à chaque étape du succès universitaire.
+            </p>
+
+            <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_14px_35px_-20px_rgba(2,8,23,0.35)] mb-8 max-w-md">
+              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
+                <FiCheckCircle size={24} />
+              </div>
+              <div>
+                <p className="font-bold text-slate-900">Vérifiez votre éligibilité</p>
+                <p className="text-sm text-slate-500">C&apos;est rapide, sans engagement et sécurisé.</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mb-10">
+              <Link to="/eligibilite" className="button-primary group px-8 no-underline">
+                Vérifier mon éligibilité
+                <div className="group-hover:translate-x-1 transition-transform">
+                  <FiArrowRight size={18} />
+                </div>
+              </Link>
+              <Link to="/auth/login" className="button-secondary px-8 no-underline">
+                Se connecter
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {[
+                { icon: FiZap, title: "Gain de temps", sub: "Moins de déplacements" },
+                { icon: FiLock, title: "Sécurisé", sub: "Données protégées" },
+                { icon: FiBell, title: "Notifications", sub: "Suivi en temps réel" },
+              ].map((item, idx) => (
+                <div key={idx} className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2 text-primary">
+                    <item.icon size={16} />
+                    <span className="font-bold text-slate-900 text-sm whitespace-nowrap">{item.title}</span>
+                  </div>
+                  <span className="text-xs text-slate-500">{item.sub}</span>
+                </div>
+              ))}
+            </div>
+          </Motion.div>
+
+          <Motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="relative"
+          >
+            <div className="relative mx-auto w-full max-w-[360px] aspect-[9/16] bg-slate-950 rounded-[3rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden shadow-primary/20 ring-1 ring-primary/10">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-800 rounded-b-2xl z-10" />
+              <div className="h-full bg-slate-50 p-6 pt-12 flex flex-col gap-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-xs text-slate-400">Bonjour,</p>
+                    <p className="font-bold text-slate-900">Diary Ba</p>
+                  </div>
+                  <div className="w-8 h-8 bg-slate-200 rounded-full" />
+                </div>
+
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Statut du dossier</p>
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-slate-900">Éligible</p>
+                    <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[10px] font-bold">ACTIF</span>
+                  </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-3">Progression</p>
+                  <div className="flex justify-between gap-1">
+                    {[1, 2, 3, 4].map((s) => (
+                      <div key={s} className={`h-1.5 rounded-full flex-1 ${s <= 2 ? "bg-primary" : "bg-slate-100"}`} />
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-primary font-bold mt-2 text-right">Traitement: 50%</p>
+                </div>
+
+                <div className="mt-auto">
+                  <div className="h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs mb-2">
+                    Dépôt du dossier
+                  </div>
+                  <div className="h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs">
+                    Suivre mes paiements
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 3 }}
+              className="absolute -top-10 -left-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3"
+            >
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                <FiZap size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Vitesse</p>
+                <p className="text-[10px] text-slate-400">Traitement en 48h</p>
+              </div>
+            </Motion.div>
+
+            <Motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 4, delay: 0.5 }}
+              className="absolute top-1/2 -right-10 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-3"
+            >
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                <FiShield size={18} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Confiance</p>
+                <p className="text-[10px] text-slate-400">Paiement garanti</p>
+              </div>
+            </Motion.div>
+          </Motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
