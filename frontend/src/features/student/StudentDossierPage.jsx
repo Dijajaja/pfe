@@ -86,9 +86,8 @@ export function StudentDossierPage() {
 
   function buildPayloadSoemis() {
     const anneeId = resolveAnneeUniversitaire();
-    if (anneeId == null) return null;
     return {
-      annee_universitaire: anneeId,
+      ...(anneeId != null ? { annee_universitaire: anneeId } : {}),
       statut: "SOUMIS",
       numero_cni: form.numero_cni,
       telephone: form.telephone,
@@ -98,10 +97,6 @@ export function StudentDossierPage() {
   const soumettreMutation = useMutation({
     mutationFn: async () => {
       const payload = buildPayloadSoemis();
-      if (!payload) {
-        const err = new Error("ANNEE_MANQUANTE");
-        throw err;
-      }
       let dossier;
       if (currentDossier) {
         dossier = await studentApi.updateDossier(currentDossier.id, payload);
@@ -125,12 +120,6 @@ export function StudentDossierPage() {
       pushSuccess("Dossier soumis avec succès.");
     },
     onError: (err) => {
-      if (err?.message === "ANNEE_MANQUANTE") {
-        const msg = "Aucune année universitaire active. Réessayez plus tard ou contactez l’administration.";
-        setFeedback(msg);
-        pushInfo(msg);
-        return;
-      }
       const msg = getApiErrorMessage(err, "Erreur lors de la soumission du dossier.");
       setFeedback(msg);
       pushError(msg);

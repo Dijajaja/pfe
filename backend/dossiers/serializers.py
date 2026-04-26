@@ -1,3 +1,6 @@
+from datetime import date
+
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -37,6 +40,8 @@ class DossierBourseSerializer(serializers.ModelSerializer):
     workflow_statut = serializers.SerializerMethodField()
     annee_universitaire = serializers.PrimaryKeyRelatedField(
         queryset=AnneeUniversitaire.objects.filter(actif=True),
+        required=False,
+        allow_null=True,
     )
 
     class Meta:
@@ -84,17 +89,46 @@ class DossierBourseSerializer(serializers.ModelSerializer):
             return "ENVOYE"
         return obj.statut
 
+    def _get_or_create_default_annee(self):
+        """
+        Fournit une année universitaire active.
+        Si aucune année active n'existe, crée/active automatiquement 2025-2026.
+        """
+        active = AnneeUniversitaire.objects.filter(actif=True).order_by("-date_debut").first()
+        if active:
+            return active
+
+        with transaction.atomic():
+            default_annee, _created = AnneeUniversitaire.objects.get_or_create(
+                libelle="2025-2026",
+                defaults={
+                    "date_debut": date(2025, 9, 1),
+                    "date_fin": date(2026, 6, 30),
+                    "actif": True,
+                    "est_courante": True,
+                },
+            )
+            if not default_annee.actif or not default_annee.est_courante:
+                default_annee.actif = True
+                default_annee.est_courante = True
+                default_annee.save(update_fields=["actif", "est_courante"])
+            return default_annee
+
     def create(self, validated_data):
         request = self.context.get("request")
         user = request.user
         if getattr(user, "role", None) != User.Role.ETUDIANT:
             raise serializers.ValidationError("Seuls les étudiants peuvent créer un dossier.")
+        if not validated_data.get("annee_universitaire"):
+            validated_data["annee_universitaire"] = self._get_or_create_default_annee()
         validated_data["etudiant"] = user
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
         request = self.context.get("request")
         user = request.user
+        if not validated_data.get("annee_universitaire") and not instance.annee_universitaire_id:
+            validated_data["annee_universitaire"] = self._get_or_create_default_annee()
         new_statut = validated_data.get("statut", instance.statut)
         if user.role == User.Role.ETUDIANT:
             allowed = {StatutDossier.BROUILLON, StatutDossier.SOUMIS}
