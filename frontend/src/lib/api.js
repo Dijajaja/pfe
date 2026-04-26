@@ -23,6 +23,21 @@ const refreshClient = axios.create({
   timeout: 20000,
 });
 
+function normalizePath(url) {
+  if (!url) return "";
+  const absolute = String(url).startsWith("http");
+  const raw = absolute ? new URL(String(url)).pathname : String(url);
+  return raw.replace(/\/+$/, "");
+}
+
+function isAuthEndpoint(url) {
+  const path = normalizePath(url);
+  const loginPath = normalizePath(endpoints.auth.login);
+  const registerPath = normalizePath(endpoints.auth.register);
+  const refreshPath = normalizePath(endpoints.auth.refresh);
+  return path === loginPath || path === registerPath || path === refreshPath;
+}
+
 function getTokens() {
   const raw = localStorage.getItem("sehily_tokens");
   if (!raw) return null;
@@ -102,6 +117,9 @@ export async function ensureValidAccessToken() {
 }
 
 api.interceptors.request.use((config) => {
+  if (isAuthEndpoint(config.url)) {
+    return config;
+  }
   const tokens = getTokens();
   if (tokens?.access) {
     config.headers.Authorization = `Bearer ${tokens.access}`;
@@ -115,7 +133,7 @@ api.interceptors.response.use(
     const status = error?.response?.status;
     const original = error?.config;
 
-    if (status !== 401 || !original || original.__isRetryRequest) {
+    if (status !== 401 || !original || original.__isRetryRequest || isAuthEndpoint(original.url)) {
       throw error;
     }
 
