@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
-import { AlertCircle, CheckCircle2, Clock3, FileText, ShieldCheck } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock3, FileText, ShieldCheck, Banknote } from "lucide-react";
 
 import { evaluerEligibiliteBackend } from "../lib/eligibilite";
 
@@ -254,22 +254,76 @@ export function EligibilitePage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mt-3 p-3 sehily-surface"
+          className="mt-3"
         >
           {result.ok ? (
             <div>
-              <div className="fw-bold text-success mb-2 d-flex align-items-center gap-2">
-                <CheckCircle2 size={17} /> {t("eligibleYes")}
+              <h2 className="h5 fw-bold text-center text-dark mb-3">{t("servicesAccordes")}</h2>
+              <div className="position-relative mx-auto" style={{ maxWidth: 420 }}>
+                <div
+                  className="position-absolute top-0 start-0 w-100 h-100 overflow-visible"
+                  style={{ zIndex: 0, pointerEvents: "none" }}
+                  aria-hidden
+                >
+                  <span className="position-absolute rounded-1" style={{ width: 6, height: 6, top: "8%", left: "3%", background: "#7ec8e3", opacity: 0.6 }} />
+                  <span className="position-absolute rounded-1" style={{ width: 5, height: 5, top: "18%", right: "6%", background: "#e8d35c", opacity: 0.65 }} />
+                  <span className="position-absolute rounded-1" style={{ width: 4, height: 8, top: "5%", right: "18%", background: "#e07a63", opacity: 0.5, transform: "rotate(12deg)" }} />
+                  <span className="position-absolute rounded-circle" style={{ width: 4, height: 4, bottom: "12%", left: "8%", background: "var(--sehily-vert-pro)", opacity: 0.45 }} />
+                  <span className="position-absolute rounded-1" style={{ width: 6, height: 4, bottom: "20%", right: "10%", background: "#7ec8e3", opacity: 0.55 }} />
+                </div>
+                <div
+                  className="position-relative text-center p-4 p-md-5 rounded-4 bg-white"
+                  style={{
+                    zIndex: 1,
+                    border: "2px solid var(--sehily-vert-pro)",
+                    boxShadow: "0 4px 24px rgba(15, 79, 76, 0.08)",
+                  }}
+                >
+                  <div
+                    className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle"
+                    style={{
+                      width: 72,
+                      height: 72,
+                      background: "color-mix(in srgb, var(--sehily-creme) 40%, #e8e8e8)",
+                    }}
+                  >
+                    <Banknote size={36} strokeWidth={1.5} style={{ color: "var(--sehily-vert-pro)" }} aria-hidden />
+                  </div>
+                  <p
+                    className="text-uppercase fw-bold mb-3"
+                    style={{ color: "var(--sehily-text)", letterSpacing: "0.04em", fontSize: "0.95rem" }}
+                  >
+                    {t("eligibleScholarshipTitle")}
+                  </p>
+                  {result.i18nKey ? (
+                    <p className="small text-muted mb-3 mb-md-4">{t(result.i18nKey, result.i18nParams || {})}</p>
+                  ) : null}
+                  <div
+                    className="d-inline-flex align-items-center gap-2 rounded-pill px-3 py-2 border small fw-semibold"
+                    style={{
+                      color: "var(--sehily-vert-pro)",
+                      background: "color-mix(in srgb, var(--sehily-vert-pro) 8%, #fff)",
+                      border: "1px solid color-mix(in srgb, var(--sehily-vert-pro) 45%, #c8d9d5)",
+                    }}
+                  >
+                    <span
+                      className="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                      style={{ width: 20, height: 20, background: "var(--sehily-vert-pro)", color: "#fff" }}
+                    >
+                      <CheckCircle2 size={12} strokeWidth={3} />
+                    </span>
+                    {t("serviceAccorde")}
+                  </div>
+                  <div className="mt-4">
+                    <Link className="btn sehily-btn-primary px-4" to="/auth/register?from=eligibilite">
+                      {t("continueRegister")}
+                    </Link>
+                  </div>
+                </div>
               </div>
-              <div className="text-muted mb-3">
-                {t(result.i18nKey, result.i18nParams || {})}
-              </div>
-              <Link className="btn sehily-btn-primary" to="/auth/register?from=eligibilite">
-                {t("continueRegister")}
-              </Link>
             </div>
           ) : (
-            <div>
+            <div className="p-3 sehily-surface">
               <div className="fw-bold text-danger mb-2 d-flex align-items-center gap-2">
                 <AlertCircle size={17} /> {t("eligibleNo")}
               </div>
