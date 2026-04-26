@@ -1381,3 +1381,239 @@ body{
     transition:none!important;
   }
 }
+
+/* Login page - polished pro */
+.login-pro-page{
+  max-width:1260px;
+  margin:0 auto;
+  padding:.35rem .1rem 1rem;
+}
+
+.login-pro-shell{
+  position:relative;
+}
+
+.login-pro-shell::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 8% 20%, rgba(15,118,110,.12), transparent 32%),
+    radial-gradient(circle at 90% 88%, rgba(16,185,129,.10), transparent 34%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.login-pro-shell > .row{
+  position:relative;
+  z-index:1;
+}
+
+.login-pro-marketing{
+  border-radius:24px;
+  padding:1rem .6rem 1rem .1rem;
+}
+
+.login-pro-marketing-card{
+  background:rgba(255,255,255,.65);
+  border:1px solid rgba(15,79,76,.1);
+  box-shadow:0 16px 36px rgba(15,79,76,.08);
+  backdrop-filter:blur(2px);
+}
+
+.login-pro-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:.4rem;
+  border:1px solid rgba(15,118,110,.2);
+  background:rgba(15,118,110,.08);
+  color:#0f766e;
+  border-radius:999px;
+  padding:.35rem .7rem;
+  font-size:.78rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+}
+
+.login-pro-title{
+  font-size:clamp(2rem, 4.3vw, 3.6rem);
+  line-height:1.03;
+  color:#0b203b;
+  font-weight:900;
+  letter-spacing:-.03em;
+  max-width:620px;
+  margin-bottom:1.2rem;
+}
+
+.login-pro-title span{
+  color:#0f766e;
+  text-decoration:underline;
+  text-decoration-thickness:.22em;
+  text-underline-offset:.1em;
+  text-decoration-color:rgba(16,185,129,.28);
+}
+
+.login-pro-lead{
+  color:#475569;
+  max-width:520px;
+  font-size:1.02rem;
+  line-height:1.5;
+  margin-bottom:1.2rem;
+}
+
+.login-pro-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  gap:.7rem;
+}
+
+.login-pro-list li{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  font-weight:700;
+  color:#0b203b;
+}
+
+.login-pro-list svg{
+  color:#10b981;
+}
+
+.login-pro-metrics{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.55rem;
+}
+
+.login-pro-metrics span{
+  border:1px solid rgba(15,79,76,.12);
+  background:#fff;
+  border-radius:999px;
+  padding:.32rem .62rem;
+  font-size:.74rem;
+  font-weight:700;
+  color:#0f766e;
+}
+
+.login-pro-card{
+  background:#fff;
+  border:1px solid rgba(15,79,76,.12);
+  border-top:8px solid #0b4d48;
+  border-radius:28px;
+  padding:1.45rem 1.35rem;
+  box-shadow:0 20px 40px rgba(15,79,76,.12);
+  height:100%;
+}
+
+.login-pro-card-title{
+  font-weight:900;
+  color:#0b203b;
+  margin-bottom:.2rem;
+}
+
+.login-pro-input-wrap{
+  position:relative;
+}
+
+.login-pro-input-icon{
+  position:absolute;
+  left:.85rem;
+  top:50%;
+  transform:translateY(-50%);
+  color:#94a3b8;
+}
+
+.login-pro-input{
+  border-radius:14px;
+  border:1px solid #e7edf2;
+  min-height:48px;
+  padding-left:2.55rem;
+  padding-right:2.4rem;
+  box-shadow:none!important;
+}
+
+.login-pro-input:focus{
+  border-color:#0f766e;
+}
+
+.login-pro-eye{
+  position:absolute;
+  right:.55rem;
+  top:50%;
+  transform:translateY(-50%);
+  border:none;
+  background:transparent;
+  color:#94a3b8;
+}
+
+.login-pro-remember{
+  display:inline-flex;
+  align-items:center;
+  gap:.45rem;
+  font-size:.86rem;
+  color:#475569;
+  font-weight:600;
+}
+
+.login-pro-remember input{
+  accent-color:#0f766e;
+}
+
+.login-pro-submit{
+  background:#0b4d48;
+  border-color:#0b4d48;
+  color:#fff;
+  border-radius:14px;
+  min-height:50px;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.55rem;
+  box-shadow:0 10px 22px rgba(8,58,54,.22);
+}
+
+.login-pro-submit:hover{
+  background:#083f3b;
+  border-color:#083f3b;
+  color:#fff;
+}
+
+.login-pro-forgot{
+  text-decoration:none;
+  color:#0f766e;
+  font-weight:700;
+  font-size:.88rem;
+}
+
+.login-pro-register{
+  color:#0f766e;
+  text-decoration:none;
+  font-weight:800;
+}
+
+@media (max-width: 991.98px){
+  .login-pro-title{
+    font-size:clamp(1.8rem, 7vw, 2.6rem);
+  }
+  .login-pro-card{
+    border-top-width:6px;
+    border-radius:22px;
+  }
+}
+
+.login-pro-ssl{
+  margin-top:1rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.4rem;
+  color:#94a3b8;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:700;
+}
