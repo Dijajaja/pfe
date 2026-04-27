@@ -61,7 +61,7 @@ const resources = {
       registerFiliereHint:
         "Choisissez votre spécialité d'études. La liste change selon l’établissement sélectionné.",
       secureVerification: "Vérification sécurisée",
-      personalInfo: "Informations personnelles",
+      personalInfo: "Informations professionnelles",
       checking: "Vérification...",
       loginTitle: "Connexion",
       grantedServices: "Services accordés",
@@ -328,7 +328,7 @@ const resources = {
       registerFiliereHint:
         "اختر تخصصك الدراسي. تتغير القائمة حسب المؤسسة المختارة.",
       secureVerification: "تحقق آمن",
-      personalInfo: "المعلومات الشخصية",
+      personalInfo: "المعلومات المهنية",
       checking: "جار التحقق...",
       loginTitle: "تسجيل الدخول",
       grantedServices: "الخدمات الممنوحة",

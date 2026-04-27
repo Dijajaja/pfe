@@ -6,7 +6,6 @@ import {
   AlertCircle,
   ArrowRight,
   Banknote,
-  Calendar,
   CheckCircle2,
   Clock3,
   FileText,
@@ -131,7 +130,7 @@ export function EligibilitePage() {
             onSubmit={onSubmit}
             className="eligibility-pro-card p-4 p-md-5 rounded-5"
           >
-            <h2 className="h4 fw-bold mb-4 text-center">{t("personalInfo")}</h2>
+            <h2 className="h4 fw-bold mb-4 text-start eligibility-form-title">{t("personalInfo")}</h2>
 
             <div className="row g-4">
               <div className="col-12 col-md-6">
@@ -148,16 +147,13 @@ export function EligibilitePage() {
 
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">{t("fieldBirthdate")}</label>
-                <div className="position-relative">
-                  <input
-                    type="date"
-                    className="form-control pe-5"
-                    value={dateNaissance}
-                    onChange={(e) => setDateNaissance(e.target.value)}
-                    required
-                  />
-                  <Calendar size={18} className="position-absolute top-50 end-0 translate-middle-y me-3 text-muted" />
-                </div>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={dateNaissance}
+                  onChange={(e) => setDateNaissance(e.target.value)}
+                  required
+                />
                 {age !== null && <div className="small eligibility-pro-success mt-2 fw-semibold">{t("computedAge", { age })}</div>}
               </div>
 
