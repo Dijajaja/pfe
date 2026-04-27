@@ -4,33 +4,33 @@ import { motion as Motion } from "motion/react";
 
 export function HeroSection() {
   return (
-    <section className="relative pt-32 pb-20 overflow-hidden" id="home">
+    <section className="relative pt-36 pb-20 overflow-hidden" id="home">
       <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-[400px] h-[400px] bg-accent/5 rounded-full blur-3xl -z-10" />
 
       <div className="container-custom">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center rounded-[28px] px-6 py-8 md:px-10 md:py-10 shadow-[0_20px_50px_-25px_rgba(7,42,40,0.55)]" style={{ backgroundColor: "#1B4D4A" }}>
           <Motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <span className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-primary/20">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border" style={{ backgroundColor: "rgba(255,255,255,0.14)", color: "#FFFFFF", borderColor: "rgba(255,255,255,0.24)" }}>
               <FiShield size={14} />
               Nouveau: Suivi de dossier en temps réel
             </span>
 
-            <h1 className="text-5xl md:text-7xl font-display font-extrabold text-slate-900 leading-[1.1] mb-6">
+            <h1 className="text-5xl md:text-7xl font-display font-extrabold text-white leading-[1.1] mb-6">
               Votre bourse, <br />
-              <span className="text-primary italic">notre engagement</span>
+              <span style={{ color: "#9FE1CB" }} className="italic">notre engagement</span>
             </h1>
 
-            <p className="text-xl text-slate-600 leading-relaxed max-w-xl mb-8">
+            <p className="text-xl leading-relaxed max-w-xl mb-8" style={{ color: "rgba(255,255,255,0.82)" }}>
               Une plateforme digitale moderne pour simplifier vos démarches et vous accompagner à chaque étape du succès universitaire.
             </p>
 
-            <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 shadow-[0_14px_35px_-20px_rgba(2,8,23,0.35)] mb-8 max-w-md">
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
+            <div className="flex items-center gap-4 p-4 rounded-2xl border shadow-[0_14px_35px_-20px_rgba(2,8,23,0.35)] mb-8 max-w-md" style={{ backgroundColor: "rgba(255,255,255,0.96)", borderColor: "rgba(255,255,255,0.35)" }}>
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#E8F2EF", color: "#1B4D4A" }}>
                 <FiCheckCircle size={24} />
               </div>
               <div>
@@ -40,13 +40,23 @@ export function HeroSection() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-10">
-              <Link to="/eligibilite" className="button-primary group px-8 no-underline">
+              <Link
+                to="/eligibilite"
+                className="group px-8 no-underline inline-flex items-center justify-center gap-2 text-white font-bold py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                style={{ backgroundColor: "#C9614A" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#b4523d";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#C9614A";
+                }}
+              >
                 Vérifier mon éligibilité
                 <div className="group-hover:translate-x-1 transition-transform">
                   <FiArrowRight size={18} />
                 </div>
               </Link>
-              <Link to="/auth/login" className="button-secondary px-8 no-underline">
+              <Link to="/auth/login" className="px-8 no-underline inline-flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all duration-300" style={{ border: "1px solid #2E7D72", color: "#FFFFFF", backgroundColor: "rgba(255,255,255,0.04)" }}>
                 Se connecter
               </Link>
             </div>
@@ -57,12 +67,12 @@ export function HeroSection() {
                 { icon: FiLock, title: "Sécurisé", sub: "Données protégées" },
                 { icon: FiBell, title: "Notifications", sub: "Suivi en temps réel" },
               ].map((item, idx) => (
-                <div key={idx} className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2 text-primary">
+                <div key={idx} className="flex flex-col gap-1 rounded-xl border px-3 py-2" style={{ borderColor: "rgba(255,255,255,0.16)", backgroundColor: "rgba(255,255,255,0.04)" }}>
+                  <div className="flex items-center gap-2" style={{ color: "#9FE1CB" }}>
                     <item.icon size={16} />
-                    <span className="font-bold text-slate-900 text-sm whitespace-nowrap">{item.title}</span>
+                    <span className="font-bold text-white text-sm whitespace-nowrap">{item.title}</span>
                   </div>
-                  <span className="text-xs text-slate-500">{item.sub}</span>
+                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.75)" }}>{item.sub}</span>
                 </div>
               ))}
             </div>

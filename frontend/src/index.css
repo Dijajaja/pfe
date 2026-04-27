@@ -5,10 +5,10 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
 
-  --color-primary: #1a5c4a;
-  --color-primary-hover: #14493b;
-  --color-accent: #e8694a;
-  --color-accent-soft: #f5f0e8;
+  --color-primary: #1B4D4A;
+  --color-primary-hover: #143C39;
+  --color-accent: #C9614A;
+  --color-accent-soft: #FAF7F2;
   --color-slate-900: #0F172A;
   --color-slate-800: #1E293B;
   --color-slate-600: #475569;
@@ -19,7 +19,8 @@
 
 @layer base {
   body {
-    @apply font-sans antialiased bg-slate-50 text-slate-800;
+    @apply font-sans antialiased text-slate-800;
+    background:#FAF7F2;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -36,7 +37,8 @@
 }
 
 .button-secondary {
-  @apply bg-white border border-slate-200 hover:border-primary/30 hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-7 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-[0.98];
+  @apply bg-white hover:bg-slate-50 text-slate-700 font-bold py-3.5 px-7 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 active:scale-[0.98];
+  border:1px solid #2E7D72;
 }
 
 .sehily-surface {
@@ -107,17 +109,17 @@
 }
 
 .public-modern .bg-primary {
-  background-color: #1a5c4a !important;
+  background-color: #1B4D4A !important;
 }
 
 .public-modern .text-primary {
-  color: #1a5c4a !important;
+  color: #1B4D4A !important;
 }
 
 .public-modern .border-primary\/20 {
-  border-color: rgba(26, 92, 74, 0.2) !important;
+  border-color: rgba(27, 77, 74, 0.2) !important;
 }
 
 .public-modern .hover\:bg-primary-hover:hover {
-  background-color: #14493b !important;
+  background-color: #143C39 !important;
 }

@@ -1,14 +1,14 @@
 :root{
-  --sehily-petrole:#1a5c4a;
-  --sehily-vert-pro:#2e8b6e;
-  --sehily-corail:#e8694a;
-  --sehily-creme:#f5f0e8;
-  --sehily-sable:#ede8df;
+  --sehily-petrole:#1B4D4A;
+  --sehily-vert-pro:#2E7D72;
+  --sehily-corail:#C9614A;
+  --sehily-creme:#FAF7F2;
+  --sehily-sable:#e8e0d8;
   --sehily-bg:var(--sehily-creme);
   --sehily-surface:#ffffff;
-  --sehily-border:rgba(26,92,74,.16);
-  --sehily-text:#173b3a;
-  --sehily-text-muted:rgba(23,59,58,.68);
+  --sehily-border:#e8e0d8;
+  --sehily-text:#2F2F2F;
+  --sehily-text-muted:#6d6d6d;
 }
 
 html,body,#root{
@@ -64,19 +64,19 @@ body{
   gap:.35rem;
 }
 .sehily-badge--ok{
-  background:color-mix(in srgb, var(--sehily-vert-pro) 12%, #fff);
-  border:1px solid color-mix(in srgb, var(--sehily-vert-pro) 30%, #fff);
-  color:var(--sehily-vert-pro);
+  background:#E8F2EF;
+  border:1px solid #c7ddd7;
+  color:var(--sehily-petrole);
 }
 .sehily-badge--warn{
-  background:color-mix(in srgb, var(--sehily-sable) 70%, #fff);
-  border:1px solid color-mix(in srgb, var(--sehily-sable) 95%, #c9b9a1);
-  color:#6b5a45;
+  background:#FAEEDA;
+  border:1px solid #efdcb7;
+  color:#633806;
 }
 .sehily-badge--danger{
-  background:color-mix(in srgb, var(--sehily-corail) 15%, #fff);
-  border:1px solid color-mix(in srgb, var(--sehily-corail) 32%, #fff);
-  color:#b44e37;
+  background:#FCEBEB;
+  border:1px solid #efc8c8;
+  color:#501313;
 }
 
 .sehily-link{
@@ -88,6 +88,21 @@ body{
 
 .text-muted{
   color:var(--sehily-text-muted)!important;
+}
+
+.form-label{
+  color:#2F2F2F;
+}
+
+.form-control,
+.form-select{
+  border-color:#e8e0d8;
+}
+
+.form-control:focus,
+.form-select:focus{
+  border-color:#2E7D72;
+  box-shadow:0 0 0 .2rem rgba(46,125,114,.15);
 }
 
 .sehily-rtl{
@@ -385,10 +400,11 @@ body{
 
 .app-shell{
   min-height:100%;
+  background:#F4F6F8;
 }
 
 .app-sidebar{
-  background:linear-gradient(180deg, #1a5c4a 0%, #14493b 100%);
+  background:#2E7D72;
   border:1px solid rgba(255,255,255,.09);
   border-radius:18px;
   box-shadow:0 18px 36px rgba(7,42,40,.34);
@@ -450,7 +466,7 @@ body{
 }
 
 .app-sidebar-nav .nav-link.active{
-  background:rgba(20,121,109,.95)!important;
+  background:#1B4D4A!important;
   border-color:rgba(255,255,255,.2);
   color:#fff!important;
   box-shadow:0 6px 14px rgba(7,42,40,.22);
