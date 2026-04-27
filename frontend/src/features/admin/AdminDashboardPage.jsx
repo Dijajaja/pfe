@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { FiCheckCircle, FiDownload, FiSettings, FiUsers } from "react-icons/fi";
 
 import { adminApi } from "../api/webFeaturesApi";
@@ -10,6 +11,7 @@ import { getApiErrorMessage } from "../../lib/apiError";
 import { DashboardKpiCard } from "../../components/dashboard/DashboardKpiCard";
 import { DashboardLineChart } from "../../components/dashboard/DashboardLineChart";
 import { StatusBadge } from "../../components/dashboard/StatusBadge";
+import { setLanguage } from "../../i18n/setup";
 
 const PAGE_SIZE = 6;
 
@@ -82,6 +84,7 @@ function QuickActionCard({ to, label, icon: Icon, tone = "primary", badge }) {
 }
 
 export function AdminDashboardPage() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -213,40 +216,58 @@ export function AdminDashboardPage() {
       <div className="col-12">
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
           <div>
-            <h1 className="h4 mb-1">Dashboard Admin CNOU</h1>
-            <div className="text-muted">Vue d’ensemble de la gestion des bourses</div>
+            <h1 className="h4 mb-1">{t("adminDashboardTitle")}</h1>
+            <div className="text-muted">{t("adminDashboardSubtitle")}</div>
           </div>
-          <button className="btn btn-sm sehily-btn-secondary">01/04/2024 - 30/04/2024</button>
+          <div className="d-flex align-items-center gap-2">
+            <div className="btn-group" role="group" aria-label="language">
+              <button
+                type="button"
+                className={`btn btn-sm ${i18n.language === "fr" ? "btn-light" : "btn-outline-secondary"}`}
+                onClick={() => setLanguage("fr")}
+              >
+                FR
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${i18n.language === "ar" ? "btn-light" : "btn-outline-secondary"}`}
+                onClick={() => setLanguage("ar")}
+              >
+                AR
+              </button>
+            </div>
+            <button className="btn btn-sm sehily-btn-secondary">{t("dateRangeSample")}</button>
+          </div>
         </div>
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label="Total dossiers" value={dossiers.total || 0} tone="petrole" trend={12.5} variant="admin" />
+        <DashboardKpiCard label={t("kpiTotalDossiers")} value={dossiers.total || 0} tone="petrole" trend={12.5} variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label="Dossiers soumis" value={dossiers.SOUMIS || 0} tone="warning" trend={8.2} variant="admin" />
+        <DashboardKpiCard label={t("kpiSubmittedDossiers")} value={dossiers.SOUMIS || 0} tone="warning" trend={8.2} variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label="Dossiers validés" value={dossiers.VALIDE || 0} tone="success" trend={15.7} variant="admin" />
+        <DashboardKpiCard label={t("kpiValidatedDossiers")} value={dossiers.VALIDE || 0} tone="success" trend={15.7} variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label="Dossiers rejetés" value={dossiers.REJETE || 0} tone="danger" trend={-5.3} variant="admin" />
+        <DashboardKpiCard label={t("kpiRejectedDossiers")} value={dossiers.REJETE || 0} tone="danger" trend={-5.3} variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label="Paiements effectués" value={paiements.EFFECTUE || 0} tone="info" trend={18.3} variant="admin" />
+        <DashboardKpiCard label={t("kpiPaymentsDone")} value={paiements.EFFECTUE || 0} tone="info" trend={18.3} variant="admin" />
       </div>
 
       <div className="col-12 col-xl-8">
         <div className="row g-3">
           <div className="col-12 col-xxl-5">
             <div className="sehily-surface p-3">
-              <div className="fw-bold mb-2">Répartition des dossiers par statut</div>
+              <div className="fw-bold mb-2">{t("adminDossiersByStatus")}</div>
               <div className="row g-3 align-items-center mt-1">
                 <div className="col-12 col-md-6">
                   <div className="cnou-donut mx-auto" style={chartStyle}>
                     <div className="cnou-donut-inner">
                       <div className="text-center">
                         <div className="h5 mb-0">{dossiers.total || 0}</div>
-                        <div className="small text-muted">Total</div>
+                        <div className="small text-muted">{t("total")}</div>
                       </div>
                     </div>
                   </div>
@@ -255,22 +276,22 @@ export function AdminDashboardPage() {
                   <ul className="list-unstyled mb-0 admin-legend-list">
                     <li>
                       <span className="admin-dot admin-dot-success" />
-                      <span>Validés</span>
+                      <span>{t("statusValidated")}</span>
                       <strong>{dossiers.VALIDE || 0}</strong>
                     </li>
                     <li>
                       <span className="admin-dot admin-dot-warning" />
-                      <span>Soumis</span>
+                      <span>{t("statusSubmitted")}</span>
                       <strong>{dossiers.SOUMIS || 0}</strong>
                     </li>
                     <li>
                       <span className="admin-dot admin-dot-danger" />
-                      <span>Rejetés</span>
+                      <span>{t("statusRejected")}</span>
                       <strong>{dossiers.REJETE || 0}</strong>
                     </li>
                     <li>
                       <span className="admin-dot admin-dot-info" />
-                      <span>En traitement</span>
+                      <span>{t("statusProcessing")}</span>
                       <strong>{Math.max(0, dossiers.total - (dossiers.VALIDE || 0) - (dossiers.SOUMIS || 0) - (dossiers.REJETE || 0))}</strong>
                     </li>
                   </ul>
@@ -282,19 +303,19 @@ export function AdminDashboardPage() {
           <div className="col-12 col-xxl-7">
             <div className="sehily-surface p-3 h-100">
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <div className="fw-bold">Évolution des dossiers</div>
+                <div className="fw-bold">{t("adminDossiersTrend")}</div>
                 <div className="small text-muted d-flex gap-3">
                   <span>
                     <span className="admin-dot admin-dot-success me-1" />
-                    Validés
+                    {t("statusValidated")}
                   </span>
                   <span>
                     <span className="admin-dot admin-dot-warning me-1" />
-                    Soumis
+                    {t("statusSubmitted")}
                   </span>
                   <span>
                     <span className="admin-dot admin-dot-danger me-1" />
-                    Rejetés
+                    {t("statusRejected")}
                   </span>
                 </div>
               </div>

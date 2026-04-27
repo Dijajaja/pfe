@@ -12,7 +12,7 @@ export function Navbar() {
   const [activeHash, setActiveHash] = useState(() =>
     typeof window !== "undefined" ? window.location.hash || "#home" : "#home",
   );
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -27,11 +27,11 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { name: "Accueil", href: "/#home" },
-    { name: "Comment ça marche", href: "/#how-it-works" },
-    { name: "À propos", href: "/#about" },
-    { name: "FAQ", href: "/#faq" },
-    { name: "Contact", href: "/#contact" },
+    { name: t("navHome"), href: "/#home" },
+    { name: t("navHowItWorks"), href: "/#how-it-works" },
+    { name: t("navAbout"), href: "/#about" },
+    { name: t("navFaq"), href: "/#faq" },
+    { name: t("navContact"), href: "/#contact" },
   ];
 
   return (
@@ -83,7 +83,7 @@ export function Navbar() {
               </button>
             </div>
             <Link to="/auth/login" className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors no-underline !text-white visited:!text-white hover:!text-[#C9614A]">
-              Connexion
+              {t("navLogin")}
             </Link>
             <Link
               to="/eligibilite"
@@ -96,7 +96,7 @@ export function Navbar() {
                 e.currentTarget.style.backgroundColor = "#C9614A";
               }}
             >
-              Vérifier mon éligibilité <FiArrowRight size={16} />
+              {t("ctaCheck")} <FiArrowRight size={16} />
             </Link>
           </div>
 
@@ -149,9 +149,9 @@ export function Navbar() {
                   AR
                 </button>
               </div>
-              <Link to="/auth/login" className="text-base font-medium !text-white visited:!text-white no-underline">Connexion</Link>
+              <Link to="/auth/login" className="text-base font-medium !text-white visited:!text-white no-underline">{t("navLogin")}</Link>
               <Link to="/eligibilite" className="text-white text-center py-3.5 rounded-xl font-bold no-underline" style={{ backgroundColor: "#C9614A" }}>
-                Vérifier mon éligibilité
+                {t("ctaCheck")}
               </Link>
             </div>
           </motion.div>

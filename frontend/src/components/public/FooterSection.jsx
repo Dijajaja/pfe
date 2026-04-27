@@ -1,6 +1,8 @@
 import logoWeb from "../../assets/logo-web.png";
+import { useTranslation } from "react-i18next";
 
 export function FooterSection() {
+  const { t } = useTranslation();
   const baseLinkColor = "#9FE1CB";
   const hoverLinkColor = "#C9614A";
   const footerLinkStyle = { color: baseLinkColor, transition: "color 220ms ease" };
@@ -23,14 +25,14 @@ export function FooterSection() {
               
             </div>
             <p className="text-sm leading-relaxed mb-6" style={{ color: "#9FE1CB" }}>
-              Plateforme officielle de gestion des bourses universitaires en Mauritanie. Simplifier, sécuriser, accompagner.
+              {t("footerLead")}
             </p>
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="font-bold mb-4 md:mb-6">Liens utiles</h4>
+            <h4 className="font-bold mb-4 md:mb-6">{t("footerUsefulLinks")}</h4>
             <ul className="space-y-3 md:space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
-              {["Accueil", "À propos", "Comment ça marche", "FAQ"].map((item) => (
+              {[t("navHome"), t("navAbout"), t("navHowItWorks"), t("navFaq")].map((item) => (
                 <li key={item}>
                   <a
                     href="#"
@@ -47,9 +49,9 @@ export function FooterSection() {
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="font-bold mb-4 md:mb-6">Support</h4>
+            <h4 className="font-bold mb-4 md:mb-6">{t("footerSupport")}</h4>
             <ul className="space-y-3 md:space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
-              {["Centre d'aide", "Nous contacter", "Mentions légales", "Confidentialité"].map((item) => (
+              {[t("footerHelpCenter"), t("footerContactUs"), t("footerLegal"), t("footerPrivacy")].map((item) => (
                 <li key={item}>
                   <a
                     href="#"
@@ -66,7 +68,7 @@ export function FooterSection() {
           </div>
 
           <div className="text-center md:text-left">
-            <h4 className="font-bold mb-4 md:mb-6">Contact</h4>
+            <h4 className="font-bold mb-4 md:mb-6">{t("navContact")}</h4>
             <ul className="space-y-3 md:space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
               <li className="flex flex-col gap-1">
                 <span className="text-white font-medium">Email</span>
@@ -81,7 +83,7 @@ export function FooterSection() {
                 </a>
               </li>
               <li className="flex flex-col gap-1">
-                <span className="text-white font-medium">Téléphone</span>
+                <span className="text-white font-medium">{t("footerPhone")}</span>
                 <a
                   href="tel:+22245253061"
                   className="no-underline"
@@ -100,8 +102,8 @@ export function FooterSection() {
           className="pt-6 md:pt-10 flex flex-col sm:flex-row justify-between items-center gap-3 md:gap-4 text-[11px] md:text-xs font-medium tracking-wide uppercase text-center sm:text-left"
           style={{ borderTop: "1px solid #1B4D4A", color: "#9FE1CB" }}
         >
-          <p>© 2026 Sehily - Tous droits réservés.</p>
-          <p>Développé pour la réussite de nos étudiants.</p>
+          <p>{t("footerRights")}</p>
+          <p>{t("footerMission")}</p>
         </div>
       </div>
     </footer>
