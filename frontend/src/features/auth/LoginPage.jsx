@@ -80,8 +80,8 @@ export function LoginPage() {
             transition={{ duration: 0.45 }}
             className="login-pro-card"
           >
-            <h2 className="login-pro-card-title">{t("login")}</h2>
-            <p className="text-muted mb-4">{t("loginWelcomeBack")}</p>
+            <h2 className="login-pro-card-title text-center">{t("login")}</h2>
+            <p className="text-muted mb-4 text-center">{t("loginWelcomeBack")}</p>
 
             {error ? <div className="alert alert-danger">{error}</div> : null}
 

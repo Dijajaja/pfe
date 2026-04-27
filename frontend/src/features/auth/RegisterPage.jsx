@@ -98,8 +98,8 @@ export function RegisterPage() {
             transition={{ duration: 0.45 }}
             className="login-pro-card"
           >
-            <h2 className="login-pro-card-title">{t("register")}</h2>
-            <p className="text-muted mb-4">{t("registerLead")}</p>
+            <h2 className="login-pro-card-title text-center">{t("register")}</h2>
+            <p className="text-muted mb-4 text-center">{t("registerLead")}</p>
 
             {error ? <div className="alert alert-danger">{error}</div> : null}
 

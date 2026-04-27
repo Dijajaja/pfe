@@ -131,7 +131,7 @@ export function EligibilitePage() {
             onSubmit={onSubmit}
             className="eligibility-pro-card p-4 p-md-5 rounded-5"
           >
-            <h2 className="h4 fw-bold mb-4">{t("personalInfo")}</h2>
+            <h2 className="h4 fw-bold mb-4 text-center">{t("personalInfo")}</h2>
 
             <div className="row g-4">
               <div className="col-12 col-md-6">
