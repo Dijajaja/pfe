@@ -1,24 +1,54 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FiCheckCircle, FiFlag, FiMapPin, FiSearch, FiShield } from "react-icons/fi";
 
-import { adminUsers as usersSeed } from "../data/mockData";
 import { adminApi } from "../api/webFeaturesApi";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { useAppToast } from "../../components/ui/AppToastProvider";
 import { getApiErrorMessage } from "../../lib/apiError";
 
 const PAGE_SIZE = 8;
+const MAURITANIA_WILAYAS = [
+  "Adrar",
+  "Assaba",
+  "Brakna",
+  "Dakhlet Nouadhibou",
+  "Gorgol",
+  "Guidimakha",
+  "Hodh Ech Chargui",
+  "Hodh El Gharbi",
+  "Inchiri",
+  "Nouakchott-Nord",
+  "Nouakchott-Ouest",
+  "Nouakchott-Sud",
+  "Tagant",
+  "Tiris Zemmour",
+  "Trarza",
+];
 
 export function AdminUsersPage() {
   const qc = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
-  const [users, setUsers] = useState(usersSeed);
-  const [draft, setDraft] = useState({ email: "", role: "ETUDIANT" });
+  const [users, setUsers] = useState([]);
+  const [draft, setDraft] = useState({
+    email: "",
+    first_name: "",
+    last_name: "",
+    matricule: "",
+    etablissement: "",
+    filiere: "",
+    wilaya: "",
+  });
+  const [createdAccount, setCreatedAccount] = useState(null);
   const [importFeedback, setImportFeedback] = useState("");
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("ALL");
+  const [wilayaFilter, setWilayaFilter] = useState("ALL");
+  const [niveauFilter, setNiveauFilter] = useState("ALL");
+  const [eligibilityFilter, setEligibilityFilter] = useState("ALL");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [page, setPage] = useState(1);
+
   const usersQuery = useQuery({
     queryKey: ["admin", "users"],
     queryFn: adminApi.listUsers,
@@ -30,6 +60,19 @@ export function AdminUsersPage() {
       const normalized = data.map((u) => ({
         ...u,
         actif: u.actif ?? u.is_active ?? true,
+        fullName:
+          u.full_name ||
+          [u.first_name, u.last_name].filter(Boolean).join(" ").trim() ||
+          u.email,
+        dateCreation: u.date_creation || null,
+        dossierId: u.dossier_id || null,
+        dossierStatut: u.dossier_statut || null,
+        niveau: u.niveau || null,
+        wilaya: u.wilaya || "Non renseignée",
+        isEligible:
+          typeof u.is_eligible === "boolean"
+            ? u.is_eligible
+            : u.dossier_statut === "VALIDE",
       }));
       setUsers(normalized);
     }
@@ -50,6 +93,24 @@ export function AdminUsersPage() {
       pushSuccess("Utilisateur supprimé.");
     },
     onError: (err) => pushError(getApiErrorMessage(err, "Impossible de supprimer l’utilisateur.")),
+  });
+  const createUserMutation = useMutation({
+    mutationFn: (payload) => adminApi.createStudentUser(payload),
+    onSuccess: async (payload) => {
+      await qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      setCreatedAccount(payload);
+      setDraft({
+        email: "",
+        first_name: "",
+        last_name: "",
+        matricule: "",
+        etablissement: "",
+        filiere: "",
+        wilaya: "",
+      });
+      pushSuccess("Étudiant créé avec succès.");
+    },
+    onError: (err) => pushError(getApiErrorMessage(err, "Impossible de créer l’étudiant.")),
   });
 
   const importMutation = useMutation({
@@ -79,13 +140,19 @@ export function AdminUsersPage() {
 
   function onCreate(e) {
     e.preventDefault();
-    if (!draft.email.trim()) {
-      pushInfo("L’endpoint création utilisateur n’est pas encore exposé côté backend.");
+    if (!draft.email.trim() || !draft.matricule.trim() || !draft.etablissement.trim() || !draft.filiere.trim()) {
+      pushInfo("Merci de remplir les champs obligatoires (email, matricule, établissement, filière).");
       return;
     }
-    setUsers((prev) => [...prev, { id: Date.now(), email: draft.email, role: draft.role, actif: true }]);
-    setDraft({ email: "", role: "ETUDIANT" });
-    pushInfo("Création locale ajoutée (endpoint création backend non disponible).");
+    createUserMutation.mutate({
+      email: draft.email.trim(),
+      first_name: draft.first_name.trim(),
+      last_name: draft.last_name.trim(),
+      matricule: draft.matricule.trim(),
+      etablissement: draft.etablissement.trim(),
+      filiere: draft.filiere.trim(),
+      wilaya: draft.wilaya.trim(),
+    });
   }
 
   function removeUser(id, email) {
@@ -100,15 +167,35 @@ export function AdminUsersPage() {
     if (!lines.length) return [];
     const headers = lines[0].split(",").map((x) => x.trim().toLowerCase());
     const idxEmail = headers.indexOf("email");
-    const idxRole = headers.indexOf("role");
-    if (idxEmail < 0) throw new Error("Le CSV doit contenir la colonne email.");
+    const idxMatricule = headers.indexOf("matricule");
+    const idxEtablissement = headers.indexOf("etablissement");
+    const idxFiliere = headers.indexOf("filiere");
+    const idxWilaya = headers.indexOf("wilaya");
+    if (idxEmail < 0 || idxMatricule < 0 || idxEtablissement < 0 || idxFiliere < 0) {
+      throw new Error("Le CSV doit contenir: email, matricule, etablissement, filiere.");
+    }
     const parsed = [];
     for (let i = 1; i < lines.length; i += 1) {
       const cols = lines[i].split(",").map((x) => x.trim());
       const email = cols[idxEmail];
+      const matricule = cols[idxMatricule];
+      const etablissement = cols[idxEtablissement];
+      const filiere = cols[idxFiliere];
+      const wilaya = idxWilaya >= 0 ? cols[idxWilaya] : "";
       if (!email) continue;
-      const role = (idxRole >= 0 ? cols[idxRole] : "ETUDIANT") || "ETUDIANT";
-      parsed.push({ id: Date.now() + i, email, role, actif: true });
+      parsed.push({
+        id: Date.now() + i,
+        email,
+        fullName: email,
+        actif: true,
+        matricule,
+        etablissement,
+        filiere,
+        wilaya: wilaya || "Non renseignée",
+        niveau: null,
+        dossierStatut: null,
+        isEligible: false,
+      });
     }
     return parsed;
   }
@@ -143,11 +230,19 @@ export function AdminUsersPage() {
   }
 
   const q = search.trim().toLowerCase();
+  const wilayaOptions = ["ALL", ...MAURITANIA_WILAYAS, "Non renseignée"];
   const filteredUsers = users.filter((u) => {
-    const searchOk = `${u.email} ${u.role}`.toLowerCase().includes(q);
-    const roleOk = roleFilter === "ALL" ? true : u.role === roleFilter;
+    const searchOk = `${u.fullName} ${u.email} ${u.matricule || ""}`.toLowerCase().includes(q);
+    const wilayaOk = wilayaFilter === "ALL" ? true : (u.wilaya || "Non renseignée") === wilayaFilter;
+    const niveauOk = niveauFilter === "ALL" ? true : (u.niveau || "NON_RENSEIGNE") === niveauFilter;
+    const eligibilityOk =
+      eligibilityFilter === "ALL"
+        ? true
+        : eligibilityFilter === "ELIGIBLE"
+          ? u.isEligible === true
+          : u.isEligible === false || u.isEligible == null;
     const activeOk = activeFilter === "ALL" ? true : activeFilter === "ACTIVE" ? u.actif : !u.actif;
-    return searchOk && roleOk && activeOk;
+    return searchOk && wilayaOk && niveauOk && eligibilityOk && activeOk;
   });
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -157,29 +252,66 @@ export function AdminUsersPage() {
     <div className="row g-4">
       <div className="col-12">
         <h1 className="h4 mb-1">Admin — Utilisateurs</h1>
-        <div className="text-muted">Gestion des utilisateurs, activation/désactivation, import CSV CNOU.</div>
+        <div className="text-muted">Gestion des étudiants, activation/désactivation, import CSV CNOU.</div>
       </div>
 
       <div className="col-12 col-lg-7">
         <div className="sehily-surface p-3">
-          <div className="d-flex gap-2 mb-3 flex-wrap">
-            <input
-              className="form-control form-control-sm"
-              placeholder="Rechercher (email, rôle)..."
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            />
-            <select className="form-select form-select-sm" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}>
-              <option value="ALL">Rôle: Tous</option>
-              <option value="ADMIN">ADMIN</option>
-              <option value="ETUDIANT">ETUDIANT</option>
-              <option value="PARTENAIRE">PARTENAIRE</option>
-            </select>
-            <select className="form-select form-select-sm" value={activeFilter} onChange={(e) => { setActiveFilter(e.target.value); setPage(1); }}>
-              <option value="ALL">État: Tous</option>
-              <option value="ACTIVE">Actifs</option>
-              <option value="INACTIVE">Inactifs</option>
-            </select>
+          <div className="admin-users-filters-row mb-3">
+            <div className="admin-users-filter-card admin-users-filter-card--search">
+              <label className="form-label small mb-1 d-flex align-items-center gap-1">
+                <FiSearch size={13} /> Recherche
+              </label>
+              <input
+                className="form-control form-control-sm"
+                placeholder="Nom, email, matricule..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              />
+            </div>
+            <div className="admin-users-filter-card">
+              <label className="form-label small mb-1 d-flex align-items-center gap-1">
+                <FiMapPin size={13} /> Wilaya
+              </label>
+              <select className="form-select form-select-sm" value={wilayaFilter} onChange={(e) => { setWilayaFilter(e.target.value); setPage(1); }}>
+                <option value="ALL">Toutes</option>
+                {wilayaOptions.filter((w) => w !== "ALL").map((wilaya) => (
+                  <option key={wilaya} value={wilaya}>{wilaya}</option>
+                ))}
+              </select>
+            </div>
+            <div className="admin-users-filter-card">
+              <label className="form-label small mb-1 d-flex align-items-center gap-1">
+                <FiFlag size={13} /> Niveau
+              </label>
+              <select className="form-select form-select-sm" value={niveauFilter} onChange={(e) => { setNiveauFilter(e.target.value); setPage(1); }}>
+                <option value="ALL">Tous</option>
+                <option value="L1">L1</option>
+                <option value="L2">L2</option>
+                <option value="L3">L3</option>
+                <option value="NON_RENSEIGNE">Non renseigné</option>
+              </select>
+            </div>
+            <div className="admin-users-filter-card">
+              <label className="form-label small mb-1 d-flex align-items-center gap-1">
+                <FiCheckCircle size={13} /> Éligibilité
+              </label>
+              <select className="form-select form-select-sm" value={eligibilityFilter} onChange={(e) => { setEligibilityFilter(e.target.value); setPage(1); }}>
+                <option value="ALL">Tous</option>
+                <option value="ELIGIBLE">Éligible</option>
+                <option value="NON_ELIGIBLE">Non éligible</option>
+              </select>
+            </div>
+            <div className="admin-users-filter-card">
+              <label className="form-label small mb-1 d-flex align-items-center gap-1">
+                <FiShield size={13} /> État
+              </label>
+              <select className="form-select form-select-sm" value={activeFilter} onChange={(e) => { setActiveFilter(e.target.value); setPage(1); }}>
+                <option value="ALL">Tous</option>
+                <option value="ACTIVE">Actifs</option>
+                <option value="INACTIVE">Inactifs</option>
+              </select>
+            </div>
           </div>
           {usersQuery.isFetching ? (
             <div className="d-flex align-items-center gap-2 small text-muted mb-2">
@@ -191,8 +323,13 @@ export function AdminUsersPage() {
             <table className="table align-middle admin-table-hover">
               <thead>
                 <tr>
+                  <th>Nom complet</th>
                   <th>Email</th>
-                  <th>Rôle</th>
+                  <th>Date d'inscription</th>
+                  <th>Wilaya</th>
+                  <th>Niveau</th>
+                  <th>Statut dossier</th>
+                  <th>Éligibilité</th>
                   <th>Actif</th>
                   <th>Actions</th>
                 </tr>
@@ -200,8 +337,17 @@ export function AdminUsersPage() {
               <tbody>
                 {pagedUsers.map((u) => (
                   <tr key={u.id}>
+                    <td className="fw-semibold">{u.fullName}</td>
                     <td>{u.email}</td>
-                    <td>{u.role}</td>
+                    <td>{u.dateCreation ? new Date(u.dateCreation).toLocaleDateString("fr-FR") : "-"}</td>
+                    <td>{u.wilaya || "Non renseignée"}</td>
+                    <td>{u.niveau || "-"}</td>
+                    <td>{u.dossierStatut || "-"}</td>
+                    <td>
+                      <span className={`sehily-badge ${u.isEligible ? "sehily-badge--ok" : "sehily-badge--warn"}`}>
+                        {u.isEligible ? "Éligible" : "Non éligible"}
+                      </span>
+                    </td>
                     <td>{u.actif ? "Oui" : "Non"}</td>
                     <td>
                       <div className="d-flex gap-2">
@@ -217,13 +363,21 @@ export function AdminUsersPage() {
                           {deleteUserMutation.isPending ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
                           Supprimer
                         </button>
+                        {u.dossierId ? (
+                          <Link
+                            className="btn btn-sm sehily-btn-primary"
+                            to={`/app/admin/dossiers?dossier=${u.dossierId}`}
+                          >
+                            Voir dossier
+                          </Link>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
                 ))}
                 {!pagedUsers.length ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-4 text-muted">
+                    <td colSpan={10} className="text-center py-4 text-muted">
                       Aucun utilisateur disponible
                     </td>
                   </tr>
@@ -247,7 +401,7 @@ export function AdminUsersPage() {
 
       <div className="col-12 col-lg-5">
         <form className="sehily-surface p-3 d-grid gap-3 mb-3" onSubmit={onCreate}>
-          <div className="fw-bold">Créer utilisateur</div>
+          <div className="fw-bold">Créer étudiant</div>
           <input
             className="form-control"
             type="email"
@@ -256,24 +410,78 @@ export function AdminUsersPage() {
             onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
             required
           />
+          <div className="row g-2">
+            <div className="col-12 col-md-6">
+              <input
+                className="form-control"
+                placeholder="Prénom"
+                value={draft.first_name}
+                onChange={(e) => setDraft((d) => ({ ...d, first_name: e.target.value }))}
+              />
+            </div>
+            <div className="col-12 col-md-6">
+              <input
+                className="form-control"
+                placeholder="Nom"
+                value={draft.last_name}
+                onChange={(e) => setDraft((d) => ({ ...d, last_name: e.target.value }))}
+              />
+            </div>
+          </div>
+          <input
+            className="form-control"
+            placeholder="Matricule"
+            value={draft.matricule}
+            onChange={(e) => setDraft((d) => ({ ...d, matricule: e.target.value }))}
+            required
+          />
+          <input
+            className="form-control"
+            placeholder="Établissement"
+            value={draft.etablissement}
+            onChange={(e) => setDraft((d) => ({ ...d, etablissement: e.target.value }))}
+            required
+          />
+          <input
+            className="form-control"
+            placeholder="Filière"
+            value={draft.filiere}
+            onChange={(e) => setDraft((d) => ({ ...d, filiere: e.target.value }))}
+            required
+          />
           <select
             className="form-select"
-            value={draft.role}
-            onChange={(e) => setDraft((d) => ({ ...d, role: e.target.value }))}
+            value={draft.wilaya}
+            onChange={(e) => setDraft((d) => ({ ...d, wilaya: e.target.value }))}
           >
-            <option value="ETUDIANT">ETUDIANT</option>
-            <option value="ADMIN">ADMIN</option>
-            <option value="PARTENAIRE">PARTENAIRE</option>
+            <option value="">Wilaya (optionnel)</option>
+            {MAURITANIA_WILAYAS.map((wilaya) => (
+              <option key={wilaya} value={wilaya}>{wilaya}</option>
+            ))}
           </select>
-          <button className="btn sehily-btn-primary" type="submit">
+          <button className="btn sehily-btn-primary d-flex align-items-center justify-content-center gap-2" type="submit" disabled={createUserMutation.isPending}>
+            {createUserMutation.isPending ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
             Ajouter
           </button>
+          {createdAccount ? (
+            <div className="alert alert-success mb-0 py-2">
+              <div className="fw-semibold">Compte créé: {createdAccount.email}</div>
+              <div>
+                Mot de passe temporaire:{" "}
+                <code>{createdAccount.temporary_password || "N/A"}</code>
+              </div>
+              <div>
+                Email de confirmation: {createdAccount.email_sent ? "envoyé" : "non envoyé"}
+                {!createdAccount.email_sent && createdAccount.email_error ? ` (${createdAccount.email_error})` : ""}
+              </div>
+            </div>
+          ) : null}
         </form>
 
         <div className="sehily-surface p-3 d-grid gap-3">
           <div className="fw-bold">Import CSV (CNOU)</div>
           <div className="small text-muted">
-            Format attendu : colonnes <code>email</code> et optionnellement <code>role</code>.
+            Format attendu : <code>email</code>, <code>matricule</code>, <code>etablissement</code>, <code>filiere</code> (+ optionnel <code>wilaya</code>).
           </div>
           <input
             className="form-control"

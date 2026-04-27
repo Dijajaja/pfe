@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { adminApi } from "../api/webFeaturesApi";
@@ -52,6 +53,7 @@ function ConfirmActionModal({ selected, status, comment, setStatus, setComment, 
 }
 
 export function AdminDossiersPage() {
+  const [searchParams] = useSearchParams();
   const qc = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
   const [rows, setRows] = useState([]);
@@ -85,6 +87,14 @@ export function AdminDossiersPage() {
     }));
     setRows(normalized);
   }, [dossiersQuery.data]);
+
+  useEffect(() => {
+    const dossierParam = Number(searchParams.get("dossier"));
+    if (!dossierParam || selectedId) return;
+    if (rows.some((r) => r.id === dossierParam)) {
+      setSelectedId(dossierParam);
+    }
+  }, [rows, searchParams, selectedId]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }) => adminApi.updateDossier(id, payload),

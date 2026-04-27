@@ -1,7 +1,9 @@
 import csv
 import io
 
+from django.conf import settings
 from django.db import transaction
+from django.core.mail import send_mail
 from rest_framework import generics, permissions, status
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +14,7 @@ from accounts.models import User
 from accounts.permissions import IsAdmin
 from accounts.serializers import (
     AdminUserSerializer,
+    AdminStudentCreateSerializer,
     AdminUserUpdateSerializer,
     InscriptionEtudiantSerializer,
     UserSerializer,
@@ -38,10 +41,15 @@ class MoiView(APIView):
         return Response(UserSerializer(request.user).data)
 
 
-class AdminUsersListView(generics.ListAPIView):
+class AdminUsersListView(generics.ListCreateAPIView):
     serializer_class = AdminUserSerializer
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset = User.objects.all().order_by("-date_creation")
+    queryset = User.objects.select_related("profil_etudiant").all().order_by("-date_creation")
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return AdminStudentCreateSerializer
+        return AdminUserSerializer
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -53,6 +61,42 @@ class AdminUsersListView(generics.ListAPIView):
             normalized = str(active).lower() in {"1", "true", "yes"}
             qs = qs.filter(is_active=normalized)
         return qs
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        temporary_password = getattr(user, "_temporary_password", "")
+        email_sent = False
+        email_error = ""
+        try:
+            send_mail(
+                subject="Création de votre compte étudiant CNOU",
+                message=(
+                    f"Bonjour {user.first_name or ''} {user.last_name or ''},\n\n"
+                    "Votre compte étudiant a été créé par l'administration CNOU.\n"
+                    f"Identifiant: {user.email}\n"
+                    f"Mot de passe temporaire: {temporary_password}\n\n"
+                    "Veuillez vous connecter puis changer votre mot de passe."
+                ).strip(),
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", None) or "no-reply@cnou.mr",
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+            email_sent = True
+        except Exception as exc:  # pragma: no cover
+            email_error = str(exc)
+
+        payload = AdminUserSerializer(user, context=self.get_serializer_context()).data
+        payload.update(
+            {
+                "temporary_password": temporary_password,
+                "email_sent": email_sent,
+                "email_error": email_error,
+            }
+        )
+        return Response(payload, status=status.HTTP_201_CREATED)
 
 
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -75,7 +119,7 @@ class AdminImportEtudiantsCsvView(APIView):
     """
     Import CSV robuste pour remplacer les échanges via clé USB CNOU.
     Colonnes requises: email, matricule, etablissement, filiere
-    Colonnes optionnelles: first_name, last_name
+    Colonnes optionnelles: first_name, last_name, wilaya
     """
 
     permission_classes = (IsAuthenticated, IsAdmin)
@@ -115,6 +159,7 @@ class AdminImportEtudiantsCsvView(APIView):
             filiere = (row.get("filiere") or "").strip()
             first_name = (row.get("first_name") or "").strip()
             last_name = (row.get("last_name") or "").strip()
+            wilaya = (row.get("wilaya") or "").strip()
 
             if not email or not matricule or not etablissement or not filiere:
                 errors.append(f"Ligne {idx}: champs requis incomplets.")
@@ -154,6 +199,7 @@ class AdminImportEtudiantsCsvView(APIView):
                         "matricule": matricule,
                         "etablissement": etablissement,
                         "filiere": filiere,
+                        "wilaya": wilaya,
                     },
                 )
 
@@ -169,6 +215,9 @@ class AdminImportEtudiantsCsvView(APIView):
                     profile_changed = True
                 if profile.filiere != filiere:
                     profile.filiere = filiere
+                    profile_changed = True
+                if wilaya and profile.wilaya != wilaya:
+                    profile.wilaya = wilaya
                     profile_changed = True
                 if profile_changed:
                     profile.save()

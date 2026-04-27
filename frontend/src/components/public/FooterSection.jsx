@@ -1,9 +1,7 @@
 import { FiFacebook, FiInstagram, FiTwitter, FiYoutube } from "react-icons/fi";
-import { useTranslation } from "react-i18next";
 import logoWeb from "../../assets/logo-web.png";
 
 export function FooterSection() {
-  const { t } = useTranslation();
   const baseLinkColor = "#9FE1CB";
   const hoverLinkColor = "#C9614A";
   const footerLinkStyle = { color: baseLinkColor, transition: "color 220ms ease" };
@@ -17,19 +15,18 @@ export function FooterSection() {
   }
 
   return (
-    <footer id="contact" className="pt-20 pb-10" style={{ backgroundColor: "#2E7D72", color: "#FFFFFF" }}>
+    <footer id="contact" className="pt-14 md:pt-20 pb-8 md:pb-10" style={{ backgroundColor: "#2E7D72", color: "#FFFFFF" }}>
       <div className="container-custom">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          <div>
-            <div className="flex items-center gap-2 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-10 md:mb-16">
+          <div className="text-center md:text-left">
+            <div className="flex items-center justify-center md:justify-start gap-2 mb-6">
               <img src={logoWeb} alt="SEHILY" className="h-8 w-auto" />
               
             </div>
-              {t("footerLead")}
             <p className="text-sm leading-relaxed mb-6" style={{ color: "#9FE1CB" }}>
-              {t("footerLead")}
+              Plateforme officielle de gestion des bourses universitaires en Mauritanie. Simplifier, sécuriser, accompagner.
             </p>
-            <div className="flex gap-4">
+            <div className="flex justify-center md:justify-start gap-3 md:gap-4">
               {[FiFacebook, FiTwitter, FiInstagram, FiYoutube].map((Icon, i) => (
                 <a
                   key={i}
@@ -51,10 +48,10 @@ export function FooterSection() {
             </div>
           </div>
 
-          <div>
-            <h4 className="font-bold mb-6">{t("footerUsefulLinks")}</h4>
-            <ul className="space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
-              {[t("navHome"), t("navAbout"), t("navHowItWorks"), t("navFaq")].map((item) => (
+          <div className="text-center md:text-left">
+            <h4 className="font-bold mb-4 md:mb-6">Liens utiles</h4>
+            <ul className="space-y-3 md:space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
+              {["Accueil", "À propos", "Comment ça marche", "FAQ"].map((item) => (
                 <li key={item}>
                   <a
                     href="#"
@@ -70,10 +67,10 @@ export function FooterSection() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-bold mb-6">{t("footerSupport")}</h4>
-            <ul className="space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
-              {[t("footerHelpCenter"), t("footerContactUs"), t("footerLegal"), t("footerPrivacy")].map((item) => (
+          <div className="text-center md:text-left">
+            <h4 className="font-bold mb-4 md:mb-6">Support</h4>
+            <ul className="space-y-3 md:space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
+              {["Centre d'aide", "Nous contacter", "Mentions légales", "Confidentialité"].map((item) => (
                 <li key={item}>
                   <a
                     href="#"
@@ -89,9 +86,9 @@ export function FooterSection() {
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-bold mb-6">{t("navContact")}</h4>
-            <ul className="space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
+          <div className="text-center md:text-left">
+            <h4 className="font-bold mb-4 md:mb-6">Contact</h4>
+            <ul className="space-y-3 md:space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
               <li className="flex flex-col gap-1">
                 <span className="text-white font-medium">Email</span>
                 <a
@@ -105,7 +102,7 @@ export function FooterSection() {
                 </a>
               </li>
               <li className="flex flex-col gap-1">
-                <span className="text-white font-medium">{t("footerPhone")}</span>
+                <span className="text-white font-medium">Téléphone</span>
                 <a
                   href="tel:+22245253061"
                   className="no-underline"
@@ -120,9 +117,12 @@ export function FooterSection() {
           </div>
         </div>
 
-        <div className="pt-10 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-medium tracking-wide uppercase" style={{ borderTop: "1px solid #1B4D4A", color: "#9FE1CB" }}>
-          <p>{t("footerRights")}</p>
-          <p>{t("footerMission")}</p>
+        <div
+          className="pt-6 md:pt-10 flex flex-col sm:flex-row justify-between items-center gap-3 md:gap-4 text-[11px] md:text-xs font-medium tracking-wide uppercase text-center sm:text-left"
+          style={{ borderTop: "1px solid #1B4D4A", color: "#9FE1CB" }}
+        >
+          <p>© 2026 Sehily - Tous droits réservés.</p>
+          <p>Développé pour la réussite de nos étudiants.</p>
         </div>
       </div>
     </footer>

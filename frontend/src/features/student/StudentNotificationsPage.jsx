@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { studentApi } from "../api/webFeaturesApi";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
 export function StudentNotificationsPage() {
   const dossiersQuery = useQuery({
@@ -55,7 +56,7 @@ export function StudentNotificationsPage() {
     setReadMap(map);
   }
 
-  if (dossiersQuery.isLoading || paiementsQuery.isLoading) return <div className="p-3">Chargement notifications...</div>;
+  if (dossiersQuery.isLoading || paiementsQuery.isLoading) return <LoadingSkeleton lines={6} />;
 
   return (
     <div className="row g-4">
@@ -74,7 +75,7 @@ export function StudentNotificationsPage() {
 
           <div className="d-grid gap-2">
             {items.map((n) => (
-              <div key={n.id} className="border rounded-3 p-3">
+              <div key={n.id} className="admin-alert-item">
                 <div className="d-flex justify-content-between">
                   <div className="fw-semibold">{n.titre}</div>
                   <div className="text-muted small">{new Date(n.date).toLocaleString()}</div>

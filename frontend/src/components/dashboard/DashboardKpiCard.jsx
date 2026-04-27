@@ -17,10 +17,10 @@ export function DashboardKpiCard({
   return (
     <div className={`sehily-surface p-3 h-100 ${cardClass}`}>
       <div className="d-flex justify-content-between align-items-start mb-2">
-        <div className="small text-muted">{label}</div>
+        <div className="small dashboard-kpi-label">{label}</div>
         <span className={iconClass}>{Icon ? <Icon size={15} /> : null}</span>
       </div>
-      <div className="h4 mb-1">{numericValue}</div>
+      <div className="h4 mb-1 dashboard-kpi-value">{numericValue}</div>
       {showTrend ? (
         <div className={`small fw-semibold ${trendClass}`}>
           {trend >= 0 ? "↗" : "↘"} {Math.abs(trend).toFixed(1)}% depuis le mois dernier

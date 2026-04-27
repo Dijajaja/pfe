@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FiCheckCircle, FiClock, FiDownload, FiFileText, FiTrendingUp } from "react-icons/fi";
-import { useTranslation } from "react-i18next";
 
 import { partnerApi } from "../api/webFeaturesApi";
 import { useAppToast } from "../../components/ui/AppToastProvider";
@@ -71,7 +70,6 @@ function ProcessConfirmModal({ payment, onConfirm, onClose, isPending }) {
 }
 
 export function PartnerBatchesPage() {
-  const { t } = useTranslation();
   const location = useLocation();
   const queryClient = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
@@ -428,21 +426,21 @@ export function PartnerBatchesPage() {
       <div className="col-12">
         <div className="d-flex flex-wrap align-items-center justify-content-between gap-2">
           <div>
-            <h1 className="h4 mb-1">{t("partnerDashboardTitle")}</h1>
-            <div className="text-muted">{t("partnerDashboardSubtitle")}</div>
+            <h1 className="h4 mb-1">Bonjour Mauripost</h1>
+            <div className="text-muted">Voici un aperçu de vos opérations de paiement.</div>
           </div>
           <button className="btn btn-sm sehily-btn-secondary d-flex align-items-center gap-2" onClick={() => queryClient.invalidateQueries({ queryKey: ["partner", "paiements"] })} disabled={partnerQuery.isFetching}>
             {partnerQuery.isFetching ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
-            <span>{t("refresh")}</span>
+            <span>Rafraîchir</span>
           </button>
         </div>
       </div>
 
       <div className="col-12 col-md-6 col-xl-3">
         <DashboardKpiCard
-          label={t("kpiAssignedPayments")}
+          label="Paiements assignés"
           value={assignedCount.toLocaleString()}
-          subLabel={t("kpiAssignedPaymentsSub")}
+          subLabel="opérations reçues"
           tone="info"
           icon={FiFileText}
           variant="partner"
@@ -450,9 +448,9 @@ export function PartnerBatchesPage() {
       </div>
       <div className="col-12 col-md-6 col-xl-3">
         <DashboardKpiCard
-          label={t("kpiSentPayments")}
+          label="Paiements envoyés"
           value={waitingCount.toLocaleString()}
-          subLabel={t("kpiSentPaymentsSub")}
+          subLabel="à payer par Mauripost"
           tone="warning"
           icon={FiClock}
           variant="partner"
@@ -460,9 +458,9 @@ export function PartnerBatchesPage() {
       </div>
       <div className="col-12 col-md-6 col-xl-3">
         <DashboardKpiCard
-          label={t("kpiPaidPayments")}
+          label="Paiements payés"
           value={confirmedCount.toLocaleString()}
-          subLabel={t("kpiPaidPaymentsSub")}
+          subLabel="traités avec succès"
           tone="success"
           icon={FiCheckCircle}
           variant="partner"
@@ -470,9 +468,9 @@ export function PartnerBatchesPage() {
       </div>
       <div className="col-12 col-md-6 col-xl-3">
         <DashboardKpiCard
-          label={t("kpiTotalAmount")}
+          label="Montant total"
           value={`${Math.round(totalAmount).toLocaleString()} MRU`}
-          subLabel={t("kpiTotalAmountSub")}
+          subLabel="volume global"
           tone="accent"
           icon={FiDownload}
           variant="partner"
@@ -480,60 +478,64 @@ export function PartnerBatchesPage() {
       </div>
       <div className="col-12 col-md-6 col-xl-3">
         <DashboardKpiCard
-          label={t("today")}
+          label="Aujourd'hui"
           value={todayConfirmed.toLocaleString()}
-          subLabel={t("kpiPaidPayments")}
+          subLabel="paiements payés"
           tone="neutral"
           icon={FiTrendingUp}
           variant="partner"
         />
       </div>
 
-      <div className="col-12 col-xl-5">
-        <div className="sehily-surface p-3">
-          <div className="fw-bold mb-2">{t("partnerPaymentsByStatus")}</div>
-          <div className="row g-3 align-items-center mt-1">
-            <div className="col-12 col-md-6">
-              <div className="cnou-donut mx-auto" style={chartStyle}>
-                <div className="cnou-donut-inner">
-                  <div className="text-center">
-                    <div className="h5 mb-0">{assignedCount}</div>
-                    <div className="small text-muted">{t("total")}</div>
+      <div className="col-12 col-xl-8">
+        <div className="row g-3">
+          <div className="col-12 col-xxl-5">
+            <div className="sehily-surface p-3">
+              <div className="fw-bold mb-2">Répartition des paiements par statut</div>
+              <div className="row g-3 align-items-center mt-1">
+                <div className="col-12 col-md-6">
+                  <div className="cnou-donut mx-auto" style={chartStyle}>
+                    <div className="cnou-donut-inner">
+                      <div className="text-center">
+                        <div className="h5 mb-0">{assignedCount}</div>
+                        <div className="small text-muted">Total</div>
+                      </div>
+                    </div>
                   </div>
+                </div>
+                <div className="col-12 col-md-6">
+                  <ul className="list-unstyled mb-0 admin-legend-list">
+                    <li><span className="admin-dot admin-dot-warning" /><span>Envoyés</span><strong>{waitingCount}</strong></li>
+                    <li><span className="admin-dot admin-dot-success" /><span>Payés</span><strong>{confirmedCount}</strong></li>
+                    <li><span className="admin-dot admin-dot-info" /><span>En traitement</span><strong>{inProgressCount}</strong></li>
+                    <li><span className="admin-dot admin-dot-danger" /><span>Échoués</span><strong>{rejectedCount}</strong></li>
+                  </ul>
                 </div>
               </div>
             </div>
-            <div className="col-12 col-md-6">
-              <ul className="list-unstyled mb-0 admin-legend-list">
-                <li><span className="admin-dot admin-dot-warning" /><span>{t("statusSent")}</span><strong>{waitingCount}</strong></li>
-                <li><span className="admin-dot admin-dot-success" /><span>{t("statusPaid")}</span><strong>{confirmedCount}</strong></li>
-                <li><span className="admin-dot admin-dot-info" /><span>{t("statusProcessing")}</span><strong>{inProgressCount}</strong></li>
-                <li><span className="admin-dot admin-dot-danger" /><span>{t("statusFailed")}</span><strong>{rejectedCount}</strong></li>
-              </ul>
+          </div>
+
+          <div className="col-12 col-xxl-7">
+            <div className="sehily-surface p-3">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <div className="fw-bold">Évolution des paiements payés</div>
+                <div className="small text-muted">6 derniers mois</div>
+              </div>
+              <DashboardLineChart
+                className="partner-linechart"
+                labelsClassName="partner-linechart-labels"
+                data={trendSeries}
+                series={[{ key: "value", color: "#2c7be4" }]}
+                width={520}
+                height={210}
+              />
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="col-12 col-xl-7">
-        <div className="sehily-surface p-3">
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="fw-bold">{t("partnerPaidTrend")}</div>
-            <div className="small text-muted">{t("lastSixMonths")}</div>
+          <div className="col-12">
+            {renderDataTable("Paiements à traiter", pagedRows.slice(0, 5))}
           </div>
-          <DashboardLineChart
-            className="partner-linechart"
-            labelsClassName="partner-linechart-labels"
-            data={trendSeries}
-            series={[{ key: "value", color: "#2c7be4" }]}
-            width={520}
-            height={210}
-          />
         </div>
-      </div>
-
-      <div className="col-12 col-xl-8">
-        {renderDataTable("Paiements à traiter", pagedRows.slice(0, 5))}
       </div>
 
       <div className="col-12 col-xl-4">

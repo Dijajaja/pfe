@@ -27,9 +27,10 @@ import { logout } from "../app/auth";
 import { useEffectiveRole } from "../app/session";
 import { FallbackBanner } from "../components/ui/FallbackBanner";
 import { partnerApi } from "../features/api/webFeaturesApi";
+import { setLanguage } from "../i18n/setup";
 
 export function AppLayout() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { role, user } = useEffectiveRole();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -50,12 +51,12 @@ export function AppLayout() {
 
   const roleBadge =
     role === "ADMIN"
-      ? t("roleAdminCnou")
+      ? "Admin CNOU"
       : role === "PARTENAIRE"
-        ? t("roleAdminMauripost")
-        : t("roleStudent");
+        ? "Admin Mauripost"
+        : "Étudiant";
   const roleSubtitle =
-    role === "ADMIN" ? t("roleSubtitleAdmin") : role === "PARTENAIRE" ? t("roleSubtitlePartner") : t("roleSubtitleStudent");
+    role === "ADMIN" ? "Administrateur" : role === "PARTENAIRE" ? "Partenaire paiement" : "Espace étudiant";
   const initials = displayName
     .split(" ")
     .filter(Boolean)
@@ -68,28 +69,28 @@ export function AppLayout() {
   const partnerNotifCount = Math.max(0, partnerWaitingCount + (partnerPayments.length ? 1 : 0));
 
   const studentLinks = [
-    { to: "/app/student/dashboard", label: t("menuStudentDashboard"), icon: FiHome },
-    { to: "/app/student/dossier", label: t("menuStudentDossier"), icon: FiFolder },
-    { to: "/app/student/suivi", label: t("menuStudentSuivi"), icon: FiCheckSquare },
-    { to: "/app/student/paiements", label: t("menuStudentPaiements"), icon: FiCreditCard },
-    { to: "/app/student/notifications", label: t("menuNotifications"), icon: FiBell },
+    { to: "/app/student/dashboard", label: "Dashboard étudiant", icon: FiHome },
+    { to: "/app/student/dossier", label: "Dossier & documents", icon: FiFolder },
+    { to: "/app/student/suivi", label: "Suivi statuts", icon: FiCheckSquare },
+    { to: "/app/student/paiements", label: "Paiements", icon: FiCreditCard },
+    { to: "/app/student/notifications", label: "Notifications", icon: FiBell },
   ];
 
   const adminLinks = [
-    { to: "/app/admin/dashboard", label: t("menuAdminDashboard"), icon: FiHome },
-    { to: "/app/admin/dossiers", label: t("menuAdminDossiers"), icon: FiFolder },
-    { to: "/app/admin/users", label: t("menuAdminUsers"), icon: FiUsers },
-    { to: "/app/admin/exports", label: t("menuAdminExports"), icon: FiFileText },
+    { to: "/app/admin/dashboard", label: "Dashboard admin", icon: FiHome },
+    { to: "/app/admin/dossiers", label: "Dossiers", icon: FiFolder },
+    { to: "/app/admin/users", label: "Utilisateurs", icon: FiUsers },
+    { to: "/app/admin/exports", label: "Exports", icon: FiFileText },
   ];
 
   const partnerLinks = [
-    { to: "/app/partner/dashboard", label: t("menuPartnerDashboard"), icon: FiHome },
-    { to: "/app/partner/to-process", label: t("menuPartnerToProcess"), icon: FiClock, badge: partnerWaitingCount },
-    { to: "/app/partner/completed", label: t("menuPartnerCompleted"), icon: FiCheckSquare },
-    { to: "/app/partner/history", label: t("menuPartnerHistory"), icon: FiBookOpen },
-    { to: "/app/partner/reports", label: t("menuPartnerReports"), icon: FiFile },
-    { to: "/app/partner/notifications", label: t("menuNotifications"), icon: FiBell, badge: partnerNotifCount },
-    { to: "/app/partner/settings", label: t("menuSettings"), icon: FiSettings },
+    { to: "/app/partner/dashboard", label: "Tableau de bord", icon: FiHome },
+    { to: "/app/partner/to-process", label: "Paiements à traiter", icon: FiClock, badge: partnerWaitingCount },
+    { to: "/app/partner/completed", label: "Paiements effectués", icon: FiCheckSquare },
+    { to: "/app/partner/history", label: "Historique", icon: FiBookOpen },
+    { to: "/app/partner/reports", label: "Relevés / Rapports", icon: FiFile },
+    { to: "/app/partner/notifications", label: "Notifications", icon: FiBell, badge: partnerNotifCount },
+    { to: "/app/partner/settings", label: "Paramètres", icon: FiSettings },
   ];
 
   const notificationsPath =
@@ -136,13 +137,13 @@ export function AppLayout() {
           {role === "PARTENAIRE" ? (
             <div className="small text-white-50 mt-2 d-flex align-items-center gap-2">
               <span className="app-online-dot" />
-              {t("online")}
+              En ligne
             </div>
           ) : null}
           {role === "ADMIN" ? (
-            <div className="small text-white-50 mt-2">{t("adminConnected")}</div>
+            <div className="small text-white-50 mt-2">Admin CNOU connecté</div>
           ) : (
-            <div className="small text-white-50 mt-2">{t("userConnected")}</div>
+            <div className="small text-white-50 mt-2">Utilisateur connecté</div>
           )}
           <span className="sehily-badge sehily-badge--ok mt-2 app-sidebar-badge">{roleBadge}</span>
         </div>
@@ -158,16 +159,15 @@ export function AppLayout() {
         <div className="app-sidebar-footer">
           {role === "PARTENAIRE" ? (
             <div className="app-sidebar-help mt-3">
-              <div className="fw-semibold small text-white">{t("needHelpTitle")}</div>
-              <div className="small text-white-50 mb-2">{t("needHelpDesc")}</div>
-              <button className="btn btn-sm sehily-btn-secondary w-100">{t("viewDocumentation")}</button>
+              <div className="fw-semibold small text-white">Besoin d'aide ?</div>
+              <div className="small text-white-50">Contactez le support pour toute assistance opérationnelle.</div>
             </div>
           ) : null}
 
           <hr className="border-light border-opacity-25" />
           <button className="btn sehily-btn-secondary w-100 d-flex align-items-center justify-content-center gap-2" onClick={onLogout}>
             <FiLogOut size={15} />
-            <span>{t("logout")}</span>
+            <span>Déconnexion</span>
           </button>
         </div>
       </div>
@@ -185,18 +185,34 @@ export function AppLayout() {
               <div className="col-12 col-lg-6">
                 <div className="app-topbar-search">
                   <FiSearch className="app-topbar-search-icon" size={15} />
-                  <input className="form-control" placeholder={t("searchGlobalPlaceholder")} />
+                  <input className="form-control" placeholder="Rechercher (dossier, étudiant, etc)" />
                 </div>
               </div>
               <div className="col-12 col-lg-6">
                 <div className="d-flex justify-content-lg-end align-items-center gap-2">
-                  <button className="btn btn-sm app-top-icon d-lg-none" type="button" aria-label={t("openMenu")} onClick={() => setSidebarOpen(true)}>
+                  <button className="btn btn-sm app-top-icon d-lg-none" type="button" aria-label="Ouvrir menu" onClick={() => setSidebarOpen(true)}>
                     <FiMenu size={15} />
                   </button>
-                  <button className="btn btn-sm app-top-icon" type="button" aria-label={t("menuNotifications")} onClick={() => navigate(notificationsPath)}>
+                  <div className="app-lang-switch">
+                    <button
+                      type="button"
+                      className={`app-lang-btn ${i18n.language === "fr" ? "active" : ""}`}
+                      onClick={() => setLanguage("fr")}
+                    >
+                      FR
+                    </button>
+                    <button
+                      type="button"
+                      className={`app-lang-btn ${i18n.language === "ar" ? "active" : ""}`}
+                      onClick={() => setLanguage("ar")}
+                    >
+                      AR
+                    </button>
+                  </div>
+                  <button className="btn btn-sm app-top-icon" type="button" aria-label="Notifications" onClick={() => navigate(notificationsPath)}>
                     <FiBell size={15} />
                   </button>
-                  <button className="btn btn-sm app-top-icon" type="button" aria-label={t("messages")} onClick={() => navigate(messagesPath)}>
+                  <button className="btn btn-sm app-top-icon" type="button" aria-label="Messages" onClick={() => navigate(messagesPath)}>
                     <FiMail size={15} />
                   </button>
                   <div className="app-top-profile">
@@ -215,7 +231,7 @@ export function AppLayout() {
             </div>
           </div>
 
-          <div className="sehily-surface p-4">
+          <div className="sehily-surface p-4 app-content-shell">
             <FallbackBanner />
             <Outlet />
           </div>
@@ -225,7 +241,7 @@ export function AppLayout() {
       <div className={`app-mobile-overlay d-lg-none ${isSidebarOpen ? "show" : ""}`} onClick={onCloseSidebar} />
       <aside className={`app-mobile-drawer d-lg-none ${isSidebarOpen ? "show" : ""}`}>
         <div className="d-flex justify-content-end mb-2">
-          <button className="btn btn-sm app-top-icon" type="button" aria-label={t("closeMenu")} onClick={onCloseSidebar}>
+          <button className="btn btn-sm app-top-icon" type="button" aria-label="Fermer menu" onClick={onCloseSidebar}>
             <FiX size={16} />
           </button>
         </div>

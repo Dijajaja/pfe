@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { studentApi } from "../api/webFeaturesApi";
+import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 
 export function StudentSuiviPage() {
   const [search, setSearch] = useState("");
@@ -42,7 +43,7 @@ export function StudentSuiviPage() {
   );
 
   if (dossiersQuery.isLoading || reclamationsQuery.isLoading) {
-    return <div className="p-3">Chargement suivi...</div>;
+    return <LoadingSkeleton lines={6} />;
   }
 
   return (
@@ -65,7 +66,7 @@ export function StudentSuiviPage() {
           </div>
 
           <div className="table-responsive">
-            <table className="table table-sm">
+            <table className="table table-sm admin-table-pro admin-table-hover">
               <thead>
                 <tr>
                   <th>Date</th>

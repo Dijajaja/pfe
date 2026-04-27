@@ -66,6 +66,7 @@ class EtudiantProfile(models.Model):
     matricule = models.CharField(max_length=64, unique=True)
     etablissement = models.CharField(max_length=255)
     filiere = models.CharField(max_length=255)
+    wilaya = models.CharField(max_length=120, blank=True, default="")
 
     class Meta:
         verbose_name = "profil étudiant"

@@ -12,7 +12,7 @@ export function Navbar() {
   const [activeHash, setActiveHash] = useState(() =>
     typeof window !== "undefined" ? window.location.hash || "#home" : "#home",
   );
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -27,22 +27,22 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { name: t("navHome"), href: "/#home" },
-    { name: t("navHowItWorks"), href: "/#how-it-works" },
-    { name: t("navAbout"), href: "/#about" },
-    { name: t("navFaq"), href: "/#faq" },
-    { name: t("navContact"), href: "/#contact" },
+    { name: "Accueil", href: "/#home" },
+    { name: "Comment ça marche", href: "/#how-it-works" },
+    { name: "À propos", href: "/#about" },
+    { name: "FAQ", href: "/#faq" },
+    { name: "Contact", href: "/#contact" },
   ];
 
   return (
     <nav
       style={{ position: "fixed", top: 0, left: 0, right: 0 }}
-      className={`z-50 transition-all duration-300 ${scrolled ? "py-3" : "py-4"}`}
+      className={`z-50 transition-all duration-300 ${scrolled ? "py-2.5 md:py-3" : "py-3 md:py-4"}`}
     >
       <div className="container-custom">
-        <div className={`flex items-center justify-between rounded-2xl border px-4 md:px-5 transition-all duration-300 ${scrolled ? "backdrop-blur-md shadow-[0_14px_40px_-20px_rgba(2,8,23,0.35)]" : "backdrop-blur-sm shadow-[0_8px_24px_-16px_rgba(2,8,23,0.25)]"}`} style={{ backgroundColor: "#1B4D4A", borderColor: "rgba(255,255,255,0.14)" }}>
+        <div className={`flex items-center justify-between rounded-xl md:rounded-2xl border px-3 md:px-5 transition-all duration-300 ${scrolled ? "backdrop-blur-md shadow-[0_14px_40px_-20px_rgba(2,8,23,0.35)]" : "backdrop-blur-sm shadow-[0_8px_24px_-16px_rgba(2,8,23,0.25)]"}`} style={{ backgroundColor: "#1B4D4A", borderColor: "rgba(255,255,255,0.14)" }}>
           <Link to="/" className="flex items-center gap-2 no-underline py-2">
-            <img src={logoWeb} alt="SEHILY" className="h-12 w-auto" />
+            <img src={logoWeb} alt="SEHILY" className="h-10 md:h-12 w-auto" />
           </Link>
 
           <div className="hidden md:flex items-center gap-7">
@@ -85,7 +85,7 @@ export function Navbar() {
               </button>
             </div>
             <Link to="/auth/login" className="text-sm font-semibold px-4 py-2 rounded-lg transition-colors no-underline !text-white visited:!text-white hover:!text-[#C9614A]">
-              {t("navLogin")}
+              Connexion
             </Link>
             <Link
               to="/eligibilite"
@@ -98,11 +98,11 @@ export function Navbar() {
                 e.currentTarget.style.backgroundColor = "#C9614A";
               }}
             >
-              {t("ctaCheck")} <FiArrowRight size={16} />
+              Vérifier mon éligibilité <FiArrowRight size={16} />
             </Link>
           </div>
 
-          <button className="md:hidden p-2 text-white" onClick={() => setIsOpen(!isOpen)}>
+          <button className="md:hidden p-1.5 text-white" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
         </div>
@@ -117,12 +117,12 @@ export function Navbar() {
             className="md:hidden border-b overflow-hidden"
             style={{ backgroundColor: "#1B4D4A", borderColor: "rgba(255,255,255,.16)" }}
           >
-            <div className="container-custom py-6 flex flex-col gap-4">
+            <div className="container-custom py-5 flex flex-col gap-3">
               {navLinks.map((link) => (
                 <a
                   key={link.name}
                   href={link.href}
-                  className="text-lg font-medium !text-white visited:!text-white no-underline"
+                  className="text-base font-medium !text-white visited:!text-white no-underline"
                   onClick={() => setIsOpen(false)}
                 >
                   {link.name}
@@ -147,9 +147,9 @@ export function Navbar() {
                   AR
                 </button>
               </div>
-              <Link to="/auth/login" className="text-lg font-medium !text-white visited:!text-white no-underline">{t("navLogin")}</Link>
-              <Link to="/eligibilite" className="text-white text-center py-4 rounded-xl font-bold no-underline" style={{ backgroundColor: "#C9614A" }}>
-                {t("ctaCheck")}
+              <Link to="/auth/login" className="text-base font-medium !text-white visited:!text-white no-underline">Connexion</Link>
+              <Link to="/eligibilite" className="text-white text-center py-3.5 rounded-xl font-bold no-underline" style={{ backgroundColor: "#C9614A" }}>
+                Vérifier mon éligibilité
               </Link>
             </div>
           </motion.div>
