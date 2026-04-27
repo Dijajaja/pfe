@@ -212,6 +212,7 @@ class AdminSendMauripostView(APIView):
 
     def post(self, request, dossier_id: int):
         partenaire_id = request.data.get("partenaire_id")
+        nombre_mois = request.data.get("nombre_mois", 1)
         if partenaire_id in ("", None):
             partenaire_id = None
         else:
@@ -223,6 +224,19 @@ class AdminSendMauripostView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        try:
+            nombre_mois = int(nombre_mois)
+        except (TypeError, ValueError):
+            return Response(
+                {"detail": "nombre_mois invalide (1, 2 ou 3)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if nombre_mois not in {1, 2, 3}:
+            return Response(
+                {"detail": "nombre_mois invalide (1, 2 ou 3)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         dossier = get_object_or_404(
             DossierBourse.objects.select_related("annee_universitaire", "etudiant"),
             pk=dossier_id,
@@ -232,6 +246,7 @@ class AdminSendMauripostView(APIView):
                 dossier=dossier,
                 admin_user=request.user,
                 partenaire_id=partenaire_id,
+                nombre_mois=nombre_mois,
             )
         except DjangoValidationError as exc:
             return Response(
@@ -244,7 +259,7 @@ class AdminSendMauripostView(APIView):
                 dossier=dossier,
                 ancien_statut=dossier.statut,
                 nouveau_statut=dossier.statut,
-                commentaire=f"Dossier envoyé à Mauripost (paiement #{paiement.id}).",
+                commentaire=f"Dossier envoyé à Mauripost ({nombre_mois} mois, paiement #{paiement.id}).",
                 auteur=request.user,
             )
         data = PaiementSerializer(paiement).data

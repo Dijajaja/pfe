@@ -136,6 +136,10 @@ export const adminApi = {
     const r = await api.patch(endpoints.admin.userDetail(id), payload);
     return r.data;
   },
+  async deleteUser(id) {
+    await api.delete(endpoints.admin.userDetail(id));
+    return true;
+  },
   async importUsersCsv(file) {
     const form = new FormData();
     form.append("file", file);

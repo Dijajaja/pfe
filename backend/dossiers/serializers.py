@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from django.db import transaction
 from django.utils import timezone
@@ -10,6 +11,7 @@ from dossiers.models import (
     DossierHistorique,
     Document,
     MessageReclamation,
+    NiveauEtude,
     Reclamation,
     StatutDossier,
 )
@@ -55,6 +57,7 @@ class DossierBourseSerializer(serializers.ModelSerializer):
             "statut_paiement",
             "workflow_statut",
             "date_soumission",
+            "niveau",
             "numero_cni",
             "telephone",
             "commentaire_admin",
@@ -114,6 +117,12 @@ class DossierBourseSerializer(serializers.ModelSerializer):
                 default_annee.save(update_fields=["actif", "est_courante"])
             return default_annee
 
+    def _montant_from_niveau(self, niveau: str) -> Decimal:
+        normalized = str(niveau or "").strip().upper()
+        if normalized == NiveauEtude.L3:
+            return Decimal("1650.00")
+        return Decimal("1350.00")
+
     def create(self, validated_data):
         request = self.context.get("request")
         user = request.user
@@ -122,6 +131,8 @@ class DossierBourseSerializer(serializers.ModelSerializer):
         if not validated_data.get("annee_universitaire"):
             validated_data["annee_universitaire"] = self._get_or_create_default_annee()
         validated_data["etudiant"] = user
+        niveau = validated_data.get("niveau", NiveauEtude.L1)
+        validated_data["montant_bourse"] = self._montant_from_niveau(niveau)
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
@@ -129,6 +140,8 @@ class DossierBourseSerializer(serializers.ModelSerializer):
         user = request.user
         if not validated_data.get("annee_universitaire") and not instance.annee_universitaire_id:
             validated_data["annee_universitaire"] = self._get_or_create_default_annee()
+        target_niveau = validated_data.get("niveau", instance.niveau)
+        validated_data["montant_bourse"] = self._montant_from_niveau(target_niveau)
         new_statut = validated_data.get("statut", instance.statut)
         if user.role == User.Role.ETUDIANT:
             allowed = {StatutDossier.BROUILLON, StatutDossier.SOUMIS}

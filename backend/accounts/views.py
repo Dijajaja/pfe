@@ -55,10 +55,20 @@ class AdminUsersListView(generics.ListAPIView):
         return qs
 
 
-class AdminUserDetailView(generics.UpdateAPIView):
+class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminUserUpdateSerializer
     permission_classes = (IsAuthenticated, IsAdmin)
     queryset = User.objects.all()
+
+    def destroy(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.id == request.user.id:
+            return Response(
+                {"detail": "Vous ne pouvez pas supprimer votre propre compte."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AdminImportEtudiantsCsvView(APIView):

@@ -50,6 +50,7 @@ export function StudentDossierPage() {
   const [form, setForm] = useState({
     numero_cni: "",
     telephone: "",
+    niveau: "L1",
   });
   const [typePiece, setTypePiece] = useState("CNI");
   const [files, setFiles] = useState([]);
@@ -74,6 +75,7 @@ export function StudentDossierPage() {
       ...f,
       numero_cni: currentDossier.numero_cni ?? "",
       telephone: currentDossier.telephone ?? "",
+      niveau: currentDossier.niveau ?? "L1",
     }));
   }, [currentDossier?.id]);
 
@@ -91,6 +93,7 @@ export function StudentDossierPage() {
       statut: "SOUMIS",
       numero_cni: form.numero_cni,
       telephone: form.telephone,
+      niveau: form.niveau,
     };
   }
 
@@ -225,6 +228,20 @@ export function StudentDossierPage() {
                     placeholder="Ex. 45 XX XX XX"
                     autoComplete="tel"
                   />
+                </InfoField>
+                <InfoField
+                  label="Niveau d'étude"
+                  icon={<User size={20} strokeWidth={2} aria-hidden />}
+                >
+                  <select
+                    className="form-select form-select-sm"
+                    value={form.niveau}
+                    onChange={(e) => setForm((f) => ({ ...f, niveau: e.target.value }))}
+                  >
+                    <option value="L1">L1</option>
+                    <option value="L2">L2</option>
+                    <option value="L3">L3</option>
+                  </select>
                 </InfoField>
               </div>
 

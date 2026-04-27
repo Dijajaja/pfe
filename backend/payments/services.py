@@ -139,9 +139,12 @@ def envoyer_dossier_a_mauripost(
     dossier: DossierBourse,
     admin_user: User,
     partenaire_id: int | None = None,
+    nombre_mois: int = 1,
 ) -> tuple[Paiement, bool]:
     if dossier.statut != StatutDossier.VALIDE:
         raise ValidationError("Seuls les dossiers validés peuvent être envoyés.")
+    if nombre_mois not in {1, 2, 3}:
+        raise ValidationError("Le nombre de mois doit être 1, 2 ou 3.")
 
     partenaire = choisir_partenaire_mauripost(partenaire_id)
     existing = (
@@ -153,14 +156,15 @@ def envoyer_dossier_a_mauripost(
     if existing:
         return existing, False
 
-    montant = dossier.montant_bourse
+    montant_mensuel = dossier.montant_bourse
+    montant = montant_mensuel * Decimal(nombre_mois)
     if montant <= 0:
         raise ValidationError("Montant de bourse invalide pour créer un paiement.")
 
     liste = ListeBeneficiaires.objects.create(
         annee_universitaire=dossier.annee_universitaire,
         partenaire=partenaire,
-        periode=f"Envoi CNOU {timezone.localdate().isoformat()}",
+        periode=f"Envoi CNOU {timezone.localdate().isoformat()} ({nombre_mois} mois)",
     )
     paiement = Paiement(
         liste=liste,

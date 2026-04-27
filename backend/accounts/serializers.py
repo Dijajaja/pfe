@@ -1,4 +1,5 @@
 from django.contrib.auth.password_validation import validate_password
+from django.db import IntegrityError, transaction
 from rest_framework import serializers
 
 from accounts.models import EtudiantProfile, User
@@ -37,6 +38,12 @@ class InscriptionEtudiantSerializer(serializers.Serializer):
         validate_password(value)
         return value
 
+    def validate_matricule(self, value):
+        normalized = (value or "").strip()
+        if EtudiantProfile.objects.filter(matricule__iexact=normalized).exists():
+            raise serializers.ValidationError("Ce matricule est déjà utilisé.")
+        return normalized
+
     def create(self, validated_data):
         profile_data = {
             "matricule": validated_data.pop("matricule"),
@@ -44,9 +51,18 @@ class InscriptionEtudiantSerializer(serializers.Serializer):
             "filiere": validated_data.pop("filiere"),
         }
         password = validated_data.pop("password")
-        user = User.objects.create_user(password=password, role=User.Role.ETUDIANT, **validated_data)
-        EtudiantProfile.objects.create(user=user, **profile_data)
-        return user
+        try:
+            with transaction.atomic():
+                user = User.objects.create_user(password=password, role=User.Role.ETUDIANT, **validated_data)
+                EtudiantProfile.objects.create(user=user, **profile_data)
+                return user
+        except IntegrityError as exc:
+            message = str(exc).lower()
+            if "matricule" in message:
+                raise serializers.ValidationError({"matricule": ["Ce matricule est déjà utilisé."]}) from exc
+            if "email" in message:
+                raise serializers.ValidationError({"email": ["Un compte existe déjà avec cet e-mail."]}) from exc
+            raise serializers.ValidationError("Inscription impossible pour le moment. Réessayez plus tard.") from exc
 
 
 class AdminUserSerializer(serializers.ModelSerializer):

@@ -59,6 +59,7 @@ export function AdminDossiersPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("date_desc");
   const [comment, setComment] = useState("");
+  const [nombreMois, setNombreMois] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
   const [pendingStatus, setPendingStatus] = useState("VALIDE");
   const [page, setPage] = useState(1);
@@ -97,7 +98,7 @@ export function AdminDossiersPage() {
     onError: (err) => pushError(getApiErrorMessage(err, "Échec mise à jour dossier.")),
   });
   const sendMutation = useMutation({
-    mutationFn: ({ id }) => adminApi.sendDossierToMauripost(id),
+    mutationFn: ({ id, payload }) => adminApi.sendDossierToMauripost(id, payload),
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: ["admin", "dossiers"] });
       await qc.invalidateQueries({ queryKey: ["admin", "dashboard"] });
@@ -130,6 +131,10 @@ export function AdminDossiersPage() {
 
   const selected = rows.find((r) => r.id === selectedId) || null;
 
+  useEffect(() => {
+    setNombreMois(1);
+  }, [selectedId]);
+
   function confirmModalAction() {
     if (!selectedId) return;
     updateMutation.mutate({
@@ -149,7 +154,7 @@ export function AdminDossiersPage() {
 
   function sendToMauripost() {
     if (!selectedId || !selected) return;
-    sendMutation.mutate({ id: selectedId });
+    sendMutation.mutate({ id: selectedId, payload: { nombre_mois: Number(nombreMois) } });
   }
 
   if (dossiersQuery.isError) return <div className="alert alert-danger">{getApiErrorMessage(dossiersQuery.error, "Erreur chargement dossiers.")}</div>;
@@ -255,6 +260,21 @@ export function AdminDossiersPage() {
               <div className="small text-muted mb-3">
                 Statut dossier: <strong>{selected.statut}</strong>
                 {selected.statutPaiement ? ` | Paiement: ${selected.statutPaiement}` : ""}
+              </div>
+              <div className="mb-3">
+                <label className="form-label small">Durée paiement (mois)</label>
+                <select
+                  className="form-select form-select-sm"
+                  value={nombreMois}
+                  onChange={(e) => setNombreMois(Number(e.target.value))}
+                >
+                  <option value={1}>1 mois</option>
+                  <option value={2}>2 mois</option>
+                  <option value={3}>3 mois</option>
+                </select>
+                <div className="small text-muted mt-1">
+                  Montant estimé: <strong>{(selected.montant * Number(nombreMois)).toLocaleString()} MRU</strong>
+                </div>
               </div>
 
               <textarea

@@ -43,6 +43,14 @@ export function AdminUsersPage() {
     },
     onError: (err) => pushError(getApiErrorMessage(err, "Impossible de mettre à jour l’utilisateur.")),
   });
+  const deleteUserMutation = useMutation({
+    mutationFn: (id) => adminApi.deleteUser(id),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      pushSuccess("Utilisateur supprimé.");
+    },
+    onError: (err) => pushError(getApiErrorMessage(err, "Impossible de supprimer l’utilisateur.")),
+  });
 
   const importMutation = useMutation({
     mutationFn: (file) => adminApi.importUsersCsv(file),
@@ -78,6 +86,13 @@ export function AdminUsersPage() {
     setUsers((prev) => [...prev, { id: Date.now(), email: draft.email, role: draft.role, actif: true }]);
     setDraft({ email: "", role: "ETUDIANT" });
     pushInfo("Création locale ajoutée (endpoint création backend non disponible).");
+  }
+
+  function removeUser(id, email) {
+    if (deleteUserMutation.isPending) return;
+    const ok = window.confirm(`Supprimer l'utilisateur ${email} ?`);
+    if (!ok) return;
+    deleteUserMutation.mutate(id);
   }
 
   function parseCsvText(text) {
@@ -179,7 +194,7 @@ export function AdminUsersPage() {
                   <th>Email</th>
                   <th>Rôle</th>
                   <th>Actif</th>
-                  <th></th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,10 +204,20 @@ export function AdminUsersPage() {
                     <td>{u.role}</td>
                     <td>{u.actif ? "Oui" : "Non"}</td>
                     <td>
-                      <button className="btn btn-sm sehily-btn-secondary d-flex align-items-center gap-2" onClick={() => toggleActive(u.id)} disabled={updateUserMutation.isPending}>
-                        {updateUserMutation.isPending ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
-                        {u.actif ? "Désactiver" : "Activer"}
-                      </button>
+                      <div className="d-flex gap-2">
+                        <button className="btn btn-sm sehily-btn-secondary d-flex align-items-center gap-2" onClick={() => toggleActive(u.id)} disabled={updateUserMutation.isPending || deleteUserMutation.isPending}>
+                          {updateUserMutation.isPending ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
+                          {u.actif ? "Désactiver" : "Activer"}
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline-danger d-flex align-items-center gap-2"
+                          onClick={() => removeUser(u.id, u.email)}
+                          disabled={deleteUserMutation.isPending || updateUserMutation.isPending}
+                        >
+                          {deleteUserMutation.isPending ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
+                          Supprimer
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -19,6 +19,12 @@ class StatutDossier(models.TextChoices):
     COMPLEMENT_DEMANDE = "COMPLEMENT_DEMANDE", "Complément demandé"
 
 
+class NiveauEtude(models.TextChoices):
+    L1 = "L1", "L1"
+    L2 = "L2", "L2"
+    L3 = "L3", "L3"
+
+
 class StatutReclamation(models.TextChoices):
     SOUMISE = "SOUMISE", "Soumise"
     EN_COURS = "EN_COURS", "En cours"
@@ -51,6 +57,12 @@ class DossierBourse(models.Model):
         default=StatutDossier.BROUILLON,
     )
     date_soumission = models.DateTimeField(null=True, blank=True)
+    niveau = models.CharField(
+        max_length=2,
+        choices=NiveauEtude.choices,
+        default=NiveauEtude.L1,
+        help_text="Niveau d'étude servant au calcul automatique du montant de bourse.",
+    )
     numero_cni = models.CharField("numéro CNI", max_length=64, blank=True)
     telephone = models.CharField("téléphone", max_length=32, blank=True)
     commentaire_admin = models.TextField(blank=True)
