@@ -69,23 +69,23 @@ export function RegisterPage() {
           >
             <span className="login-pro-chip">
               <UserPlus size={14} />
-              Inscription sécurisée
+              {t("registerChip")}
             </span>
             <h1 className="login-pro-title mt-3">
-              Créez votre compte <span>étudiant</span>.
+              {t("registerHeroTitlePrefix")} <span>{t("registerHeroTitleAccent")}</span>.
             </h1>
             <p className="login-pro-lead">
-              Complétez vos informations académiques pour accéder à votre espace personnel et suivre votre dossier en toute simplicité.
+              {t("registerHeroLead")}
             </p>
             <ul className="login-pro-list">
-              <li><CheckCircle2 size={18} /> Inscription guidée et rapide</li>
-              <li><CheckCircle2 size={18} /> Établissements et filières structurés</li>
-              <li><CheckCircle2 size={18} /> Parcours académique mieux organisé</li>
+              <li><CheckCircle2 size={18} /> {t("registerBenefit1")}</li>
+              <li><CheckCircle2 size={18} /> {t("registerBenefit2")}</li>
+              <li><CheckCircle2 size={18} /> {t("registerBenefit3")}</li>
             </ul>
             <div className="login-pro-metrics mt-4">
-              <span>Traitement rapide</span>
-              <span>Flux sécurisé</span>
-              <span>Assistance continue</span>
+              <span>{t("loginMetric1")}</span>
+              <span>{t("loginMetric2")}</span>
+              <span>{t("loginMetric3")}</span>
             </div>
           </motion.div>
         </div>
@@ -199,16 +199,16 @@ export function RegisterPage() {
 
               <div className="col-12 d-flex flex-wrap gap-2">
                 <button className="btn login-pro-submit" disabled={loading}>
-                  {loading ? "Inscription..." : t("register")} <ArrowRight size={18} />
+                  {loading ? t("registerLoading") : t("register")} <ArrowRight size={18} />
                 </button>
                 <Link className="btn sehily-btn-secondary" to="/auth/login">
-                  Se connecter
+                  {t("ctaLogin")}
                 </Link>
               </div>
               <div className="col-12 text-center small text-muted mt-1">
-                Déjà un compte ?{" "}
+                {t("registerAlreadyAccount")}{" "}
                 <Link className="login-pro-register" to="/auth/login">
-                  Se connecter
+                  {t("ctaLogin")}
                 </Link>
               </div>
             </form>

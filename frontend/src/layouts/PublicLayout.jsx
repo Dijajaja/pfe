@@ -6,7 +6,7 @@ import { setLanguage } from "../i18n/setup";
 import { FallbackBanner } from "../components/ui/FallbackBanner";
 
 export function PublicLayout() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const location = useLocation();
   const isLanding = location.pathname === "/";
 
@@ -19,11 +19,11 @@ export function PublicLayout() {
           </Link>
 
           <nav className="public-nav d-none d-lg-flex align-items-center gap-3">
-            <Link to="/" className="public-nav-link public-nav-link--active">Accueil</Link>
-            <a href="/#about" className="public-nav-link">À propos</a>
-            <a href="/#how-it-works" className="public-nav-link">Comment ça marche</a>
-            <a href="/#faq" className="public-nav-link">FAQ</a>
-            <a href="/#contact" className="public-nav-link">Contact</a>
+            <Link to="/" className="public-nav-link public-nav-link--active">{t("navHome")}</Link>
+            <a href="/#about" className="public-nav-link">{t("navAbout")}</a>
+            <a href="/#how-it-works" className="public-nav-link">{t("navHowItWorks")}</a>
+            <a href="/#faq" className="public-nav-link">{t("navFaq")}</a>
+            <a href="/#contact" className="public-nav-link">{t("navContact")}</a>
           </nav>
 
           <div className="d-flex align-items-center gap-2 flex-shrink-0">

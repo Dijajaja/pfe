@@ -1,26 +1,27 @@
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { studentApi } from "../api/webFeaturesApi";
 import { useAppToast } from "../../components/ui/AppToastProvider";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { getApiErrorMessage } from "../../lib/apiError";
 
-const ORDERED_STEPS = [
-  { key: "BROUILLON", label: "Brouillon créé" },
-  { key: "SOUMIS", label: "Dossier soumis" },
-  { key: "EN_INSTRUCTION", label: "En instruction" },
-  { key: "VALIDE", label: "Validé CNOU" },
-  { key: "REJETE", label: "Rejeté" },
-];
-
-function StatusBadge({ statut }) {
-  if (statut === "EN_INSTRUCTION") return <span className="sehily-badge sehily-badge--warn">En instruction</span>;
-  if (statut === "VALIDE") return <span className="sehily-badge sehily-badge--ok">Validé</span>;
+function StatusBadge({ statut, t }) {
+  if (statut === "EN_INSTRUCTION") return <span className="sehily-badge sehily-badge--warn">{t("stepInInstruction")}</span>;
+  if (statut === "VALIDE") return <span className="sehily-badge sehily-badge--ok">{t("statusValidated")}</span>;
   return <span className="sehily-badge sehily-badge--danger">{statut}</span>;
 }
 
 export function StudentDashboardPage() {
+  const { t } = useTranslation();
+  const ORDERED_STEPS = [
+    { key: "BROUILLON", label: t("stepDraftCreated") },
+    { key: "SOUMIS", label: t("stepSubmitted") },
+    { key: "EN_INSTRUCTION", label: t("stepInInstruction") },
+    { key: "VALIDE", label: t("stepValidatedCnou") },
+    { key: "REJETE", label: t("stepRejected") },
+  ];
   const { pushError } = useAppToast();
   const { data, isLoading, error } = useQuery({
     queryKey: ["student", "dossiers"],
@@ -55,8 +56,8 @@ export function StudentDashboardPage() {
   if (!dossier) {
     return (
       <div className="sehily-surface p-4">
-        <h1 className="h5 mb-2">Aucun dossier trouvé</h1>
-        <div className="text-muted">Crée ton premier dossier dans la section “Dossier & documents”.</div>
+        <h1 className="h5 mb-2">{t("studentNoDossierTitle")}</h1>
+        <div className="text-muted">{t("studentNoDossierDesc")}</div>
       </div>
     );
   }
@@ -64,28 +65,28 @@ export function StudentDashboardPage() {
   return (
     <div className="row g-4">
       <div className="col-12">
-        <h1 className="h4 mb-1">Espace étudiant — Dashboard</h1>
-        <div className="text-muted">Résumé dossier, statut courant et timeline.</div>
+        <h1 className="h4 mb-1">{t("studentDashboardTitle")}</h1>
+        <div className="text-muted">{t("studentDashboardSubtitle")}</div>
       </div>
 
       <div className="col-12 col-lg-4">
         <div className="sehily-surface p-3 h-100">
-          <div className="text-muted small">Numéro dossier</div>
+          <div className="text-muted small">{t("studentDossierNumber")}</div>
           <div className="fw-bold">DOS-{String(dossier.id).padStart(6, "0")}</div>
           <hr />
-          <div className="text-muted small">Année</div>
+          <div className="text-muted small">{t("studentYear")}</div>
           <div className="fw-semibold">{dossier.annee_universitaire}</div>
           <hr />
-          <div className="text-muted small">Montant prévu</div>
+          <div className="text-muted small">{t("studentExpectedAmount")}</div>
           <div className="fw-semibold">{Number(dossier.montant_bourse || 0).toLocaleString()} MRU</div>
           <hr />
-          <StatusBadge statut={dossier.statut} />
+          <StatusBadge statut={dossier.statut} t={t} />
         </div>
       </div>
 
       <div className="col-12 col-lg-8">
         <div className="sehily-surface p-3 h-100">
-          <div className="fw-bold mb-3">Timeline</div>
+          <div className="fw-bold mb-3">{t("timeline")}</div>
           <div className="d-grid gap-2">
             {timeline.map((step) => (
               <div key={step.key} className="d-flex align-items-center justify-content-between border rounded-3 px-3 py-2">
@@ -104,7 +105,7 @@ export function StudentDashboardPage() {
                         : "sehily-badge--danger"
                   }`}
                 >
-                  {step.statut === "done" ? "Terminé" : step.statut === "current" ? "En cours" : "À venir"}
+                  {step.statut === "done" ? t("timelineDone") : step.statut === "current" ? t("timelineCurrent") : t("timelineUpcoming")}
                 </span>
               </div>
             ))}

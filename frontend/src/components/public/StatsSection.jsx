@@ -1,14 +1,16 @@
 import { FiFileText, FiSmile, FiUsers, FiSend } from "react-icons/fi";
 import { motion } from "motion/react";
-
-const stats = [
-  { icon: FiUsers, value: "10 000+", label: "Étudiants" },
-  { icon: FiFileText, value: "25 000+", label: "Dossiers" },
-  { icon: FiSmile, value: "95%", label: "Satisfaction" },
-  { icon: FiSend, value: "-80%", label: "Déplacements" },
-];
+import { useTranslation } from "react-i18next";
 
 export function StatsSection() {
+  const { t } = useTranslation();
+  const stats = [
+    { icon: FiUsers, value: "10 000+", label: t("statsStudents") },
+    { icon: FiFileText, value: "25 000+", label: t("statsDossiers") },
+    { icon: FiSmile, value: "95%", label: t("statsSatisfaction") },
+    { icon: FiSend, value: "-80%", label: t("statsTravels") },
+  ];
+
   return (
     <section className="py-16 bg-primary">
       <div className="container-custom">

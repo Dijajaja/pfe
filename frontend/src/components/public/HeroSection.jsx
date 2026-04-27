@@ -1,8 +1,16 @@
 import { Link } from "react-router-dom";
 import { FiArrowRight, FiCheckCircle, FiShield, FiZap, FiLock, FiBell } from "react-icons/fi";
 import { motion as Motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 export function HeroSection() {
+  const { t } = useTranslation();
+  const kpis = [
+    { icon: FiZap, title: t("heroKpiTimeTitle"), sub: t("heroKpiTimeSub") },
+    { icon: FiLock, title: t("heroKpiSecureTitle"), sub: t("heroKpiSecureSub") },
+    { icon: FiBell, title: t("heroKpiNotifTitle"), sub: t("heroKpiNotifSub") },
+  ];
+
   return (
     <section className="relative pt-36 pb-20 overflow-hidden" id="home">
       <div className="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl -z-10" />
@@ -17,16 +25,16 @@ export function HeroSection() {
           >
             <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border" style={{ backgroundColor: "rgba(255,255,255,0.14)", color: "#FFFFFF", borderColor: "rgba(255,255,255,0.24)" }}>
               <FiShield size={14} />
-              Nouveau: Suivi de dossier en temps réel
+              {t("heroBadgeNew")}
             </span>
 
             <h1 className="text-5xl md:text-7xl font-display font-extrabold text-white leading-[1.1] mb-6">
-              Votre bourse, <br />
-              <span style={{ color: "#9FE1CB" }} className="italic">notre engagement</span>
+              {t("heroTitleLine1")} <br />
+              <span style={{ color: "#9FE1CB" }} className="italic">{t("heroTitleLine2")}</span>
             </h1>
 
             <p className="text-xl leading-relaxed max-w-xl mb-8" style={{ color: "rgba(255,255,255,0.82)" }}>
-              Une plateforme digitale moderne pour simplifier vos démarches et vous accompagner à chaque étape du succès universitaire.
+              {t("heroLead")}
             </p>
 
             <div className="flex items-center gap-4 p-4 rounded-2xl border shadow-[0_14px_35px_-20px_rgba(2,8,23,0.35)] mb-8 max-w-md" style={{ backgroundColor: "rgba(255,255,255,0.96)", borderColor: "rgba(255,255,255,0.35)" }}>
@@ -34,8 +42,8 @@ export function HeroSection() {
                 <FiCheckCircle size={24} />
               </div>
               <div>
-                <p className="font-bold text-slate-900">Vérifiez votre éligibilité</p>
-                <p className="text-sm text-slate-500">C&apos;est rapide, sans engagement et sécurisé.</p>
+                <p className="font-bold text-slate-900">{t("heroCardTitle")}</p>
+                <p className="text-sm text-slate-500">{t("heroCardSubtitle")}</p>
               </div>
             </div>
 
@@ -51,22 +59,18 @@ export function HeroSection() {
                   e.currentTarget.style.backgroundColor = "#C9614A";
                 }}
               >
-                Vérifier mon éligibilité
+                {t("ctaCheck")}
                 <div className="group-hover:translate-x-1 transition-transform">
                   <FiArrowRight size={18} />
                 </div>
               </Link>
               <Link to="/auth/login" className="px-8 no-underline inline-flex items-center justify-center gap-2 font-bold py-3.5 rounded-xl transition-all duration-300" style={{ border: "1px solid #2E7D72", color: "#FFFFFF", backgroundColor: "rgba(255,255,255,0.04)" }}>
-                Se connecter
+                {t("ctaLogin")}
               </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {[
-                { icon: FiZap, title: "Gain de temps", sub: "Moins de déplacements" },
-                { icon: FiLock, title: "Sécurisé", sub: "Données protégées" },
-                { icon: FiBell, title: "Notifications", sub: "Suivi en temps réel" },
-              ].map((item, idx) => (
+              {kpis.map((item, idx) => (
                 <div key={idx} className="flex flex-col gap-1 rounded-xl border px-3 py-2" style={{ borderColor: "rgba(255,255,255,0.16)", backgroundColor: "rgba(255,255,255,0.04)" }}>
                   <div className="flex items-center gap-2" style={{ color: "#9FE1CB" }}>
                     <item.icon size={16} />
@@ -89,36 +93,36 @@ export function HeroSection() {
               <div className="h-full bg-slate-50 p-6 pt-12 flex flex-col gap-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <p className="text-xs text-slate-400">Bonjour,</p>
+                    <p className="text-xs text-slate-400">{t("heroHello")}</p>
                     <p className="font-bold text-slate-900">Diary Ba</p>
                   </div>
                   <div className="w-8 h-8 bg-slate-200 rounded-full" />
                 </div>
 
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Statut du dossier</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">{t("heroStatusTitle")}</p>
                   <div className="flex items-center justify-between">
-                    <p className="font-bold text-slate-900">Éligible</p>
-                    <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[10px] font-bold">ACTIF</span>
+                    <p className="font-bold text-slate-900">{t("heroStatusValue")}</p>
+                    <span className="px-2 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[10px] font-bold">{t("heroStatusActive")}</span>
                   </div>
                 </div>
 
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-3">Progression</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase mb-3">{t("heroProgressTitle")}</p>
                   <div className="flex justify-between gap-1">
                     {[1, 2, 3, 4].map((s) => (
                       <div key={s} className={`h-1.5 rounded-full flex-1 ${s <= 2 ? "bg-primary" : "bg-slate-100"}`} />
                     ))}
                   </div>
-                  <p className="text-[10px] text-primary font-bold mt-2 text-right">Traitement: 50%</p>
+                  <p className="text-[10px] text-primary font-bold mt-2 text-right">{t("heroProgressLabel")}</p>
                 </div>
 
                 <div className="mt-auto">
                   <div className="h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary font-bold text-xs mb-2">
-                    Dépôt du dossier
+                    {t("heroDeposit")}
                   </div>
                   <div className="h-10 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs">
-                    Suivre mes paiements
+                    {t("heroPayments")}
                   </div>
                 </div>
               </div>
@@ -133,8 +137,8 @@ export function HeroSection() {
                 <FiZap size={18} />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">Vitesse</p>
-                <p className="text-[10px] text-slate-400">Traitement en 48h</p>
+                <p className="text-xs font-bold text-slate-900">{t("heroSpeedTitle")}</p>
+                <p className="text-[10px] text-slate-400">{t("heroSpeedSub")}</p>
               </div>
             </Motion.div>
 
@@ -147,8 +151,8 @@ export function HeroSection() {
                 <FiShield size={18} />
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-900">Confiance</p>
-                <p className="text-[10px] text-slate-400">Paiement garanti</p>
+                <p className="text-xs font-bold text-slate-900">{t("heroTrustTitle")}</p>
+                <p className="text-[10px] text-slate-400">{t("heroTrustSub")}</p>
               </div>
             </Motion.div>
           </Motion.div>

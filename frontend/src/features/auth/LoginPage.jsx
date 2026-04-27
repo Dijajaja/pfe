@@ -51,23 +51,23 @@ export function LoginPage() {
           >
             <span className="login-pro-chip">
               <ShieldCheck size={14} />
-              Espace étudiant sécurisé
+              {t("loginChip")}
             </span>
             <h1 className="login-pro-title mt-3">
-              Gérez votre bourse en <span>toute simplicité</span>.
+              {t("loginHeroTitlePrefix")} <span>{t("loginHeroTitleAccent")}</span>.
             </h1>
             <p className="login-pro-lead">
-              Accédez à votre dossier, suivez vos paiements et recevez des notifications en temps réel sur l&apos;état de votre demande.
+              {t("loginHeroLead")}
             </p>
             <ul className="login-pro-list">
-              <li><CheckCircle2 size={18} /> Suivi en temps réel des dossiers</li>
-              <li><CheckCircle2 size={18} /> Paiements bancaires sécurisés</li>
-              <li><CheckCircle2 size={18} /> Support dédié 24/7</li>
+              <li><CheckCircle2 size={18} /> {t("loginBenefit1")}</li>
+              <li><CheckCircle2 size={18} /> {t("loginBenefit2")}</li>
+              <li><CheckCircle2 size={18} /> {t("loginBenefit3")}</li>
             </ul>
             <div className="login-pro-metrics mt-4">
-              <span>Traitement rapide</span>
-              <span>Flux sécurisé</span>
-              <span>Assistance continue</span>
+              <span>{t("loginMetric1")}</span>
+              <span>{t("loginMetric2")}</span>
+              <span>{t("loginMetric3")}</span>
             </div>
           </motion.div>
         </div>
@@ -80,7 +80,7 @@ export function LoginPage() {
             className="login-pro-card"
           >
             <h2 className="login-pro-card-title">{t("login")}</h2>
-            <p className="text-muted mb-4">Heureux de vous revoir !</p>
+            <p className="text-muted mb-4">{t("loginWelcomeBack")}</p>
 
             {error ? <div className="alert alert-danger">{error}</div> : null}
 
@@ -105,7 +105,7 @@ export function LoginPage() {
                 <div className="d-flex justify-content-between align-items-center mb-1">
                   <label className="form-label fw-semibold mb-0">{t("password")}</label>
                   <Link className="login-pro-forgot" to="/auth/reset">
-                    Oublié ?
+                    {t("loginForgot")}
                   </Link>
                 </div>
                 <div className="login-pro-input-wrap">
@@ -138,18 +138,18 @@ export function LoginPage() {
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
                   />
-                  <span>Rester connecté</span>
+                  <span>{t("loginRememberMe")}</span>
                 </label>
               </div>
 
               <button className="btn login-pro-submit" disabled={loading}>
-                {loading ? "Connexion..." : "Se connecter"} <ArrowRight size={18} />
+                {loading ? t("loginLoading") : t("ctaLogin")} <ArrowRight size={18} />
               </button>
 
               <div className="text-center small text-muted mt-1">
-                Vous souhaitez vérifier votre statut ?{" "}
+                {t("loginCheckStatus")}{" "}
                 <Link className="login-pro-register" to="/eligibilite">
-                  Vérifier votre éligibilité
+                  {t("ctaCheck")}
                 </Link>
               </div>
             </form>

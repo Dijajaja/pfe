@@ -1,21 +1,23 @@
 import { FiCreditCard, FiFileText, FiSearch, FiUserPlus, FiHome } from "react-icons/fi";
 import { motion } from "motion/react";
-
-const steps = [
-  { icon: FiSearch, title: "vérification éligibilité", text: "Entrez vos informations pour vérifier si vous êtes éligible à la bourse." },
-  { icon: FiUserPlus, title: "Créer un compte", text: "Si vous êtes éligible, créez votre compte en quelques minutes." },
-  { icon: FiFileText, title: "Dossier Déposer", text: "Remplissez le formulaire et téléversez vos pièces justificatives." },
-  { icon: FiHome, title: "Traitement", text: "Votre dossier est étudié et validé par les équipes du CNOU." },
-  { icon: FiCreditCard, title: "paiement", text: "Une fois validé, le paiement est effectué par notre partenaire." },
-];
+import { useTranslation } from "react-i18next";
 
 export function StepsSection() {
+  const { t } = useTranslation();
+  const steps = [
+    { icon: FiSearch, title: t("step1Title"), text: t("step1Text") },
+    { icon: FiUserPlus, title: t("step2Title"), text: t("step2Text") },
+    { icon: FiFileText, title: t("step3Title"), text: t("step3Text") },
+    { icon: FiHome, title: t("step4Title"), text: t("step4Text") },
+    { icon: FiCreditCard, title: t("step5Title"), text: t("step5Text") },
+  ];
+
   return (
     <section id="how-it-works" className="py-24 bg-white relative">
       <div className="container-custom">
         <div className="text-center mb-20">
-          <h2 className="section-title-center text-3xl md:text-4xl">Comment ça marche ?</h2>
-          <div className="text-slate-400 font-medium tracking-wide">Un processus 100% digitalisé</div>
+          <h2 className="section-title-center text-3xl md:text-4xl">{t("stepsSectionTitle")}</h2>
+          <div className="text-slate-400 font-medium tracking-wide">{t("stepsSectionSubtitle")}</div>
         </div>
 
         <div className="relative">

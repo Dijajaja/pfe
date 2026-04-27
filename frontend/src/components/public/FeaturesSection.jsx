@@ -1,28 +1,31 @@
 import { FiGlobe, FiMapPin, FiShield, FiZap } from "react-icons/fi";
 import { motion } from "motion/react";
-
-const features = [
-  { icon: FiZap, title: "Plus rapide", text: "Des démarches simplifiées pour un traitement accéléré." },
-  { icon: FiShield, title: "Plus sûr", text: "Sécurité et confidentialité de vos données garanties." },
-  { icon: FiMapPin, title: "Plus transparent", text: "Suivez l'avancement de votre dossier en temps réel." },
-  { icon: FiGlobe, title: "Accessible partout", text: "Utilisez la plateforme depuis tous vos appareils." },
-];
+import { useTranslation } from "react-i18next";
 
 export function FeaturesSection() {
+  const { t } = useTranslation();
+  const features = [
+    { icon: FiZap, title: t("featureFastTitle"), text: t("featureFastText") },
+    { icon: FiShield, title: t("featureSafeTitle"), text: t("featureSafeText") },
+    { icon: FiMapPin, title: t("featureTransparentTitle"), text: t("featureTransparentText") },
+    { icon: FiGlobe, title: t("featureAccessibleTitle"), text: t("featureAccessibleText") },
+  ];
+  const bullets = [t("featureBullet1"), t("featureBullet2"), t("featureBullet3")];
+
   return (
     <section id="about" className="py-24 bg-slate-50">
       <div className="container-custom">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="section-title text-3xl md:text-5xl leading-tight">
-              Pourquoi choisir <span className="text-primary italic">Sehily</span> ?
+              {t("featuresTitlePrefix")} <span className="text-primary italic">Sehily</span> ?
             </h2>
             <p className="text-lg text-slate-600 mb-10 leading-relaxed">
-              Nous avons repensé la gestion des bourses pour offrir une expérience digitale fluide, éliminant les barrières administratives traditionnelles.
+              {t("featuresLead")}
             </p>
 
             <div className="space-y-6">
-              {["Innovation digitale au service de l'éducation", "Traitement automatisé des données", "Accès direct aux partenaires de paiement"].map((item, i) => (
+              {bullets.map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                     <FiShield size={14} />
