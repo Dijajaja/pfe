@@ -8,7 +8,6 @@ import {
   Banknote,
   Calendar,
   CheckCircle2,
-  ChevronDown,
   Clock3,
   FileText,
   Search,
@@ -27,7 +26,9 @@ const WILAYAS = [
   "Hodh Ech Chargui",
   "Hodh El Gharbi",
   "Inchiri",
-  "Nouakchott",
+  "Nouakchott-Nord",
+  "Nouakchott-Ouest",
+  "Nouakchott-Sud",
   "Tagant",
   "Tiris Zemmour",
   "Trarza",
@@ -93,15 +94,15 @@ export function EligibilitePage() {
   }
 
   return (
-    <div className="rounded-4 p-2 p-md-3" style={{ backgroundColor: "#f5f4ef" }}>
+    <div className="rounded-4 p-2 p-md-3 public-modern eligibility-pro-page eligibility-pro-bg">
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-4 p-md-5 rounded-5 border border-slate-100 shadow-sm mb-4"
+        className="eligibility-pro-card p-4 p-md-5 rounded-5 mb-4"
       >
         <div className="d-flex flex-column flex-lg-row justify-content-between gap-3">
           <div>
-            <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill border border-emerald-100 bg-emerald-50 text-emerald-700 small fw-bold mb-3">
+            <div className="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill eligibility-pro-chip small fw-bold mb-3">
               <ShieldCheck size={14} />
               {t("secureVerification")}
             </div>
@@ -128,7 +129,7 @@ export function EligibilitePage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.05 }}
             onSubmit={onSubmit}
-            className="bg-white p-4 p-md-5 rounded-5 border border-slate-100 shadow-sm"
+            className="eligibility-pro-card p-4 p-md-5 rounded-5"
           >
             <h2 className="h4 fw-bold mb-4">{t("personalInfo")}</h2>
 
@@ -157,36 +158,30 @@ export function EligibilitePage() {
                   />
                   <Calendar size={18} className="position-absolute top-50 end-0 translate-middle-y me-3 text-muted" />
                 </div>
-                {age !== null && <div className="small text-success mt-2 fw-semibold">{t("computedAge", { age })}</div>}
+                {age !== null && <div className="small eligibility-pro-success mt-2 fw-semibold">{t("computedAge", { age })}</div>}
               </div>
 
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">{t("fieldWilayaBac")}</label>
-                <div className="position-relative">
-                  <select className="form-select pe-5" value={wilaya} onChange={(e) => setWilaya(e.target.value)} required>
-                    <option value="">{t("selectPlaceholder")}</option>
-                    {WILAYAS.map((w) => (
-                      <option key={w} value={w}>
-                        {w}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={18} className="position-absolute top-50 end-0 translate-middle-y me-3 text-muted" />
-                </div>
+                <select className="form-select" value={wilaya} onChange={(e) => setWilaya(e.target.value)} required>
+                  <option value="">{t("selectPlaceholder")}</option>
+                  {WILAYAS.map((w) => (
+                    <option key={w} value={w}>
+                      {w}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="col-12 col-md-6">
                 <label className="form-label fw-semibold">{t("fieldLevel")}</label>
-                <div className="position-relative">
-                  <select className="form-select pe-5" value={niveau} onChange={(e) => setNiveau(e.target.value)} required>
-                    {NIVEAUX.map((n) => (
-                      <option key={n.value} value={n.value}>
-                        {n.label}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={18} className="position-absolute top-50 end-0 translate-middle-y me-3 text-muted" />
-                </div>
+                <select className="form-select" value={niveau} onChange={(e) => setNiveau(e.target.value)} required>
+                  {NIVEAUX.map((n) => (
+                    <option key={n.value} value={n.value}>
+                      {n.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -207,24 +202,24 @@ export function EligibilitePage() {
             initial={{ opacity: 0, x: 14 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-white p-4 p-md-5 rounded-5 border border-slate-100 shadow-sm h-100"
+            className="eligibility-pro-card p-4 p-md-5 rounded-5 h-100"
           >
             <h3 className="h5 fw-bold mb-4">{t("howItWorks")}</h3>
             <div className="d-grid gap-3">
               <div className="d-flex align-items-start gap-2">
-                <FileText size={16} className="mt-1 text-success" />
+                <FileText size={16} className="mt-1 eligibility-pro-icon" />
                 <span className="small text-muted">{t("sidebarItem0")}</span>
               </div>
               <div className="d-flex align-items-start gap-2">
-                <Clock3 size={16} className="mt-1 text-success" />
+                <Clock3 size={16} className="mt-1 eligibility-pro-icon" />
                 <span className="small text-muted">{t("sidebarItem1")}</span>
               </div>
               <div className="d-flex align-items-start gap-2">
-                <CheckCircle2 size={16} className="mt-1 text-success" />
+                <CheckCircle2 size={16} className="mt-1 eligibility-pro-icon" />
                 <span className="small text-muted">{t("sidebarItem2")}</span>
               </div>
             </div>
-            <div className="alert alert-light border small mt-4 mb-0">
+            <div className="alert eligibility-pro-note small mt-4 mb-0">
               <AlertCircle size={15} className="me-2" />
               {t("officialDocumentsNote")}
             </div>
@@ -240,9 +235,9 @@ export function EligibilitePage() {
       ) : null}
 
       {result?.ok ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 bg-white p-4 p-md-5 rounded-5 border border-success-subtle shadow-sm text-center">
-          <div className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle" style={{ width: 74, height: 74, background: "#f1faf6" }}>
-            <Banknote size={36} className="text-success" />
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 eligibility-pro-result-ok p-4 p-md-5 rounded-5 text-center">
+          <div className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle eligibility-pro-result-icon">
+            <Banknote size={36} className="eligibility-pro-icon" />
           </div>
           <div className="fw-bold text-uppercase mb-2">{t("eligibleScholarshipTitle")}</div>
           {result.i18nKey ? <p className="text-muted mb-3">{t(result.i18nKey, result.i18nParams || {})}</p> : null}
@@ -254,8 +249,8 @@ export function EligibilitePage() {
       ) : null}
 
       {result && !result.ok ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-4 rounded-4 border border-danger-subtle bg-white">
-          <div className="fw-bold text-danger mb-2 d-flex align-items-center gap-2">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-4 rounded-4 eligibility-pro-result-ko">
+          <div className="fw-bold eligibility-pro-danger mb-2 d-flex align-items-center gap-2">
             <AlertCircle size={17} /> {t("eligibleNo")}
           </div>
           <div className="text-muted">{t(result.i18nKey, result.i18nParams || {})}</div>

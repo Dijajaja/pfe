@@ -1,4 +1,3 @@
-import { FiFacebook, FiInstagram, FiTwitter, FiYoutube } from "react-icons/fi";
 import logoWeb from "../../assets/logo-web.png";
 
 export function FooterSection() {
@@ -26,26 +25,6 @@ export function FooterSection() {
             <p className="text-sm leading-relaxed mb-6" style={{ color: "#9FE1CB" }}>
               Plateforme officielle de gestion des bourses universitaires en Mauritanie. Simplifier, sécuriser, accompagner.
             </p>
-            <div className="flex justify-center md:justify-start gap-3 md:gap-4">
-              {[FiFacebook, FiTwitter, FiInstagram, FiYoutube].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="w-10 h-10 rounded-full flex items-center justify-center transition-colors no-underline"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#FFFFFF", border: "1px solid #1B4D4A" }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#C9614A";
-                    e.currentTarget.style.borderColor = "#C9614A";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.08)";
-                    e.currentTarget.style.borderColor = "#1B4D4A";
-                  }}
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
-            </div>
           </div>
 
           <div className="text-center md:text-left">

@@ -66,19 +66,17 @@ export function Navbar() {
               </a>
               );
             })}
-            <div className="flex items-center gap-1 border rounded-full px-1.5 py-1" style={{ borderColor: "rgba(255,255,255,.25)", background: "rgba(255,255,255,.08)" }}>
+            <div className="btn-group" role="group" aria-label="language">
               <button
                 type="button"
-                className={`text-xs px-2 py-1 rounded-full transition-colors ${i18n.language === "fr" ? "font-semibold" : ""}`}
-                style={i18n.language === "fr" ? { background: "#FFFFFF", color: "#1B4D4A" } : { color: "#FFFFFF" }}
+                className={`btn btn-sm ${i18n.language === "fr" ? "btn-light" : "btn-outline-light"}`}
                 onClick={() => setLanguage("fr")}
               >
                 FR
               </button>
               <button
                 type="button"
-                className={`text-xs px-2 py-1 rounded-full transition-colors ${i18n.language === "ar" ? "font-semibold" : ""}`}
-                style={i18n.language === "ar" ? { background: "#FFFFFF", color: "#1B4D4A" } : { color: "#FFFFFF" }}
+                className={`btn btn-sm ${i18n.language === "ar" ? "btn-light" : "btn-outline-light"}`}
                 onClick={() => setLanguage("ar")}
               >
                 AR
@@ -118,16 +116,20 @@ export function Navbar() {
             style={{ backgroundColor: "#1B4D4A", borderColor: "rgba(255,255,255,.16)" }}
           >
             <div className="container-custom py-5 flex flex-col gap-3">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-base font-medium !text-white visited:!text-white no-underline"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.name}
-                </a>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = activeHash === link.href.replace("/#", "#");
+                return (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    className="text-base font-medium no-underline transition-colors"
+                    style={{ color: isActive ? "#C9614A" : "#FFFFFF" }}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.name}
+                  </a>
+                );
+              })}
               <hr style={{ borderColor: "rgba(255,255,255,.16)" }} />
               <div className="flex items-center gap-2">
                 <button

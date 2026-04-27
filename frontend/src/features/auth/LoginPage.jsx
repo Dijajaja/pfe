@@ -40,8 +40,9 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login-pro-page login-pro-shell">
-      <div className="row g-4 align-items-stretch">
+    <div className="login-pro-page login-pro-shell public-modern">
+      <div className="login-pro-frame p-3 p-lg-4">
+        <div className="row g-4 align-items-stretch">
         <div className="col-12 col-lg-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -155,6 +156,7 @@ export function LoginPage() {
             </form>
           </motion.div>
         </div>
+      </div>
       </div>
     </div>
   );

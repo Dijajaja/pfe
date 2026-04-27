@@ -487,7 +487,7 @@ export function PartnerBatchesPage() {
         />
       </div>
 
-      <div className="col-12 col-xl-8">
+      <div className="col-12">
         <div className="row g-3">
           <div className="col-12 col-xxl-5">
             <div className="sehily-surface p-3">
@@ -535,42 +535,48 @@ export function PartnerBatchesPage() {
           <div className="col-12">
             {renderDataTable("Paiements à traiter", pagedRows.slice(0, 5))}
           </div>
-        </div>
-      </div>
-
-      <div className="col-12 col-xl-4">
-        <div className="sehily-surface p-3 mb-3">
-          <div className="d-flex justify-content-between align-items-center mb-2">
-            <div className="fw-bold">Notifications</div>
-            <span className="sehily-badge sehily-badge--warn">{unreadNotifications.length}</span>
-          </div>
-          <div className="admin-alert-list">
-            {notifications.map((n) => (
-              <div key={n.id} className="admin-alert-item">
-                <div>
-                  <div className="fw-semibold">{n.title}</div>
-                  <div className="small text-muted">{n.message}</div>
+          <div className="col-12">
+            <div className="row g-3 partner-side-panels">
+              <div className="col-12 col-xl-6">
+                <div className="sehily-surface p-3 h-100 partner-side-card">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <div className="fw-bold">Notifications</div>
+                    <span className="sehily-badge sehily-badge--warn">{unreadNotifications.length}</span>
+                  </div>
+                  <div className="small text-muted mb-3">Suivi des alertes récentes côté partenaire.</div>
+                  <div className="admin-alert-list">
+                    {notifications.map((n) => (
+                      <div key={n.id} className="admin-alert-item">
+                        <div>
+                          <div className="fw-semibold">{n.title}</div>
+                          <div className="small text-muted">{n.message}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="sehily-surface p-3 mb-3">
-          <div className="fw-bold mb-2">Actions rapides</div>
-          <div className="admin-quick-actions-grid">
-            <button className="admin-quick-action admin-quick-action-success border-0" onClick={() => { if (rowsForCurrentView[0]) openProcessModal(rowsForCurrentView[0]); }} disabled={!rowsForCurrentView.length || confirmMutation.isPending}>
-              <span className="admin-quick-action-icon"><FiCheckCircle size={17} /></span>
-              <span className="admin-quick-action-label">Confirmer un paiement</span>
-            </button>
-            <button className="admin-quick-action admin-quick-action-info border-0" onClick={() => pushInfo("Ouvre l’onglet Historique pour le détail complet.")}>
-              <span className="admin-quick-action-icon"><FiFileText size={17} /></span>
-              <span className="admin-quick-action-label">Voir historique</span>
-            </button>
-            <button className="admin-quick-action admin-quick-action-accent border-0" onClick={exportCsv}>
-              <span className="admin-quick-action-icon"><FiDownload size={17} /></span>
-              <span className="admin-quick-action-label">Télécharger relevé</span>
-            </button>
+              <div className="col-12 col-xl-6">
+                <div className="sehily-surface p-3 h-100 partner-side-card">
+                  <div className="fw-bold mb-2">Actions rapides</div>
+                  <div className="small text-muted mb-3">Pilotez les opérations prioritaires en un clic.</div>
+                  <div className="admin-quick-actions-grid partner-quick-actions-grid">
+                    <button className="admin-quick-action admin-quick-action-success border-0" onClick={() => { if (rowsForCurrentView[0]) openProcessModal(rowsForCurrentView[0]); }} disabled={!rowsForCurrentView.length || confirmMutation.isPending}>
+                      <span className="admin-quick-action-icon"><FiCheckCircle size={17} /></span>
+                      <span className="admin-quick-action-label">Confirmer un paiement</span>
+                    </button>
+                    <button className="admin-quick-action admin-quick-action-info border-0" onClick={() => pushInfo("Ouvre l’onglet Historique pour le détail complet.")}>
+                      <span className="admin-quick-action-icon"><FiFileText size={17} /></span>
+                      <span className="admin-quick-action-label">Voir historique</span>
+                    </button>
+                    <button className="admin-quick-action admin-quick-action-accent border-0" onClick={exportCsv}>
+                      <span className="admin-quick-action-icon"><FiDownload size={17} /></span>
+                      <span className="admin-quick-action-label">Télécharger relevé</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

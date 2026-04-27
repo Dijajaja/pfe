@@ -157,13 +157,6 @@ export function AppLayout() {
         </div>
 
         <div className="app-sidebar-footer">
-          {role === "PARTENAIRE" ? (
-            <div className="app-sidebar-help mt-3">
-              <div className="fw-semibold small text-white">Besoin d'aide ?</div>
-              <div className="small text-white-50">Contactez le support pour toute assistance opérationnelle.</div>
-            </div>
-          ) : null}
-
           <hr className="border-light border-opacity-25" />
           <button className="btn sehily-btn-secondary w-100 d-flex align-items-center justify-content-center gap-2" onClick={onLogout}>
             <FiLogOut size={15} />

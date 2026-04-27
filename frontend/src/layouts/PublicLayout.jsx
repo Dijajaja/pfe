@@ -30,14 +30,14 @@ export function PublicLayout() {
             <div className="btn-group" role="group" aria-label="language">
               <button
                 type="button"
-                className={`btn btn-sm ${i18n.language === "fr" ? "btn-light" : "btn-outline-secondary"}`}
+                className={`btn btn-sm ${i18n.language === "fr" ? "btn-light" : "btn-outline-light"}`}
                 onClick={() => setLanguage("fr")}
               >
                 FR
               </button>
               <button
                 type="button"
-                className={`btn btn-sm ${i18n.language === "ar" ? "btn-light" : "btn-outline-secondary"}`}
+                className={`btn btn-sm ${i18n.language === "ar" ? "btn-light" : "btn-outline-light"}`}
                 onClick={() => setLanguage("ar")}
               >
                 AR
