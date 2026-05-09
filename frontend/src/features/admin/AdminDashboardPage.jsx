@@ -11,7 +11,6 @@ import { getApiErrorMessage } from "../../lib/apiError";
 import { DashboardKpiCard } from "../../components/dashboard/DashboardKpiCard";
 import { DashboardLineChart } from "../../components/dashboard/DashboardLineChart";
 import { StatusBadge } from "../../components/dashboard/StatusBadge";
-import { setLanguage } from "../../i18n/setup";
 
 const PAGE_SIZE = 6;
 
@@ -84,7 +83,7 @@ function QuickActionCard({ to, label, icon: Icon, tone = "primary", badge }) {
 }
 
 export function AdminDashboardPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
   const [statusFilter, setStatusFilter] = useState("ALL");
@@ -219,25 +218,7 @@ export function AdminDashboardPage() {
             <h1 className="h4 mb-1">{t("adminDashboardTitle")}</h1>
             <div className="text-muted">{t("adminDashboardSubtitle")}</div>
           </div>
-          <div className="d-flex align-items-center gap-2">
-            <div className="btn-group" role="group" aria-label="language">
-              <button
-                type="button"
-                className={`btn btn-sm ${i18n.language === "fr" ? "btn-light" : "btn-outline-secondary"}`}
-                onClick={() => setLanguage("fr")}
-              >
-                FR
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${i18n.language === "ar" ? "btn-light" : "btn-outline-secondary"}`}
-                onClick={() => setLanguage("ar")}
-              >
-                AR
-              </button>
-            </div>
-            <button className="btn btn-sm sehily-btn-secondary">{t("dateRangeSample")}</button>
-          </div>
+          <button className="btn btn-sm sehily-btn-secondary">{t("dateRangeSample")}</button>
         </div>
       </div>
       <div className="col-12 col-md-6 col-xl-3">

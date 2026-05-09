@@ -11,7 +11,6 @@ import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { DashboardKpiCard } from "../../components/dashboard/DashboardKpiCard";
 import { DashboardLineChart } from "../../components/dashboard/DashboardLineChart";
 import { StatusBadge } from "../../components/dashboard/StatusBadge";
-import { setLanguage } from "../../i18n/setup";
 
 const PAGE_SIZE = 6;
 
@@ -72,7 +71,7 @@ function ProcessConfirmModal({ payment, onConfirm, onClose, isPending }) {
 }
 
 export function PartnerBatchesPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const location = useLocation();
   const queryClient = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
@@ -433,22 +432,6 @@ export function PartnerBatchesPage() {
             <div className="text-muted">{t("partnerDashboardSubtitle")}</div>
           </div>
           <div className="d-flex align-items-center gap-2">
-            <div className="btn-group" role="group" aria-label="language">
-              <button
-                type="button"
-                className={`btn btn-sm ${i18n.language === "fr" ? "btn-light" : "btn-outline-secondary"}`}
-                onClick={() => setLanguage("fr")}
-              >
-                FR
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${i18n.language === "ar" ? "btn-light" : "btn-outline-secondary"}`}
-                onClick={() => setLanguage("ar")}
-              >
-                AR
-              </button>
-            </div>
             <button className="btn btn-sm sehily-btn-secondary d-flex align-items-center gap-2" onClick={() => queryClient.invalidateQueries({ queryKey: ["partner", "paiements"] })} disabled={partnerQuery.isFetching}>
               {partnerQuery.isFetching ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
               <span>{t("refresh")}</span>

@@ -12,12 +12,14 @@ import { MessagesCenterPage } from "../app/MessagesCenterPage";
 import { StudentDashboardPage } from "../features/student/StudentDashboardPage";
 import { StudentDossierPage } from "../features/student/StudentDossierPage";
 import { StudentSuiviPage } from "../features/student/StudentSuiviPage";
+import { StudentReclamationsPage } from "../features/student/StudentReclamationsPage";
 import { StudentPaiementsPage } from "../features/student/StudentPaiementsPage";
 import { StudentNotificationsPage } from "../features/student/StudentNotificationsPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
 import { AdminDossiersPage } from "../features/admin/AdminDossiersPage";
 import { AdminUsersPage } from "../features/admin/AdminUsersPage";
 import { AdminExportsPage } from "../features/admin/AdminExportsPage";
+import { AdminReclamationsPage } from "../features/admin/AdminReclamationsPage";
 import { PartnerBatchesPage } from "../features/partner/PartnerBatchesPage";
 import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
@@ -69,6 +71,7 @@ export const router = createBrowserRouter([
               { path: "dashboard", element: <StudentDashboardPage /> },
               { path: "dossier", element: <StudentDossierPage /> },
               { path: "suivi", element: <StudentSuiviPage /> },
+              { path: "reclamations", element: <StudentReclamationsPage /> },
               { path: "paiements", element: <StudentPaiementsPage /> },
               { path: "notifications", element: <StudentNotificationsPage /> },
             ],
@@ -81,6 +84,7 @@ export const router = createBrowserRouter([
               { path: "dossiers", element: <AdminDossiersPage /> },
               { path: "users", element: <AdminUsersPage /> },
               { path: "exports", element: <AdminExportsPage /> },
+              { path: "reclamations", element: <AdminReclamationsPage /> },
             ],
           },
           {

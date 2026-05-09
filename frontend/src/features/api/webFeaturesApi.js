@@ -75,6 +75,10 @@ export const studentApi = {
       return results(r.data);
     }, [], `GET ${endpoints.etudiant.reclamations}`);
   },
+  async createReclamation(payload) {
+    const r = await api.post(endpoints.etudiant.reclamations, payload);
+    return r.data;
+  },
 };
 
 export const adminApi = {
@@ -150,6 +154,16 @@ export const adminApi = {
     const r = await api.post(endpoints.admin.usersImportCsv, form, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+    return r.data;
+  },
+  async listReclamations(params = {}) {
+    return withFallback(async () => {
+      const r = await api.get(endpoints.reclamations.list, { params });
+      return results(r.data);
+    }, [], `GET ${endpoints.reclamations.list}`);
+  },
+  async updateReclamation(id, payload) {
+    const r = await api.patch(endpoints.reclamations.detail(id), payload);
     return r.data;
   },
 };

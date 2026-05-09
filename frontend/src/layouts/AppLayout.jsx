@@ -72,6 +72,7 @@ export function AppLayout() {
     { to: "/app/student/dashboard", label: t("menuStudentDashboard"), icon: FiHome },
     { to: "/app/student/dossier", label: t("menuStudentDossier"), icon: FiFolder },
     { to: "/app/student/suivi", label: t("menuStudentSuivi"), icon: FiCheckSquare },
+    { to: "/app/student/reclamations", label: t("menuStudentReclamations"), icon: FiFileText },
     { to: "/app/student/paiements", label: t("menuStudentPaiements"), icon: FiCreditCard },
     { to: "/app/student/notifications", label: t("menuNotifications"), icon: FiBell },
   ];
@@ -79,6 +80,7 @@ export function AppLayout() {
   const adminLinks = [
     { to: "/app/admin/dashboard", label: t("menuAdminDashboard"), icon: FiHome },
     { to: "/app/admin/dossiers", label: t("menuAdminDossiers"), icon: FiFolder },
+    { to: "/app/admin/reclamations", label: t("menuAdminReclamations"), icon: FiFileText },
     { to: "/app/admin/users", label: t("menuAdminUsers"), icon: FiUsers },
     { to: "/app/admin/exports", label: t("menuAdminExports"), icon: FiFileText },
   ];

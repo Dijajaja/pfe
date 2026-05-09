@@ -23,6 +23,10 @@ export const endpoints = {
     paiements: "/api/etudiant/paiements/",
     reclamations: "/api/etudiant/reclamations/",
   },
+  reclamations: {
+    list: "/api/v1/reclamations/",
+    detail: (id) => `/api/v1/reclamations/${id}/`,
+  },
   demande: {
     listCreate: "/api/demande/",
     detail: (id) => `/api/demande/${id}/`,
