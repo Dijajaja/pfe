@@ -71,7 +71,10 @@ class AdminPaiementViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [IsAdmin]
     serializer_class = PaiementSerializer
     queryset = Paiement.objects.select_related(
-        "liste", "dossier", "annee_universitaire"
+        "liste",
+        "dossier",
+        "dossier__etudiant",
+        "annee_universitaire",
     )
 
     def get_queryset(self):
@@ -178,7 +181,7 @@ class StudentPaiementViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     def get_queryset(self):
         return Paiement.objects.filter(
             dossier__etudiant=self.request.user
-        ).select_related("liste", "dossier", "annee_universitaire")
+        ).select_related("liste", "dossier", "dossier__etudiant", "annee_universitaire")
 
 
 class MauriposteDossiersView(APIView):
@@ -191,14 +194,14 @@ class MauriposteDossiersView(APIView):
 
     def get(self, request):
         qs = Paiement.objects.select_related(
-            "liste", "dossier", "annee_universitaire"
+            "liste", "dossier", "dossier__etudiant", "annee_universitaire"
         ).filter(
             liste__partenaire_id=request.user.id,
             statut__in=["ENVOYE", "EFFECTUE"],
         )
         if not qs.exists():
             qs = Paiement.objects.select_related(
-                "liste", "dossier", "annee_universitaire"
+                "liste", "dossier", "dossier__etudiant", "annee_universitaire"
             ).filter(
                 liste__partenaire__isnull=True,
                 statut__in=["ENVOYE", "EFFECTUE"],

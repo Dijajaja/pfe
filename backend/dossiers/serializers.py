@@ -40,6 +40,8 @@ class DossierBourseSerializer(serializers.ModelSerializer):
     documents = DocumentSerializer(many=True, read_only=True)
     statut_paiement = serializers.SerializerMethodField()
     workflow_statut = serializers.SerializerMethodField()
+    etudiant_email = serializers.SerializerMethodField()
+    wilaya = serializers.SerializerMethodField()
     annee_universitaire = serializers.PrimaryKeyRelatedField(
         queryset=AnneeUniversitaire.objects.filter(actif=True),
         required=False,
@@ -51,11 +53,13 @@ class DossierBourseSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "etudiant",
+            "etudiant_email",
             "instructeur",
             "annee_universitaire",
             "statut",
             "statut_paiement",
             "workflow_statut",
+            "wilaya",
             "date_soumission",
             "niveau",
             "numero_cni",
@@ -68,12 +72,23 @@ class DossierBourseSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "etudiant",
+            "etudiant_email",
+            "wilaya",
             "instructeur",
             "date_soumission",
             "cree_le",
             "modifie_le",
             "documents",
         )
+
+    def get_etudiant_email(self, obj):
+        user = getattr(obj, "etudiant", None)
+        return getattr(user, "email", "") or ""
+
+    def get_wilaya(self, obj):
+        user = getattr(obj, "etudiant", None)
+        profil = getattr(user, "profil_etudiant", None) if user else None
+        return (getattr(profil, "wilaya", None) or "").strip() or ""
 
     def get_statut_paiement(self, obj):
         paiement = (
@@ -185,12 +200,14 @@ class MessageReclamationSerializer(serializers.ModelSerializer):
 
 class ReclamationSerializer(serializers.ModelSerializer):
     messages = MessageReclamationSerializer(many=True, read_only=True)
+    etudiant_email = serializers.SerializerMethodField()
 
     class Meta:
         model = Reclamation
         fields = (
             "id",
             "etudiant",
+            "etudiant_email",
             "dossiers",
             "objet",
             "description",
@@ -199,7 +216,11 @@ class ReclamationSerializer(serializers.ModelSerializer):
             "date_maj",
             "messages",
         )
-        read_only_fields = ("etudiant", "date_creation", "date_maj", "messages")
+        read_only_fields = ("etudiant", "etudiant_email", "date_creation", "date_maj", "messages")
+
+    def get_etudiant_email(self, obj):
+        user = getattr(obj, "etudiant", None)
+        return getattr(user, "email", "") or ""
 
     def create(self, validated_data):
         request = self.context.get("request")

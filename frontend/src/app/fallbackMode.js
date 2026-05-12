@@ -1,3 +1,5 @@
+import { isApiFallbackEnabled } from "../lib/apiFallbackConfig";
+
 const FALLBACK_KEY = "sehily_fallback_endpoints";
 const EVENT_NAME = "sehily:fallback-updated";
 
@@ -21,7 +23,7 @@ function emit() {
 }
 
 export function markFallbackEndpoint(endpointTag) {
-  if (!endpointTag) return;
+  if (!isApiFallbackEnabled() || !endpointTag) return;
   const set = readSet();
   set.add(endpointTag);
   writeSet(set);

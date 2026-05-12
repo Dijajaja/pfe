@@ -9,4 +9,6 @@ backend/staticfiles/
 frontend/node_modules/
 frontend/dist/
 frontend/.env
-frontend/screenshots-export/
+
+# Réglages VS Code locaux (excl. aperçu navigateur / perso)
+.vscode/

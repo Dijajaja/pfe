@@ -14,6 +14,11 @@ export async function fetchMe() {
   return r.data;
 }
 
+/** POST « mot de passe oublié » (sans JWT). */
+export async function requestPasswordReset(email) {
+  await authApi.requestPasswordReset({ email });
+}
+
 export function logout() {
   tokenStore.clear();
   clearDemoRole();

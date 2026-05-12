@@ -27,6 +27,7 @@ export function getApiErrorMessage(error, fallback = "Une erreur est survenue.")
   return fallback;
 }
 
+/** Statuts pour lesquels `webFeaturesApi` peut substituer un mock si `isApiFallbackEnabled()` est vrai. */
 export function shouldUseFallback(error) {
   const status = error?.response?.status;
   return [404, 405, 501, 503].includes(status);

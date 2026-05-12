@@ -1,10 +1,9 @@
 import { api } from "../../lib/api";
 import { endpoints } from "../../lib/endpoints";
 import { adminKpis, adminUsers, partnerBatches } from "../data/mockData";
+import { isApiFallbackEnabled } from "../../lib/apiFallbackConfig";
 import { shouldUseFallback } from "../../lib/apiError";
 import { markFallbackEndpoint } from "../../app/fallbackMode";
-
-const API_FALLBACK_ENABLED = import.meta.env.VITE_ENABLE_API_FALLBACK === "true";
 
 function results(payload) {
   if (Array.isArray(payload)) return payload;
@@ -15,7 +14,7 @@ async function withFallback(requestFn, fallbackValue, endpointTag) {
   try {
     return await requestFn();
   } catch (error) {
-    if (API_FALLBACK_ENABLED && shouldUseFallback(error) && typeof fallbackValue !== "undefined") {
+    if (isApiFallbackEnabled() && shouldUseFallback(error) && typeof fallbackValue !== "undefined") {
       markFallbackEndpoint(endpointTag);
       return typeof fallbackValue === "function" ? fallbackValue() : fallbackValue;
     }

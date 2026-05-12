@@ -82,6 +82,7 @@ class DossierBourseViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = DossierBourse.objects.select_related(
             "etudiant",
+            "etudiant__profil_etudiant",
             "instructeur",
             "annee_universitaire",
         ).prefetch_related("documents", "paiements")
@@ -117,7 +118,7 @@ class ReclamationViewSet(viewsets.ModelViewSet):
     filterset_fields = ("statut",)
 
     def get_queryset(self):
-        qs = Reclamation.objects.prefetch_related("dossiers", "messages").all()
+        qs = Reclamation.objects.select_related("etudiant").prefetch_related("dossiers", "messages").all()
         user = self.request.user
         role = getattr(user, "role", None)
         if role == User.Role.ADMIN:
@@ -155,6 +156,7 @@ class AdminDossiersAliasListView(generics.ListAPIView):
     filterset_fields = ("statut", "annee_universitaire")
     queryset = DossierBourse.objects.select_related(
         "etudiant",
+        "etudiant__profil_etudiant",
         "instructeur",
         "annee_universitaire",
     ).prefetch_related("documents", "paiements")
@@ -169,6 +171,7 @@ class AdminDossiersAliasDetailView(generics.UpdateAPIView):
     serializer_class = DossierBourseSerializer
     queryset = DossierBourse.objects.select_related(
         "etudiant",
+        "etudiant__profil_etudiant",
         "instructeur",
         "annee_universitaire",
     ).prefetch_related("documents", "paiements")

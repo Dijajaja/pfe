@@ -1,17 +1,20 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { FiInbox } from "react-icons/fi";
 
 import { studentApi } from "../api/webFeaturesApi";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { useAppToast } from "../../components/ui/AppToastProvider";
 import { getApiErrorMessage } from "../../lib/apiError";
 
-export function StudentReclamationsPage() {
+function StudentReclamationsBody() {
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushError, pushSuccess } = useAppToast();
   const [objet, setObjet] = useState("");
   const [description, setDescription] = useState("");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
 
   const reclamationsQuery = useQuery({
     queryKey: ["student", "reclamations"],
@@ -31,12 +34,14 @@ export function StudentReclamationsPage() {
     },
   });
 
+  const sourceRows = useMemo(() => reclamationsQuery.data || [], [reclamationsQuery.data]);
   const rows = useMemo(() => {
-    const source = reclamationsQuery.data || [];
     const needle = search.trim().toLowerCase();
-    if (!needle) return source;
-    return source.filter((r) => `${r.objet} ${r.description} ${r.statut}`.toLowerCase().includes(needle));
-  }, [reclamationsQuery.data, search]);
+    if (!needle) return sourceRows;
+    return sourceRows.filter((r) => `${r.objet} ${r.description} ${r.statut}`.toLowerCase().includes(needle));
+  }, [sourceRows, search]);
+
+  const isFilteredEmpty = sourceRows.length > 0 && rows.length === 0;
 
   function submitForm(e) {
     e.preventDefault();
@@ -78,7 +83,7 @@ export function StudentReclamationsPage() {
             <label className="form-label small">Description</label>
             <textarea
               className="form-control"
-              rows={5}
+              rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Décrivez votre problème en détail..."
@@ -108,39 +113,51 @@ export function StudentReclamationsPage() {
               {getApiErrorMessage(reclamationsQuery.error, "Impossible de charger les réclamations.")}
             </div>
           ) : null}
-          <div className="table-responsive">
-            <table className="table table-sm admin-table-pro admin-table-hover mb-0">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Objet</th>
-                  <th>Statut</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length ? (
-                  rows.map((row) => (
+          {!rows.length ? (
+            <div className="partner-payments-empty py-5 px-3 text-center">
+              <div className="partner-payments-empty-icon mx-auto mb-3" aria-hidden="true">
+                <FiInbox size={28} strokeWidth={1.25} />
+              </div>
+              <div className="fw-semibold mb-1">{isFilteredEmpty ? "Aucun résultat" : "Aucune réclamation pour le moment"}</div>
+              <p className="small text-muted mb-0">
+                {isFilteredEmpty
+                  ? "Modifiez le filtre pour afficher vos réclamations."
+                  : "Lorsque vous envoyez une demande, elle apparaîtra ici avec son statut."}
+              </p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <table className="table table-sm admin-table-pro admin-table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Objet</th>
+                    <th>Statut</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
                     <tr key={row.id}>
                       <td>{new Date(row.date_creation).toLocaleString()}</td>
                       <td>{row.objet}</td>
                       <td>{row.statut}</td>
                       <td>{row.description}</td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="text-center text-muted py-4">
-                      Aucune réclamation pour le moment
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
+/** Remount when URL search `q` changes so the filter field stays in sync with la recherche globale. */
+export function StudentReclamationsPage() {
+  const [searchParams] = useSearchParams();
+  const urlQKey = searchParams.get("q") ?? "";
+  return <StudentReclamationsBody key={urlQKey} />;
+}

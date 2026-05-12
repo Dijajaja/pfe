@@ -218,7 +218,9 @@ export function AdminDashboardPage() {
             <h1 className="h4 mb-1">{t("adminDashboardTitle")}</h1>
             <div className="text-muted">{t("adminDashboardSubtitle")}</div>
           </div>
-          <button className="btn btn-sm sehily-btn-secondary">{t("dateRangeSample")}</button>
+          <button type="button" className="btn btn-sm sehily-btn-secondary">
+            {t("dateRangeSample")}
+          </button>
         </div>
       </div>
       <div className="col-12 col-md-6 col-xl-3">
@@ -237,10 +239,10 @@ export function AdminDashboardPage() {
         <DashboardKpiCard label={t("kpiPaymentsDone")} value={paiements.EFFECTUE || 0} tone="info" trend={18.3} variant="admin" />
       </div>
 
-      <div className="col-12 col-xl-8">
+      <div className="col-12">
         <div className="row g-3">
           <div className="col-12 col-xxl-5">
-            <div className="sehily-surface p-3">
+            <div className="sehily-surface p-3 h-100">
               <div className="fw-bold mb-2">{t("adminDossiersByStatus")}</div>
               <div className="row g-3 align-items-center mt-1">
                 <div className="col-12 col-md-6">
@@ -413,94 +415,94 @@ export function AdminDashboardPage() {
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="col-12">
-        <div className="row g-3">
-          <div className="col-12 col-lg-4">
-            <div className="sehily-surface p-3 h-100">
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="fw-bold">Alertes</div>
-                <span className="sehily-badge sehily-badge--warn">{unreadAlerts.length} non lues</span>
-              </div>
-              <div className="admin-alert-list">
-                {alerts.map((alert) => (
-                  <div key={alert.id} className={`admin-alert-item ${readAlertIds.includes(alert.id) ? "" : "admin-alert-item--unread"}`}>
-                    <div>
-                      <div className="fw-semibold">{alert.title}</div>
-                      <div className="small text-muted">{alert.detail}</div>
-                    </div>
-                    <div className="d-flex flex-column align-items-end gap-1">
-                      <span className="admin-alert-badge">{alert.count}</span>
-                      <button className="btn btn-sm sehily-btn-secondary" disabled={readAlertIds.includes(alert.id)} onClick={() => markAlertRead(alert.id)}>
-                        {readAlertIds.includes(alert.id) ? "Lue" : "Lire"}
-                      </button>
-                    </div>
+          <div className="col-12">
+            <div className="row g-3">
+              <div className="col-12 col-lg-4">
+                <div className="sehily-surface p-3 h-100">
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <div className="fw-bold">Alertes</div>
+                    <span className="sehily-badge sehily-badge--warn">{unreadAlerts.length} non lues</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-lg-4">
-            <div className="sehily-surface p-3 h-100">
-              <div className="fw-bold mb-2">Actions rapides</div>
-              <div className="admin-quick-actions-grid">
-                <QuickActionCard
-                  to="/app/admin/dossiers"
-                  label="Valider dossiers"
-                  icon={FiCheckCircle}
-                  tone="success"
-                  badge={pendingAlerts}
-                />
-                <QuickActionCard
-                  to="/app/admin/exports"
-                  label="Générer paiements"
-                  icon={FiDownload}
-                  tone="info"
-                  badge={unconfirmedPayments}
-                />
-                <QuickActionCard
-                  to="/app/admin/exports"
-                  label="Exporter rapports"
-                  icon={FiSettings}
-                  tone="accent"
-                  badge={exportableRowsCount}
-                />
-                <QuickActionCard
-                  to="/app/admin/users"
-                  label="Gérer utilisateurs"
-                  icon={FiUsers}
-                  tone="primary"
-                  badge={activeUsersCount}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-lg-4">
-            <div className="sehily-surface p-3 h-100">
-              <div className="fw-bold mb-2">Historique session</div>
-              {!actionHistory.length ? (
-                <div className="small text-muted">Aucune action admin enregistrée pour cette session.</div>
-              ) : (
-                <div className="small d-grid gap-1">
-                  {actionHistory.slice(0, 4).map((h) => (
-                    <div key={h.id} className="text-muted">{h.date} - {h.detail}</div>
-                  ))}
+                  <div className="admin-alert-list">
+                    {alerts.map((alert) => (
+                      <div key={alert.id} className={`admin-alert-item ${readAlertIds.includes(alert.id) ? "" : "admin-alert-item--unread"}`}>
+                        <div>
+                          <div className="fw-semibold">{alert.title}</div>
+                          <div className="small text-muted">{alert.detail}</div>
+                        </div>
+                        <div className="d-flex flex-column align-items-end gap-1">
+                          <span className="admin-alert-badge">{alert.count}</span>
+                          <button type="button" className="btn btn-sm sehily-btn-secondary" disabled={readAlertIds.includes(alert.id)} onClick={() => markAlertRead(alert.id)}>
+                            {readAlertIds.includes(alert.id) ? "Lue" : "Lire"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
-              <hr />
-              <div className="fw-bold mb-2">Statistiques clés</div>
-              <div className="small mb-1 d-flex justify-content-between">
-                <span>Taux d’acceptation</span>
-                <span className="fw-semibold">{acceptanceRate}%</span>
               </div>
-              <div className="progress mb-2" style={{ height: 8 }}>
-                <div className="progress-bar bg-success" role="progressbar" style={{ width: `${acceptanceRate}%` }} />
+
+              <div className="col-12 col-lg-4">
+                <div className="sehily-surface p-3 h-100">
+                  <div className="fw-bold mb-2">Actions rapides</div>
+                  <div className="admin-quick-actions-grid">
+                    <QuickActionCard
+                      to="/app/admin/dossiers"
+                      label="Valider dossiers"
+                      icon={FiCheckCircle}
+                      tone="success"
+                      badge={pendingAlerts}
+                    />
+                    <QuickActionCard
+                      to="/app/admin/exports"
+                      label="Générer paiements"
+                      icon={FiDownload}
+                      tone="info"
+                      badge={unconfirmedPayments}
+                    />
+                    <QuickActionCard
+                      to="/app/admin/exports"
+                      label="Exporter rapports"
+                      icon={FiSettings}
+                      tone="accent"
+                      badge={exportableRowsCount}
+                    />
+                    <QuickActionCard
+                      to="/app/admin/users"
+                      label="Gérer utilisateurs"
+                      icon={FiUsers}
+                      tone="primary"
+                      badge={activeUsersCount}
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="small text-muted">Basé sur la proportion de dossiers validés.</div>
+
+              <div className="col-12 col-lg-4">
+                <div className="sehily-surface p-3 h-100">
+                  <div className="fw-bold mb-2">Historique session</div>
+                  {!actionHistory.length ? (
+                    <div className="small text-muted">Aucune action admin enregistrée pour cette session.</div>
+                  ) : (
+                    <div className="small d-grid gap-1">
+                      {actionHistory.slice(0, 4).map((h) => (
+                        <div key={h.id} className="text-muted">{h.date} - {h.detail}</div>
+                      ))}
+                    </div>
+                  )}
+                  <hr />
+                  <div className="fw-bold mb-2">Statistiques clés</div>
+                  <div className="small mb-1 d-flex justify-content-between">
+                    <span>Taux d’acceptation</span>
+                    <span className="fw-semibold">{acceptanceRate}%</span>
+                  </div>
+                  <div className="progress mb-2" style={{ height: 8 }}>
+                    <div className="progress-bar bg-success" role="progressbar" style={{ width: `${acceptanceRate}%` }} />
+                  </div>
+                  <div className="small text-muted">Basé sur la proportion de dossiers validés.</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

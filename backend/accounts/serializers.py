@@ -71,6 +71,12 @@ class InscriptionEtudiantSerializer(serializers.Serializer):
             raise serializers.ValidationError("Inscription impossible pour le moment. Réessayez plus tard.") from exc
 
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Corps attendu pour POST /api/auth/password-reset/ (envoi de lien à compléter)."""
+
+    email = serializers.EmailField(required=True)
+
+
 class AdminUserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
     matricule = serializers.SerializerMethodField()

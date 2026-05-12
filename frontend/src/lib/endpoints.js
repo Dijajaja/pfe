@@ -3,6 +3,7 @@
  * `backend/config/api_alias_urls.py` (préfixe global `/api/`).
  *
  * L’auth JWT est aussi exposée sous `/api/v1/auth/*` ; le front utilise les alias stables.
+ * Mot de passe oublié : `POST /api/auth/password-reset/` avec `{ "email": "..." }`.
  */
 
 export const endpoints = {
@@ -11,6 +12,8 @@ export const endpoints = {
     login: "/api/auth/login/",
     refresh: "/api/auth/refresh/",
     me: "/api/auth/me/",
+    /** POST { email } — demande de réinitialisation (e-mail à brancher en prod). */
+    passwordResetRequest: "/api/auth/password-reset/",
   },
   referentials: {
     anneesUniversitaires: "/api/referentiels/annees-universitaires/",

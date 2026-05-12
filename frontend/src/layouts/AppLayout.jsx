@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createSearchParams, Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,6 +27,8 @@ import { logout } from "../app/auth";
 import { useEffectiveRole } from "../app/session";
 import { FallbackBanner } from "../components/ui/FallbackBanner";
 import { partnerApi } from "../features/api/webFeaturesApi";
+import { buildPartnerNotificationsFeed, countUnreadPartnerNotifications } from "../lib/partnerNotificationsFeed";
+import { getReadPartnerNotificationIds } from "../lib/partnerNotificationRead";
 import { setLanguage } from "../i18n/setup";
 
 export function AppLayout() {
@@ -35,7 +37,7 @@ export function AppLayout() {
   const { role, user } = useEffectiveRole();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const partnerSummaryQuery = useQuery({
-    queryKey: ["partner", "summary"],
+    queryKey: ["partner", "paiements"],
     queryFn: () => partnerApi.listOperationalPaiements(),
     enabled: role === "PARTENAIRE",
     retry: false,
@@ -66,7 +68,62 @@ export function AppLayout() {
 
   const partnerPayments = partnerSummaryQuery.data || [];
   const partnerWaitingCount = partnerPayments.filter((p) => p.statut !== "EFFECTUE").length;
-  const partnerNotifCount = Math.max(0, partnerWaitingCount + (partnerPayments.length ? 1 : 0));
+  const [partnerReadNotifIds, setPartnerReadNotifIds] = useState(() => getReadPartnerNotificationIds());
+
+  const partnerNotifList = useMemo(
+    () =>
+      buildPartnerNotificationsFeed(partnerPayments, [], {
+        dataUpdatedAt: partnerSummaryQuery.dataUpdatedAt,
+        locale: i18n.language,
+      }),
+    [partnerPayments, partnerSummaryQuery.dataUpdatedAt, i18n.language],
+  );
+
+  const partnerNotifCount = useMemo(
+    () => countUnreadPartnerNotifications(partnerReadNotifIds, partnerNotifList),
+    [partnerReadNotifIds, partnerNotifList],
+  );
+
+  useEffect(() => {
+    if (role !== "PARTENAIRE") return undefined;
+    const sync = () => setPartnerReadNotifIds(getReadPartnerNotificationIds());
+    sync();
+    window.addEventListener("sehily-partner-notif-read", sync);
+    return () => window.removeEventListener("sehily-partner-notif-read", sync);
+  }, [role]);
+
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const globalSearchRef = useRef(null);
+
+  const globalSearchTrim = globalSearch.trim();
+  const hasGlobalQuery = globalSearchTrim.length > 0;
+
+  useEffect(() => {
+    if (!globalSearchOpen) return undefined;
+    function onDown(e) {
+      if (!globalSearchRef.current?.contains(e.target)) setGlobalSearchOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [globalSearchOpen]);
+
+  function navigateGlobalSearch(path) {
+    if (!hasGlobalQuery) return;
+    navigate(`${path}?${createSearchParams({ q: globalSearchTrim })}`);
+    setGlobalSearchOpen(false);
+  }
+
+  function onGlobalSearchKeyDown(e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (!hasGlobalQuery) return;
+      if (role === "ADMIN") navigateGlobalSearch("/app/admin/dossiers");
+      else if (role === "ETUDIANT") navigateGlobalSearch("/app/student/reclamations");
+      else navigateGlobalSearch("/app/partner/to-process");
+    }
+    if (e.key === "Escape") setGlobalSearchOpen(false);
+  }
 
   const studentLinks = [
     { to: "/app/student/dashboard", label: t("menuStudentDashboard"), icon: FiHome },
@@ -109,8 +166,8 @@ export function AppLayout() {
 
   function renderNavLinks(items) {
     return items.map(({ to, label, icon: Icon, badge }) => (
-      <NavLink key={to} className="nav-link d-flex align-items-center gap-2" to={to} onClick={onCloseSidebar}>
-        <Icon size={15} />
+      <NavLink key={to} className={`nav-link d-flex align-items-center ${Icon ? "gap-2" : ""}`} to={to} onClick={onCloseSidebar}>
+        {Icon ? <Icon size={15} /> : null}
         <span>{label}</span>
         {typeof badge === "number" && badge > 0 ? <span className="app-nav-badge ms-auto">{badge}</span> : null}
       </NavLink>
@@ -136,12 +193,6 @@ export function AppLayout() {
               <div className="small text-white-50">{roleSubtitle}</div>
             </div>
           </div>
-          {role === "PARTENAIRE" ? (
-            <div className="small text-white-50 mt-2 d-flex align-items-center gap-2">
-              <span className="app-online-dot" />
-              {t("online")}
-            </div>
-          ) : null}
           {role === "ADMIN" ? (
             <div className="small text-white-50 mt-2">{t("adminConnected")}</div>
           ) : (
@@ -177,10 +228,124 @@ export function AppLayout() {
         <main className="col-12 col-lg-9 col-xl-10">
           <div className="sehily-surface p-3 mb-3 app-topbar">
             <div className="row g-2 align-items-center">
-              <div className="col-12 col-lg-6">
+              <div className="col-12 col-lg-6" ref={globalSearchRef}>
                 <div className="app-topbar-search">
-                  <FiSearch className="app-topbar-search-icon" size={15} />
-                  <input className="form-control" placeholder={t("searchGlobalPlaceholder")} />
+                  <FiSearch className="app-topbar-search-icon" size={15} aria-hidden />
+                  <input
+                    id="app-global-search"
+                    className="form-control"
+                    type="search"
+                    autoComplete="off"
+                    placeholder={t("searchGlobalPlaceholder")}
+                    value={globalSearch}
+                    onChange={(e) => {
+                      setGlobalSearch(e.target.value);
+                      setGlobalSearchOpen(true);
+                    }}
+                    onFocus={() => setGlobalSearchOpen(true)}
+                    onKeyDown={onGlobalSearchKeyDown}
+                    aria-expanded={globalSearchOpen}
+                    aria-controls="app-global-search-panel"
+                    aria-autocomplete="list"
+                  />
+                  {globalSearchOpen ? (
+                    <div id="app-global-search-panel" className="app-global-search-panel" role="listbox" aria-label={t("searchGlobalPlaceholder")}>
+                      <div className="app-global-search-panel__hint">{hasGlobalQuery ? t("searchGlobalHintLists") : t("searchGlobalHint")}</div>
+                      {hasGlobalQuery && role === "ADMIN" ? (
+                        <>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/admin/dossiers?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitAdminDossiers")}
+                            <small>{t("searchGlobalHitAdminDossiersSub")}</small>
+                          </Link>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/admin/users?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitAdminUsers")}
+                            <small>{t("searchGlobalHitAdminUsersSub")}</small>
+                          </Link>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/admin/reclamations?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitAdminReclamations")}
+                            <small>{t("searchGlobalHitAdminReclamationsSub")}</small>
+                          </Link>
+                        </>
+                      ) : null}
+                      {hasGlobalQuery && role === "ETUDIANT" ? (
+                        <>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/student/reclamations?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitStudentRecl")}
+                            <small>{t("searchGlobalHitStudentReclSub")}</small>
+                          </Link>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/student/suivi?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitStudentSuivi")}
+                            <small>{t("searchGlobalHitStudentSuiviSub")}</small>
+                          </Link>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/student/paiements?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitStudentPay")}
+                            <small>{t("searchGlobalHitStudentPaySub")}</small>
+                          </Link>
+                        </>
+                      ) : null}
+                      {hasGlobalQuery && role === "PARTENAIRE" ? (
+                        <>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/partner/to-process?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitPartnerTodo")}
+                            <small>{t("searchGlobalHitPartnerSub")}</small>
+                          </Link>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/partner/completed?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitPartnerDone")}
+                            <small>{t("searchGlobalHitPartnerSub")}</small>
+                          </Link>
+                          <Link
+                            className="app-global-search-hit"
+                            to={`/app/partner/dashboard?${createSearchParams({ q: globalSearchTrim })}`}
+                            onClick={() => setGlobalSearchOpen(false)}
+                            role="option"
+                          >
+                            {t("searchGlobalHitPartnerAll")}
+                            <small>{t("searchGlobalHitPartnerSub")}</small>
+                          </Link>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <div className="col-12 col-lg-6">

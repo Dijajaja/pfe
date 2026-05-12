@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { motion } from "motion/react";
+import { motion as Motion } from "motion/react";
 import {
   AlertCircle,
   ArrowRight,
@@ -13,6 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { EligibilityPetals } from "../components/public/EligibilityPetals";
 import { evaluerEligibiliteBackend } from "../lib/eligibilite";
 
 const WILAYAS = [
@@ -62,6 +63,8 @@ export function EligibilitePage() {
   const [apiError, setApiError] = useState("");
   const [apiLatencyMs, setApiLatencyMs] = useState(null);
   const [apiLatencyState, setApiLatencyState] = useState("idle");
+  const [petalBurst, setPetalBurst] = useState(0);
+  const outcomesAnchorRef = useRef(null);
 
   const age = useMemo(() => (dateNaissance ? calcAgeYears(dateNaissance) : null), [dateNaissance]);
 
@@ -80,6 +83,7 @@ export function EligibilitePage() {
         niveau,
       });
       setResult({ ...apiResult, ok: Boolean(apiResult.ok) });
+      if (apiResult.ok) setPetalBurst((n) => n + 1);
       setApiLatencyMs(Math.round(performance.now() - startedAt));
       setApiLatencyState("ok");
     } catch (error) {
@@ -89,12 +93,18 @@ export function EligibilitePage() {
       setApiLatencyState("error");
     } finally {
       setIsSubmitting(false);
+      window.setTimeout(() => {
+        const el = outcomesAnchorRef.current;
+        if (!el) return;
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      }, 80);
     }
   }
 
   return (
     <div className="rounded-4 p-2 p-md-3 public-modern eligibility-pro-page eligibility-pro-bg">
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         className="eligibility-pro-card p-4 p-md-5 rounded-5 mb-4"
@@ -119,11 +129,11 @@ export function EligibilitePage() {
             </Link>
           </div>
         </div>
-      </motion.div>
+      </Motion.div>
 
       <div className="row g-4">
         <div className="col-12 col-lg-8">
-          <motion.form
+          <Motion.form
             initial={{ opacity: 0, x: -14 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.05 }}
@@ -190,11 +200,11 @@ export function EligibilitePage() {
                 {t("loginTitle")}
               </Link>
             </div>
-          </motion.form>
+          </Motion.form>
         </div>
 
         <div className="col-12 col-lg-4">
-          <motion.aside
+          <Motion.aside
             initial={{ opacity: 0, x: 14 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
@@ -219,39 +229,58 @@ export function EligibilitePage() {
               <AlertCircle size={15} className="me-2" />
               {t("officialDocumentsNote")}
             </div>
-          </motion.aside>
+          </Motion.aside>
         </div>
       </div>
 
-      {apiError ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="alert alert-warning mt-4 mb-0">
-          <AlertCircle size={15} className="me-2" />
-          {apiError}
-        </motion.div>
-      ) : null}
+      <div ref={outcomesAnchorRef} className="eligibility-pro-outcomes-anchor">
+        {apiError ? (
+          <Motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="alert alert-warning mt-4 mb-0">
+            <AlertCircle size={15} className="me-2" />
+            {apiError}
+          </Motion.div>
+        ) : null}
 
-      {result?.ok ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 eligibility-pro-result-ok p-4 p-md-5 rounded-5 text-center">
-          <div className="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle eligibility-pro-result-icon">
-            <Banknote size={36} className="eligibility-pro-icon" />
+        {result?.ok ? (
+          <div className="eligibility-pro-result-ok-wrap rounded-5 mt-4">
+            <Motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="eligibility-pro-result-ok p-4 p-md-5 rounded-5 text-center">
+              <div className="eligibility-pro-result-stack">
+                <div className="mx-auto d-flex align-items-center justify-content-center rounded-circle eligibility-pro-result-icon">
+                  <Banknote size={36} className="eligibility-pro-icon" />
+                </div>
+                <div className="fw-bold text-uppercase eligibility-pro-result-title">{t("eligibleScholarshipTitle")}</div>
+                {result.i18nKey ? (
+                  <p className="eligibility-pro-result-detail text-muted mb-0">{t(result.i18nKey, result.i18nParams || {})}</p>
+                ) : null}
+                <div className="eligibility-pro-service-row">
+                  <div className="eligibility-pro-service-badge d-inline-flex align-items-center gap-2">
+                    <span className="eligibility-pro-service-badge-icon" aria-hidden>
+                      <CheckCircle2 size={15} strokeWidth={2.5} />
+                    </span>
+                    <span className="fw-semibold">{t("serviceAccorde")}</span>
+                  </div>
+                </div>
+                <div className="eligibility-pro-result-actions">
+                  <Link className="btn sehily-btn-primary px-4 d-inline-flex align-items-center gap-2" to="/auth/register?from=eligibilite">
+                    {t("continueToRegistration")}
+                    <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </div>
+            </Motion.div>
+            <EligibilityPetals burstId={petalBurst} />
           </div>
-          <div className="fw-bold text-uppercase mb-2">{t("eligibleScholarshipTitle")}</div>
-          {result.i18nKey ? <p className="text-muted mb-3">{t(result.i18nKey, result.i18nParams || {})}</p> : null}
-          <Link className="btn sehily-btn-primary px-4 d-inline-flex align-items-center gap-2" to="/auth/register?from=eligibilite">
-            {t("continueToRegistration")}
-            <ArrowRight size={16} />
-          </Link>
-        </motion.div>
-      ) : null}
+        ) : null}
 
-      {result && !result.ok ? (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-4 rounded-4 eligibility-pro-result-ko">
-          <div className="fw-bold eligibility-pro-danger mb-2 d-flex align-items-center gap-2">
-            <AlertCircle size={17} /> {t("eligibleNo")}
-          </div>
-          <div className="text-muted">{t(result.i18nKey, result.i18nParams || {})}</div>
-        </motion.div>
-      ) : null}
+        {result && !result.ok ? (
+          <Motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-4 rounded-4 eligibility-pro-result-ko">
+            <div className="fw-bold eligibility-pro-danger mb-2 d-flex align-items-center gap-2">
+              <AlertCircle size={17} /> {t("eligibleNo")}
+            </div>
+            <div className="text-muted">{t(result.i18nKey, result.i18nParams || {})}</div>
+          </Motion.div>
+        ) : null}
+      </div>
     </div>
   );
 }

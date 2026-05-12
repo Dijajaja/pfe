@@ -35,7 +35,13 @@ function isAuthEndpoint(url) {
   const loginPath = normalizePath(endpoints.auth.login);
   const registerPath = normalizePath(endpoints.auth.register);
   const refreshPath = normalizePath(endpoints.auth.refresh);
-  return path === loginPath || path === registerPath || path === refreshPath;
+  const passwordResetPath = normalizePath(endpoints.auth.passwordResetRequest);
+  return (
+    path === loginPath ||
+    path === registerPath ||
+    path === refreshPath ||
+    path === passwordResetPath
+  );
 }
 
 function getTokens() {
@@ -149,6 +155,7 @@ export const authApi = {
   register: (payload) => api.post(endpoints.auth.register, payload),
   login: (payload) => api.post(endpoints.auth.login, payload),
   me: () => api.get(endpoints.auth.me),
+  requestPasswordReset: (payload) => api.post(endpoints.auth.passwordResetRequest, payload),
 };
 
 export const tokenStore = {

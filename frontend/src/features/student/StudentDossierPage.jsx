@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { IdCard, Phone, User } from "lucide-react";
+import { AlertTriangle, ArrowRight, Folder, GraduationCap, IdCard, Phone, Upload } from "lucide-react";
 
 import { referentialApi, studentApi } from "../api/webFeaturesApi";
 import { useAppToast } from "../../components/ui/AppToastProvider";
@@ -10,77 +10,37 @@ import { getApiErrorMessage } from "../../lib/apiError";
 const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg"];
 const MAX_SIZE = 5 * 1024 * 1024;
 
-const sectionTitleClass = "fw-bold mb-2";
-const sectionTitleStyle = { color: "var(--sehily-petrole)", fontSize: "1rem" };
-
 function toMb(size) {
   return `${(size / 1024 / 1024).toFixed(2)} MB`;
 }
 
 function InfoField({ icon, label, children }) {
   return (
-    <div
-      className="d-flex align-items-stretch gap-2 rounded-3 p-2 border w-100"
-      style={{ background: "color-mix(in srgb, var(--sehily-creme) 70%, #fff)", borderColor: "var(--sehily-border)" }}
-    >
-      <div
-        className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle"
-        style={{
-          width: 44,
-          height: 44,
-          background: "color-mix(in srgb, var(--sehily-vert-pro) 22%, #fff)",
-          color: "var(--sehily-vert-pro)",
-        }}
-      >
-        {icon}
-      </div>
+    <div className="student-dossier-info-field d-flex align-items-stretch gap-2 rounded-3 p-2 border w-100">
+      <div className="student-dossier-info-field__icon d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle">{icon}</div>
       <div className="flex-grow-1 min-w-0 d-flex flex-column justify-content-center">
-        <div className="text-muted text-uppercase" style={{ fontSize: "0.65rem", letterSpacing: "0.04em" }}>
-          {label}
-        </div>
+        <div className="student-dossier-info-field__label text-muted text-uppercase">{label}</div>
         <div className="mt-1">{children}</div>
       </div>
     </div>
   );
 }
 
-export function StudentDossierPage() {
-  const qc = useQueryClient();
-  const { pushError, pushSuccess, pushInfo } = useAppToast();
+function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pushSuccess, pushInfo }) {
+  const fileInputRef = useRef(null);
   const [form, setForm] = useState({
-    numero_cni: "",
-    telephone: "",
-    niveau: "L1",
+    numero_cni: dossier?.numero_cni ?? "",
+    telephone: dossier?.telephone ?? "",
+    niveau: dossier?.niveau ?? "L1",
   });
   const [typePiece, setTypePiece] = useState("CNI");
   const [files, setFiles] = useState([]);
   const [feedback, setFeedback] = useState("");
 
-  const anneesQuery = useQuery({
-    queryKey: ["referential", "annees-actives"],
-    queryFn: referentialApi.listAnneesActives,
-  });
-  const dossiersQuery = useQuery({
-    queryKey: ["student", "dossiers"],
-    queryFn: () => studentApi.listDossiers(),
-  });
-
-  const dossiers = dossiersQuery.data?.results || dossiersQuery.data || [];
-  const currentDossier = dossiers[0] || null;
-  const activeAnnees = anneesQuery.data || [];
-
-  useEffect(() => {
-    if (!currentDossier) return;
-    setForm((f) => ({
-      ...f,
-      numero_cni: currentDossier.numero_cni ?? "",
-      telephone: currentDossier.telephone ?? "",
-      niveau: currentDossier.niveau ?? "L1",
-    }));
-  }, [currentDossier?.id]);
+  const headerEmail = (dossier?.etudiant_email || "").trim() || "—";
 
   function resolveAnneeUniversitaire() {
-    const fromDossier = currentDossier?.annee_universitaire;
+    const fromDossier = dossier?.annee_universitaire;
     if (fromDossier != null && fromDossier !== "") return Number(fromDossier);
     if (activeAnnees[0]?.id != null) return Number(activeAnnees[0].id);
     return null;
@@ -100,13 +60,13 @@ export function StudentDossierPage() {
   const soumettreMutation = useMutation({
     mutationFn: async () => {
       const payload = buildPayloadSoemis();
-      let dossier;
-      if (currentDossier) {
-        dossier = await studentApi.updateDossier(currentDossier.id, payload);
+      let nextDossier;
+      if (dossier) {
+        nextDossier = await studentApi.updateDossier(dossier.id, payload);
       } else {
-        dossier = await studentApi.createDossier(payload);
+        nextDossier = await studentApi.createDossier(payload);
       }
-      const dossierId = dossier.id;
+      const dossierId = nextDossier.id;
       for (const fichier of files) {
         await studentApi.uploadDocument({
           dossier: dossierId,
@@ -117,7 +77,7 @@ export function StudentDossierPage() {
       return dossierId;
     },
     onSuccess: async () => {
-      await qc.invalidateQueries({ queryKey: ["student", "dossiers"] });
+      await queryClient.invalidateQueries({ queryKey: ["student", "dossiers"] });
       setFiles([]);
       setFeedback("Dossier soumis avec succès.");
       pushSuccess("Dossier soumis avec succès.");
@@ -130,7 +90,7 @@ export function StudentDossierPage() {
   });
 
   function onFileInput(selected) {
-    const arr = Array.from(selected);
+    const arr = Array.from(selected || []);
     const validated = [];
     for (const f of arr) {
       if (!ACCEPTED_TYPES.includes(f.type)) {
@@ -148,6 +108,7 @@ export function StudentDossierPage() {
       validated.push(f);
     }
     setFiles((prev) => [...prev, ...validated]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function onDrop(e) {
@@ -155,153 +116,189 @@ export function StudentDossierPage() {
     onFileInput(e.dataTransfer.files);
   }
 
-  if (anneesQuery.isLoading || dossiersQuery.isLoading) {
-    return <LoadingSkeleton lines={8} />;
-  }
-
   return (
-    <div className="row g-4">
+    <>
       <div className="col-12">
-        <p
-          className="mb-3 small"
-          style={{ color: "color-mix(in srgb, var(--sehily-vert-pro) 75%, var(--sehily-text))" }}
-        >
+        <p className="student-dossier-lead mb-3">
           Renseignez vos informations et déposez les pièces (formats validés — image ou PDF pour la CNI).
         </p>
 
-        {/* Barre titre au-dessus du cadre blanc du formulaire */}
-        <div
-          className="d-flex align-items-center gap-3 py-3 px-3 px-md-4 w-100"
-          style={{
-            background: "var(--sehily-vert-pro)",
-            color: "#fff",
-            borderTopLeftRadius: "0.75rem",
-            borderTopRightRadius: "0.75rem",
-          }}
-        >
-          <div
-            className="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle"
-            style={{
-              width: 40,
-              height: 40,
-              background: "rgba(255, 255, 255, 0.2)",
-              color: "#fff",
-            }}
-            aria-hidden
-          >
-            <User size={22} strokeWidth={2} />
+        <div className="student-dossier-card-v1">
+          <div className="student-dossier-card-head">
+            <div className="student-dossier-card-head__brand">
+              <div className="student-dossier-card-head__folder" aria-hidden>
+                <Folder size={22} strokeWidth={2} />
+              </div>
+              <h1 className="h5 mb-0 fw-semibold text-white">Dossier étudiant</h1>
+            </div>
+            <span className="student-dossier-email-pill" title={headerEmail}>
+              {headerEmail}
+            </span>
           </div>
-          <h1 className="h5 mb-0 fw-semibold text-white">Dossier étudiant</h1>
-        </div>
 
-        <div
-          className="sehily-surface w-100 border-0 p-3 p-md-4"
-          style={{
-            borderBottomLeftRadius: "0.75rem",
-            borderBottomRightRadius: "0.75rem",
-            boxShadow: "0 8px 32px rgba(15, 79, 76, 0.12), 0 2px 8px rgba(15, 79, 76, 0.06)",
-          }}
-        >
+          <div className="p-3 p-md-4 student-dossier-card-body">
             <div className="row g-3 g-lg-4 align-items-stretch">
-              <div className="col-12 col-md-6 d-flex flex-column gap-3">
-                <InfoField
-                  label="CNI"
-                  icon={<IdCard size={20} strokeWidth={2} aria-hidden />}
-                >
-                  <input
-                    className="form-control form-control-sm"
-                    value={form.numero_cni}
-                    onChange={(e) => setForm((f) => ({ ...f, numero_cni: e.target.value }))}
-                    placeholder="Numéro de la carte d’identité"
-                    autoComplete="off"
-                  />
-                </InfoField>
-                <InfoField
-                  label="Numéro de téléphone"
-                  icon={<Phone size={20} strokeWidth={2} aria-hidden />}
-                >
-                  <input
-                    className="form-control form-control-sm"
-                    type="tel"
-                    value={form.telephone}
-                    onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))}
-                    placeholder="Ex. 45 XX XX XX"
-                    autoComplete="tel"
-                  />
-                </InfoField>
-                <InfoField
-                  label="Niveau d'étude"
-                  icon={<User size={20} strokeWidth={2} aria-hidden />}
-                >
-                  <select
-                    className="form-select form-select-sm"
-                    value={form.niveau}
-                    onChange={(e) => setForm((f) => ({ ...f, niveau: e.target.value }))}
-                  >
-                    <option value="L1">L1</option>
-                    <option value="L2">L2</option>
-                    <option value="L3">L3</option>
-                  </select>
-                </InfoField>
+              <div className="col-12 col-md-6 d-flex flex-column">
+                <div className="student-dossier-v1-section-title">Informations personnelles</div>
+                <div className="d-flex flex-column gap-3 flex-grow-1">
+                  <InfoField label="CNI" icon={<IdCard size={20} strokeWidth={2} aria-hidden />}>
+                    <input
+                      className="form-control form-control-sm"
+                      value={form.numero_cni}
+                      onChange={(e) => setForm((f) => ({ ...f, numero_cni: e.target.value }))}
+                      placeholder="Numéro de la carte d’identité"
+                      autoComplete="off"
+                    />
+                  </InfoField>
+                  <InfoField label="Numéro de téléphone" icon={<Phone size={20} strokeWidth={2} aria-hidden />}>
+                    <input
+                      className="form-control form-control-sm"
+                      type="tel"
+                      value={form.telephone}
+                      onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))}
+                      placeholder="Ex. 45 XX XX XX"
+                      autoComplete="tel"
+                    />
+                  </InfoField>
+                  <InfoField label="Niveau d'étude" icon={<GraduationCap size={20} strokeWidth={2} aria-hidden />}>
+                    <select
+                      className="form-select form-select-sm"
+                      value={form.niveau}
+                      onChange={(e) => setForm((f) => ({ ...f, niveau: e.target.value }))}
+                    >
+                      <option value="L1">L1</option>
+                      <option value="L2">L2</option>
+                      <option value="L3">L3</option>
+                    </select>
+                  </InfoField>
+                </div>
               </div>
 
               <div className="col-12 col-md-6 d-flex flex-column">
-                <div className={sectionTitleClass} style={sectionTitleStyle}>
-                  Type de document
-                </div>
-                <select
-                  className="form-select mb-3"
-                  value={typePiece}
-                  onChange={(e) => setTypePiece(e.target.value)}
-                >
+                <div className="student-dossier-v1-section-title">Pièce justificative</div>
+                <div className="text-muted small mb-1">Type de document</div>
+                <select className="form-select form-select-sm mb-3" value={typePiece} onChange={(e) => setTypePiece(e.target.value)}>
                   <option value="CNI">CNI (carte d’identité / scan)</option>
                   <option value="BAC">Baccalauréat</option>
                   <option value="INSCRIPTION">Attestation d’inscription</option>
                   <option value="RELEVE">Relevé</option>
                 </select>
 
-                <div className={sectionTitleClass} style={sectionTitleStyle}>
-                  Documents
-                </div>
                 <div
-                  className="border rounded-3 p-3 d-flex flex-column flex-grow-1"
+                  className="student-dossier-dropzone-v1 flex-grow-1 d-flex flex-column"
                   onDrop={onDrop}
                   onDragOver={(e) => e.preventDefault()}
-                  style={{ borderStyle: "dashed", background: "var(--sehily-creme)", minHeight: 160 }}
                 >
-                  <div className="small text-muted mb-2">Glissez-déposez ici (PDF / JPG / PNG, max 5 MB)</div>
+                  <div className="student-dossier-upload-icon mx-auto" aria-hidden>
+                    <Upload size={22} strokeWidth={2} />
+                  </div>
+                  <div className="fw-semibold small student-dossier-dropzone-v1__title">Déposer le fichier</div>
+                  <div className="small text-muted">Glissez-déposez ici</div>
+                  <div className="small text-muted">PDF / JPG / PNG — max 5 MB</div>
+                </div>
+                <div className="mt-2 student-dossier-file-below">
                   <input
-                    className="form-control mt-auto"
+                    ref={fileInputRef}
                     type="file"
+                    className="form-control form-control-sm student-dossier-native-file"
                     accept="application/pdf,image/png,image/jpeg"
                     multiple
                     onChange={(e) => onFileInput(e.target.files)}
                   />
+                  <div className="small text-muted mt-1 text-center">
+                    {files.length ? `${files.length} fichier${files.length > 1 ? "s" : ""} prêt(s)` : "Aucun fichier sélectionné"}
+                  </div>
+                  {files.length > 0 ? (
+                    <ul className="student-dossier-file-list small mb-0 ps-3 mt-2 text-start w-100">
+                      {files.map((f) => (
+                        <li key={`${f.name}-${f.size}`} className="text-break">
+                          {f.name} <span className="text-muted">({toMb(f.size)})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
               </div>
             </div>
-
-            <div className="d-flex justify-content-end pt-3 mt-1">
-              <button
-                className="btn sehily-btn-accent"
-                type="button"
-                disabled={soumettreMutation.isPending}
-                onClick={() => {
-                  setFeedback("");
-                  soumettreMutation.mutate();
-                }}
-              >
-                Soumettre dossier
-              </button>
-            </div>
           </div>
+
+          <footer className="student-dossier-foot">
+            <div className="d-flex align-items-start gap-2 small text-muted">
+              <AlertTriangle size={18} className="flex-shrink-0 student-dossier-foot__warn-icon" aria-hidden />
+              <span>
+                Formats acceptés : <strong className="text-body">PDF, JPG, PNG</strong>
+              </span>
+            </div>
+            <button
+              className="btn student-dossier-submit-btn d-inline-flex align-items-center gap-2"
+              type="button"
+              disabled={soumettreMutation.isPending}
+              onClick={() => {
+                setFeedback("");
+                soumettreMutation.mutate();
+              }}
+            >
+              {soumettreMutation.isPending ? (
+                <>
+                  <span className="spinner-border spinner-border-sm" aria-hidden="true" />
+                  Envoi…
+                </>
+              ) : (
+                <>
+                  Soumettre le dossier
+                  <ArrowRight size={18} aria-hidden />
+                </>
+              )}
+            </button>
+          </footer>
         </div>
+      </div>
 
       {feedback ? (
         <div className="col-12">
           <div className="alert alert-info mb-0">{feedback}</div>
         </div>
       ) : null}
+    </>
+  );
+}
+
+export function StudentDossierPage() {
+  const qc = useQueryClient();
+  const { pushError, pushSuccess, pushInfo } = useAppToast();
+
+  const anneesQuery = useQuery({
+    queryKey: ["referential", "annees-actives"],
+    queryFn: referentialApi.listAnneesActives,
+  });
+  const dossiersQuery = useQuery({
+    queryKey: ["student", "dossiers"],
+    queryFn: () => studentApi.listDossiers(),
+  });
+
+  const dossiers = dossiersQuery.data?.results || dossiersQuery.data || [];
+  const currentDossier = dossiers[0] || null;
+  const activeAnnees = anneesQuery.data || [];
+
+  if (anneesQuery.isLoading || dossiersQuery.isLoading) {
+    return <LoadingSkeleton lines={8} />;
+  }
+
+  const formKey = currentDossier?.id != null ? String(currentDossier.id) : "nouveau";
+
+  return (
+    <div className="student-dossier-page">
+      <div className="row g-4">
+        <StudentDossierForm
+          key={formKey}
+          dossier={currentDossier}
+          activeAnnees={activeAnnees}
+          queryClient={qc}
+          pushError={pushError}
+          pushSuccess={pushSuccess}
+          pushInfo={pushInfo}
+        />
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ from accounts.views import (
     AdminUsersListView,
     InscriptionEtudiantView,
     MoiView,
+    PasswordResetRequestView,
 )
 from dossiers.views import (
     AdminDossiersAliasDetailView,
@@ -41,6 +42,7 @@ urlpatterns = [
     path("auth/login/", TokenObtainPairView.as_view(), name="alias-auth-login"),
     path("auth/refresh/", TokenRefreshView.as_view(), name="alias-auth-refresh"),
     path("auth/me/", MoiView.as_view(), name="alias-auth-me"),
+    path("auth/password-reset/", PasswordResetRequestView.as_view(), name="alias-auth-password-reset"),
     # Étudiant alias
     path("etudiant/eligibilite/", EtudiantEligibiliteView.as_view(), name="alias-etudiant-eligibilite"),
     path("public/eligibilite/", PublicEligibiliteView.as_view(), name="alias-public-eligibilite"),

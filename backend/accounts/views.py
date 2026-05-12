@@ -17,6 +17,7 @@ from accounts.serializers import (
     AdminStudentCreateSerializer,
     AdminUserUpdateSerializer,
     InscriptionEtudiantSerializer,
+    PasswordResetRequestSerializer,
     UserSerializer,
 )
 
@@ -39,6 +40,24 @@ class MoiView(APIView):
 
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+
+
+class PasswordResetRequestView(APIView):
+    """Demande « mot de passe oublié » : valide l’e-mail ; envoi réel du lien à brancher (SMTP / tâches)."""
+
+    permission_classes = (permissions.AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        # Ne pas révéler si l’e-mail existe (énumération). L’envoi de mail sera ajouté ici.
+        return Response(
+            {
+                "detail": "Si cet e-mail correspond à un compte actif, vous recevrez un lien pour réinitialiser votre mot de passe."
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminUsersListView(generics.ListCreateAPIView):

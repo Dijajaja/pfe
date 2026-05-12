@@ -9,6 +9,7 @@ class PaiementSerializer(serializers.ModelSerializer):
     dossier_id = serializers.IntegerField(source="dossier.id", read_only=True)
     liste_reference = serializers.UUIDField(source="liste.reference", read_only=True)
     envoye_par_id = serializers.IntegerField(source="envoye_par.id", read_only=True)
+    etudiant_email = serializers.SerializerMethodField()
 
     class Meta:
         model = Paiement
@@ -18,6 +19,7 @@ class PaiementSerializer(serializers.ModelSerializer):
             "liste_reference",
             "dossier",
             "dossier_id",
+            "etudiant_email",
             "annee_universitaire",
             "montant",
             "statut",
@@ -30,11 +32,17 @@ class PaiementSerializer(serializers.ModelSerializer):
         read_only_fields = (
             "liste_reference",
             "dossier_id",
+            "etudiant_email",
             "date_envoi",
             "envoye_par",
             "envoye_par_id",
             "date_operation",
         )
+
+    def get_etudiant_email(self, obj):
+        dossier = getattr(obj, "dossier", None)
+        user = getattr(dossier, "etudiant", None) if dossier else None
+        return getattr(user, "email", "") or ""
 
 
 class ListeBeneficiairesSerializer(serializers.ModelSerializer):
