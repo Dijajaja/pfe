@@ -9,6 +9,3 @@ backend/staticfiles/
 frontend/node_modules/
 frontend/dist/
 frontend/.env
-
-# Réglages VS Code locaux (excl. aperçu navigateur / perso)
-.vscode/
