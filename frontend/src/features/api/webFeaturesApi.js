@@ -78,6 +78,21 @@ export const studentApi = {
     const r = await api.post(endpoints.etudiant.reclamations, payload);
     return r.data;
   },
+  async updateReclamation(id, payload) {
+    const r = await api.patch(endpoints.etudiant.reclamationDetail(id), payload);
+    return r.data;
+  },
+  async deleteReclamation(id) {
+    await api.delete(endpoints.etudiant.reclamationDetail(id));
+  },
+  async getAttestationStatus() {
+    const r = await api.get(endpoints.etudiant.attestation);
+    return r.data;
+  },
+  async confirmAttestationPayment(payload) {
+    const r = await api.post(endpoints.etudiant.attestationPaiement, payload);
+    return r.data;
+  },
 };
 
 export const adminApi = {
@@ -154,6 +169,12 @@ export const adminApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return r.data;
+  },
+  async listBoursiers(params = {}) {
+    return withFallback(async () => {
+      const r = await api.get(endpoints.admin.boursiers, { params });
+      return results(r.data);
+    }, [], `GET ${endpoints.admin.boursiers}`);
   },
   async listReclamations(params = {}) {
     return withFallback(async () => {

@@ -63,7 +63,11 @@ class PasswordResetRequestView(APIView):
 class AdminUsersListView(generics.ListCreateAPIView):
     serializer_class = AdminUserSerializer
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset = User.objects.select_related("profil_etudiant").all().order_by("-date_creation")
+    queryset = (
+        User.objects.filter(role=User.Role.ETUDIANT)
+        .select_related("profil_etudiant")
+        .order_by("-date_creation")
+    )
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -121,7 +125,7 @@ class AdminUsersListView(generics.ListCreateAPIView):
 class AdminUserDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AdminUserUpdateSerializer
     permission_classes = (IsAuthenticated, IsAdmin)
-    queryset = User.objects.all()
+    queryset = User.objects.filter(role=User.Role.ETUDIANT)
 
     def destroy(self, request, *args, **kwargs):
         user = self.get_object()
@@ -216,6 +220,8 @@ class AdminImportEtudiantsCsvView(APIView):
                     user=user,
                     defaults={
                         "matricule": matricule,
+                        "prenom": first_name,
+                        "nom": last_name,
                         "etablissement": etablissement,
                         "filiere": filiere,
                         "wilaya": wilaya,
@@ -228,6 +234,12 @@ class AdminImportEtudiantsCsvView(APIView):
                         errors.append(f"Ligne {idx}: matricule déjà utilisé ({matricule}).")
                         continue
                     profile.matricule = matricule
+                    profile_changed = True
+                if first_name and profile.prenom != first_name:
+                    profile.prenom = first_name
+                    profile_changed = True
+                if last_name and profile.nom != last_name:
+                    profile.nom = last_name
                     profile_changed = True
                 if profile.etablissement != etablissement:
                     profile.etablissement = etablissement

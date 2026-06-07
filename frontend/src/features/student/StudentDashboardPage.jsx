@@ -8,6 +8,7 @@ import { referentialApi, studentApi } from "../api/webFeaturesApi";
 import { useAppToast } from "../../components/ui/AppToastProvider";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { getApiErrorMessage } from "../../lib/apiError";
+import { isAttestationEligibleFromStatus, StatutDossier, StatutPaiement } from "../../lib/statuts";
 
 const STATUS_TO_TIMELINE_INDEX = {
   BROUILLON: 0,
@@ -78,6 +79,11 @@ export function StudentDashboardPage() {
     queryFn: () => studentApi.listDossiers(),
   });
 
+  const attestationQuery = useQuery({
+    queryKey: ["student", "attestation"],
+    queryFn: studentApi.getAttestationStatus,
+  });
+
   const anneesQuery = useQuery({
     queryKey: ["referential", "annees-actives"],
     queryFn: referentialApi.listAnneesActives,
@@ -87,8 +93,19 @@ export function StudentDashboardPage() {
     if (error) pushError(getApiErrorMessage(error, "Impossible de charger le dashboard étudiant."));
   }, [error, pushError]);
 
+  useEffect(() => {
+    if (attestationQuery.error) {
+      pushError(getApiErrorMessage(attestationQuery.error, t("attestationLoadError")));
+    }
+  }, [attestationQuery.error, pushError, t]);
+
   const dossiers = data?.results || data || [];
   const dossier = dossiers[0] || null;
+
+  const canAttestation = isAttestationEligibleFromStatus(attestationQuery.data);
+  const attestationStatus = attestationQuery.data;
+  const showAttestationHint =
+    attestationQuery.isSuccess && attestationStatus && !canAttestation;
 
   const timelineIndex = useMemo(() => {
     if (!dossier) return -1;
@@ -199,6 +216,11 @@ export function StudentDashboardPage() {
               </div>
 
               <div className="d-flex flex-column flex-sm-row flex-wrap gap-2 mt-auto pt-3 student-dash-actions border-top">
+                {canAttestation ? (
+                  <Link to="/app/student/attestation" className="btn btn-sm student-dash-btn-attestation text-center">
+                    {t("studentActionAttestation")}
+                  </Link>
+                ) : null}
                 <Link to="/app/student/dossier" className="btn btn-sm student-dash-btn-outline text-center">
                   {t("studentActionViewDossier")}
                 </Link>

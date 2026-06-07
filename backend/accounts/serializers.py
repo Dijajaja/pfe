@@ -12,7 +12,7 @@ from dossiers.models import DossierBourse, StatutDossier
 class EtudiantProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = EtudiantProfile
-        fields = ("matricule", "etablissement", "filiere", "wilaya")
+        fields = ("matricule", "prenom", "nom", "etablissement", "filiere", "wilaya")
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,8 +27,8 @@ class UserSerializer(serializers.ModelSerializer):
 class InscriptionEtudiantSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
-    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    prenom = serializers.CharField(max_length=150)
+    nom = serializers.CharField(max_length=150)
     matricule = serializers.CharField(max_length=64)
     etablissement = serializers.CharField(max_length=255)
     filiere = serializers.CharField(max_length=255)
@@ -49,14 +49,30 @@ class InscriptionEtudiantSerializer(serializers.Serializer):
             raise serializers.ValidationError("Ce matricule est déjà utilisé.")
         return normalized
 
+    def validate_prenom(self, value):
+        normalized = (value or "").strip()
+        if not normalized:
+            raise serializers.ValidationError("Le prénom est obligatoire.")
+        return normalized
+
+    def validate_nom(self, value):
+        normalized = (value or "").strip()
+        if not normalized:
+            raise serializers.ValidationError("Le nom est obligatoire.")
+        return normalized
+
     def create(self, validated_data):
         profile_data = {
             "matricule": validated_data.pop("matricule"),
+            "prenom": validated_data.pop("prenom"),
+            "nom": validated_data.pop("nom"),
             "etablissement": validated_data.pop("etablissement"),
             "filiere": validated_data.pop("filiere"),
             "wilaya": validated_data.pop("wilaya", ""),
         }
         password = validated_data.pop("password")
+        validated_data["first_name"] = profile_data["prenom"]
+        validated_data["last_name"] = profile_data["nom"]
         try:
             with transaction.atomic():
                 user = User.objects.create_user(password=password, role=User.Role.ETUDIANT, **validated_data)
@@ -117,6 +133,11 @@ class AdminUserSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "date_creation")
 
     def get_full_name(self, obj):
+        profile = getattr(obj, "profil_etudiant", None)
+        if profile:
+            full_name = f"{profile.prenom or ''} {profile.nom or ''}".strip()
+            if full_name:
+                return full_name
         full_name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
         return full_name or obj.email
 
@@ -195,6 +216,8 @@ class AdminStudentCreateSerializer(serializers.Serializer):
             EtudiantProfile.objects.create(
                 user=user,
                 matricule=validated_data["matricule"],
+                prenom=validated_data.get("first_name", ""),
+                nom=validated_data.get("last_name", ""),
                 etablissement=validated_data["etablissement"],
                 filiere=validated_data["filiere"],
                 wilaya=validated_data.get("wilaya", ""),

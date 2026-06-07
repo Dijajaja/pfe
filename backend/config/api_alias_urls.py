@@ -10,10 +10,13 @@ from accounts.views import (
     PasswordResetRequestView,
 )
 from dossiers.views import (
+    AdminBoursiersListView,
     AdminDossiersAliasDetailView,
     AdminDossiersAliasListView,
     DocumentViewSet,
     DossierBourseViewSet,
+    EtudiantAttestationPaiementView,
+    EtudiantAttestationStatusView,
     EtudiantEligibiliteView,
     PublicEligibiliteView,
     ReclamationViewSet,
@@ -33,6 +36,9 @@ demande_detail = DossierBourseViewSet.as_view({"get": "retrieve", "patch": "part
 document_upload = DocumentViewSet.as_view({"post": "create"})
 document_list = DocumentViewSet.as_view({"get": "list"})
 reclamation_list = ReclamationViewSet.as_view({"get": "list", "post": "create"})
+reclamation_detail = ReclamationViewSet.as_view(
+    {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
+)
 annee_list = AnneeUniversitaireViewSet.as_view({"get": "list"})
 etudiant_paiements_list = StudentPaiementViewSet.as_view({"get": "list"})
 admin_paiements_list = AdminPaiementViewSet.as_view({"get": "list"})
@@ -47,13 +53,21 @@ urlpatterns = [
     path("etudiant/eligibilite/", EtudiantEligibiliteView.as_view(), name="alias-etudiant-eligibilite"),
     path("public/eligibilite/", PublicEligibiliteView.as_view(), name="alias-public-eligibilite"),
     path("etudiant/paiements/", etudiant_paiements_list, name="alias-etudiant-paiements"),
+    path("etudiant/attestation/", EtudiantAttestationStatusView.as_view(), name="alias-etudiant-attestation"),
+    path(
+        "etudiant/attestation/paiement/",
+        EtudiantAttestationPaiementView.as_view(),
+        name="alias-etudiant-attestation-paiement",
+    ),
     path("etudiant/reclamations/", reclamation_list, name="alias-etudiant-reclamations"),
+    path("etudiant/reclamations/<int:pk>/", reclamation_detail, name="alias-etudiant-reclamations-detail"),
     path("demande/", demande_list_create, name="alias-demande-list-create"),
     path("demande/<int:pk>/", demande_detail, name="alias-demande-detail"),
     path("documents/", document_list, name="alias-documents-list"),
     path("documents/upload/", document_upload, name="alias-documents-upload"),
     path("referentiels/annees-universitaires/", annee_list, name="alias-annees-list"),
     # Admin CNOU alias
+    path("admin/boursiers/", AdminBoursiersListView.as_view(), name="alias-admin-boursiers"),
     path("admin/dossiers/", AdminDossiersAliasListView.as_view(), name="alias-admin-dossiers"),
     path("admin/dossiers/<int:pk>/", AdminDossiersAliasDetailView.as_view(), name="alias-admin-dossiers-patch"),
     path("admin/dossiers/<int:dossier_id>/envoyer-mauripost/", AdminSendMauripostView.as_view(), name="alias-admin-dossiers-send-mauripost"),

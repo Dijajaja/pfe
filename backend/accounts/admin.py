@@ -29,7 +29,7 @@ class UserAdmin(DjangoUserAdmin):
 
 @admin.register(EtudiantProfile)
 class EtudiantProfileAdmin(admin.ModelAdmin):
-    list_display = ("matricule", "user", "etablissement", "filiere")
+    list_display = ("matricule", "prenom", "nom", "user", "etablissement", "filiere")
 
 
 @admin.register(AdministrateurProfile)

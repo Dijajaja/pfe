@@ -14,6 +14,7 @@ from dossiers.models import (
     NiveauEtude,
     Reclamation,
     StatutDossier,
+    StatutReclamation,
 )
 from payments.models import Paiement, StatutPaiement
 from referentials.models import AnneeUniversitaire
@@ -138,11 +139,37 @@ class DossierBourseSerializer(serializers.ModelSerializer):
             return Decimal("1650.00")
         return Decimal("1350.00")
 
+    def _validate_submission_readiness(self, instance, validated_data=None):
+        data = validated_data or {}
+        numero_cni = str(data.get("numero_cni", instance.numero_cni) or "").strip()
+        telephone = str(data.get("telephone", instance.telephone) or "").strip()
+        niveau = str(data.get("niveau", instance.niveau) or "").strip()
+        annee = data.get("annee_universitaire", instance.annee_universitaire)
+
+        errors = {}
+        if not numero_cni:
+            errors["numero_cni"] = "Le numéro CNI est obligatoire."
+        phone_digits = "".join(ch for ch in telephone if ch.isdigit())
+        if len(phone_digits) < 8:
+            errors["telephone"] = "Le numéro de téléphone doit contenir au moins 8 chiffres."
+        if not niveau:
+            errors["niveau"] = "Le niveau d'étude est obligatoire."
+        if not annee:
+            errors["annee_universitaire"] = "L'année universitaire est obligatoire."
+        if not instance.documents.exists():
+            errors["documents"] = "Au moins une pièce justificative doit être déposée."
+        if errors:
+            raise serializers.ValidationError(errors)
+
     def create(self, validated_data):
         request = self.context.get("request")
         user = request.user
         if getattr(user, "role", None) != User.Role.ETUDIANT:
             raise serializers.ValidationError("Seuls les étudiants peuvent créer un dossier.")
+        if validated_data.get("statut") == StatutDossier.SOUMIS:
+            raise serializers.ValidationError(
+                {"statut": "Déposez d'abord vos pièces justificatives, puis soumettez le dossier."}
+            )
         if not validated_data.get("annee_universitaire"):
             validated_data["annee_universitaire"] = self._get_or_create_default_annee()
         validated_data["etudiant"] = user
@@ -164,6 +191,11 @@ class DossierBourseSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Transition de statut non autorisée pour l’étudiant.")
             if "commentaire_admin" in validated_data:
                 validated_data.pop("commentaire_admin")
+            if (
+                new_statut == StatutDossier.SOUMIS
+                and instance.statut != StatutDossier.SOUMIS
+            ):
+                self._validate_submission_readiness(instance, validated_data)
         if user.role == User.Role.ADMIN and new_statut != instance.statut:
             DossierHistorique.objects.create(
                 dossier=instance,
@@ -230,8 +262,95 @@ class ReclamationSerializer(serializers.ModelSerializer):
         validated_data["etudiant"] = user
         return super().create(validated_data)
 
+    def validate(self, attrs):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if self.instance and getattr(user, "role", None) == User.Role.ETUDIANT:
+            if self.instance.statut not in (
+                StatutReclamation.SOUMISE,
+                StatutReclamation.EN_ATTENTE_ETUDIANT,
+            ):
+                raise serializers.ValidationError(
+                    "Cette réclamation ne peut plus être modifiée une fois prise en charge par l'administration."
+                )
+        return attrs
+
     def update(self, instance, validated_data):
         request = self.context.get("request")
         if getattr(request.user, "role", None) != User.Role.ADMIN:
             validated_data.pop("statut", None)
         return super().update(instance, validated_data)
+
+
+class BoursierListSerializer(serializers.ModelSerializer):
+    """Ligne de la liste admin des boursiers (dossier validé + profil étudiant + paiement Mauripost)."""
+
+    nom_complet = serializers.SerializerMethodField()
+    nni = serializers.CharField(source="numero_cni", read_only=True)
+    etablissement = serializers.SerializerMethodField()
+    filiere = serializers.SerializerMethodField()
+    statut_paiement = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DossierBourse
+        fields = (
+            "id",
+            "nom_complet",
+            "nni",
+            "etablissement",
+            "filiere",
+            "niveau",
+            "montant_bourse",
+            "statut_paiement",
+        )
+
+    def _profil(self, obj):
+        user = getattr(obj, "etudiant", None)
+        return getattr(user, "profil_etudiant", None) if user else None
+
+    def get_nom_complet(self, obj):
+        user = getattr(obj, "etudiant", None)
+        if not user:
+            return "—"
+        profil = self._profil(obj)
+        if profil:
+            joined = f"{profil.prenom or ''} {profil.nom or ''}".strip()
+            if joined:
+                return joined
+        joined = f"{user.first_name or ''} {user.last_name or ''}".strip()
+        return joined or user.email
+
+    def get_etablissement(self, obj):
+        profil = self._profil(obj)
+        return getattr(profil, "etablissement", "") or ""
+
+    def get_filiere(self, obj):
+        profil = self._profil(obj)
+        return getattr(profil, "filiere", "") or ""
+
+    def get_statut_paiement(self, obj):
+        paiement = (
+            Paiement.objects.filter(dossier=obj)
+            .order_by("-id")
+            .values_list("statut", flat=True)
+            .first()
+        )
+        return paiement or None
+
+
+class AttestationPaiementSerializer(serializers.Serializer):
+    methode = serializers.ChoiceField(choices=["BANKILY", "MASRVI", "SEDAD"])
+    telephone = serializers.CharField(max_length=32)
+    code_transaction = serializers.CharField(max_length=4, min_length=4)
+
+    def validate_telephone(self, value):
+        digits = "".join(c for c in str(value) if c.isdigit())
+        if len(digits) < 8:
+            raise serializers.ValidationError("Entrez un numéro de téléphone valide (au moins 8 chiffres).")
+        return digits
+
+    def validate_code_transaction(self, value):
+        code = str(value).strip()
+        if not code.isdigit() or len(code) != 4:
+            raise serializers.ValidationError("Le code de transaction doit contenir exactement 4 chiffres.")
+        return code

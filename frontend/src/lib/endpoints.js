@@ -24,7 +24,10 @@ export const endpoints = {
   etudiant: {
     eligibilite: "/api/etudiant/eligibilite/",
     paiements: "/api/etudiant/paiements/",
+    attestation: "/api/etudiant/attestation/",
+    attestationPaiement: "/api/etudiant/attestation/paiement/",
     reclamations: "/api/etudiant/reclamations/",
+    reclamationDetail: (id) => `/api/etudiant/reclamations/${id}/`,
   },
   reclamations: {
     list: "/api/v1/reclamations/",
@@ -48,6 +51,7 @@ export const endpoints = {
     users: "/api/admin/users/",
     userDetail: (id) => `/api/admin/users/${id}/`,
     usersImportCsv: "/api/admin/users/import-csv/",
+    boursiers: "/api/admin/boursiers/",
   },
   mauriposte: {
     dossiers: "/api/mauriposte/dossiers/",

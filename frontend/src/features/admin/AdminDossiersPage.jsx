@@ -68,7 +68,7 @@ function ConfirmActionModal({ selected, status, comment, setStatus, setComment, 
 }
 
 export function AdminDossiersPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const qc = useQueryClient();
   const { pushError, pushSuccess, pushInfo } = useAppToast();
   const [search, setSearch] = useState("");
@@ -109,17 +109,42 @@ export function AdminDossiersPage() {
   }, [dossiersQuery.data]);
 
   useEffect(() => {
-    const dossierParam = Number(searchParams.get("dossier"));
-    if (!dossierParam || selectedId) return;
-    if (!rows.some((r) => r.id === dossierParam)) return;
-    const t = window.setTimeout(() => setSelectedId(dossierParam), 0);
-    return () => window.clearTimeout(t);
-  }, [rows, searchParams, selectedId]);
+    const raw = searchParams.get("dossier");
+    if (!raw) return;
+    const dossierParam = Number(raw);
+    if (!dossierParam || !rows.some((r) => r.id === dossierParam)) return;
+    setSelectedId(dossierParam);
+  }, [rows, searchParams]);
+
+  function closeDrawer() {
+    setSelectedId(null);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("dossier");
+        return next;
+      },
+      { replace: true },
+    );
+  }
+
+  function openRow(id) {
+    if (id !== selectedId) setNombreMois(1);
+    setSelectedId(id);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("dossier", String(id));
+        return next;
+      },
+      { replace: true },
+    );
+  }
 
   useEffect(() => {
     if (!selectedId) return;
     function onKey(e) {
-      if (e.key === "Escape") setSelectedId(null);
+      if (e.key === "Escape") closeDrawer();
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -207,11 +232,6 @@ export function AdminDossiersPage() {
   function sendToMauripost() {
     if (!selectedId || !selected) return;
     sendMutation.mutate({ id: selectedId, payload: { nombre_mois: Number(nombreMois) } });
-  }
-
-  function openRow(id) {
-    if (id !== selectedId) setNombreMois(1);
-    setSelectedId(id);
   }
 
   if (dossiersQuery.isError) return <div className="alert alert-danger">{getApiErrorMessage(dossiersQuery.error, "Erreur chargement dossiers.")}</div>;
@@ -344,7 +364,7 @@ export function AdminDossiersPage() {
       <div
         className={`admin-dossiers-drawer-backdrop ${drawerOpen ? "is-open" : ""}`}
         aria-hidden={!drawerOpen}
-        onClick={() => setSelectedId(null)}
+        onClick={closeDrawer}
       />
       <aside className={`admin-dossiers-drawer ${drawerOpen ? "is-open" : ""}`} aria-hidden={!drawerOpen}>
         {selected ? (
@@ -354,7 +374,7 @@ export function AdminDossiersPage() {
                 <div className="small text-muted">Dossier</div>
                 <div className="fw-bold">{selected.numero}</div>
               </div>
-              <button type="button" className="btn btn-sm app-top-icon" aria-label="Fermer le panneau" onClick={() => setSelectedId(null)}>
+              <button type="button" className="btn btn-sm app-top-icon" aria-label="Fermer le panneau" onClick={closeDrawer}>
                 <FiX size={18} />
               </button>
             </div>

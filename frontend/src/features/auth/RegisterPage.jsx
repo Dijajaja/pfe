@@ -15,6 +15,8 @@ export function RegisterPage() {
   const [form, setForm] = useState({
     email: "",
     password: "",
+    prenom: "",
+    nom: "",
     matricule: "",
     etablissement: "",
     filiere: "",
@@ -132,6 +134,35 @@ export function RegisterPage() {
                     required
                     minLength={8}
                     placeholder="Au moins 8 caractères"
+                  />
+                </div>
+              </div>
+
+              <div className="col-12 col-md-6">
+                <label className="form-label fw-semibold">{t("fieldPrenom")}</label>
+                <div className="login-pro-input-wrap">
+                  <UserPlus size={18} className="login-pro-input-icon" />
+                  <input
+                    className="form-control login-pro-input"
+                    autoComplete="given-name"
+                    value={form.prenom}
+                    onChange={(e) => setField("prenom", e.target.value)}
+                    placeholder={t("fieldPrenomPlaceholder")}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label fw-semibold">{t("fieldNom")}</label>
+                <div className="login-pro-input-wrap">
+                  <UserPlus size={18} className="login-pro-input-icon" />
+                  <input
+                    className="form-control login-pro-input"
+                    autoComplete="family-name"
+                    value={form.nom}
+                    onChange={(e) => setField("nom", e.target.value)}
+                    placeholder={t("fieldNomPlaceholder")}
+                    required
                   />
                 </div>
               </div>

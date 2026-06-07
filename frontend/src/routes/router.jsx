@@ -15,9 +15,11 @@ import { StudentSuiviPage } from "../features/student/StudentSuiviPage";
 import { StudentReclamationsPage } from "../features/student/StudentReclamationsPage";
 import { StudentPaiementsPage } from "../features/student/StudentPaiementsPage";
 import { StudentNotificationsPage } from "../features/student/StudentNotificationsPage";
+import { StudentAttestationPage } from "../features/student/StudentAttestationPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
 import { AdminDossiersPage } from "../features/admin/AdminDossiersPage";
 import { AdminUsersPage } from "../features/admin/AdminUsersPage";
+import { AdminBoursiersPage } from "../features/admin/AdminBoursiersPage";
 import { AdminExportsPage } from "../features/admin/AdminExportsPage";
 import { AdminReclamationsPage } from "../features/admin/AdminReclamationsPage";
 import { PartnerBatchesPage } from "../features/partner/PartnerBatchesPage";
@@ -33,6 +35,7 @@ export const router = createBrowserRouter([
   { path: "/admin/dossiers", element: <Navigate to="/app/admin/dossiers" replace /> },
   { path: "/admin/etudiants", element: <Navigate to="/app/admin/users" replace /> },
   { path: "/admin/exports", element: <Navigate to="/app/admin/exports" replace /> },
+  { path: "/admin/boursiers", element: <Navigate to="/app/admin/boursiers" replace /> },
   { path: "/mauriposte", element: <Navigate to="/app/partner/dashboard" replace /> },
   { path: "/mauriposte/dashboard", element: <Navigate to="/app/partner/dashboard" replace /> },
   {
@@ -74,6 +77,7 @@ export const router = createBrowserRouter([
               { path: "reclamations", element: <StudentReclamationsPage /> },
               { path: "paiements", element: <StudentPaiementsPage /> },
               { path: "notifications", element: <StudentNotificationsPage /> },
+              { path: "attestation", element: <StudentAttestationPage /> },
             ],
           },
           {
@@ -82,6 +86,7 @@ export const router = createBrowserRouter([
             children: [
               { path: "dashboard", element: <AdminDashboardPage /> },
               { path: "dossiers", element: <AdminDossiersPage /> },
+              { path: "boursiers", element: <AdminBoursiersPage /> },
               { path: "users", element: <AdminUsersPage /> },
               { path: "exports", element: <AdminExportsPage /> },
               { path: "reclamations", element: <AdminReclamationsPage /> },

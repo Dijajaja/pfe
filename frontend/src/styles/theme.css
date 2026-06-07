@@ -468,6 +468,116 @@ body{
   border:1px solid color-mix(in srgb, #2e7d72 26%, #fff);
 }
 
+/* —— Attestation de bourse (paiement 50 MRU) —— */
+.student-attestation-page .attestation-block{
+  border-radius:16px;
+  background:linear-gradient(180deg, #fff 0%, #FAF7F2 100%);
+}
+.student-attestation-page .attestation-block--locked{
+  border:1px dashed color-mix(in srgb, #1B4D4A 28%, #ced4da);
+}
+.student-attestation-page .attestation-block--success{
+  border:1px solid color-mix(in srgb, #2E7D72 35%, #fff);
+}
+.student-attestation-page .attestation-success-icon{
+  color:#2E7D72;
+}
+.student-attestation-page .attestation-step-label{
+  font-size:.72rem;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#2E7D72;
+  margin-bottom:.35rem;
+}
+.student-attestation-page .attestation-methods-row{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:.75rem;
+}
+@media (max-width:768px){
+  .student-attestation-page .attestation-methods-row{
+    grid-template-columns:1fr;
+  }
+}
+.student-attestation-page .attestation-method-card{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:.5rem;
+  padding:1rem .75rem;
+  border-radius:14px;
+  border:2px solid #e2e8e6;
+  background:#fff;
+  cursor:pointer;
+  transition:border-color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.student-attestation-page .attestation-method-card:hover{
+  border-color:color-mix(in srgb, #2E7D72 40%, #e2e8e6);
+}
+.student-attestation-page .attestation-method-card.is-selected{
+  border-color:#1B4D4A;
+  background:color-mix(in srgb, #9FE1CB 22%, #fff);
+  box-shadow:0 4px 16px -8px rgba(27, 77, 74, .35);
+}
+.student-attestation-page .attestation-method-icon{
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.student-attestation-page .attestation-instructions{
+  padding-left:1.25rem;
+  line-height:1.65;
+  color:#3d4a48;
+}
+.student-attestation-page .attestation-instructions li{
+  margin-bottom:.45rem;
+}
+.student-attestation-page .attestation-merchant-code{
+  font-family:ui-monospace, monospace;
+  letter-spacing:.08em;
+  color:#1B4D4A;
+  background:color-mix(in srgb, #9FE1CB 35%, #fff);
+  padding:.1rem .45rem;
+  border-radius:6px;
+}
+.student-attestation-page .attestation-checklist{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:grid;
+  gap:.65rem;
+}
+.student-attestation-page .attestation-checklist li{
+  display:flex;
+  align-items:center;
+  gap:.55rem;
+  padding:.55rem .75rem;
+  border-radius:10px;
+  background:#fff;
+  border:1px solid #e8ecea;
+}
+.student-attestation-page .attestation-checklist li.is-ok{
+  color:#1b5e20;
+  border-color:color-mix(in srgb, #2E7D72 30%, #fff);
+}
+.student-attestation-page .attestation-checklist li.is-pending{
+  color:#6c757d;
+}
+.student-attestation-page .attestation-check-dot{
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#ced4da;
+  flex-shrink:0;
+}
+.student-attestation-page .attestation-confirm-form{
+  max-width:420px;
+}
+
 .notif-center-item[role="button"]{
   cursor:pointer;
 }
@@ -1688,6 +1798,18 @@ body{
 .student-dash-btn-reclam:hover{
   background:color-mix(in srgb, var(--sehily-corail, #c9614a) 24%, #fff);
   color:#5c241f;
+}
+.student-dash-btn-attestation{
+  border-radius:10px;
+  font-weight:600;
+  border:none;
+  background:linear-gradient(135deg, #1B4D4A 0%, #2E7D72 100%);
+  color:#fff;
+  text-decoration:none;
+}
+.student-dash-btn-attestation:hover{
+  background:linear-gradient(135deg, #163d3a 0%, #256a5f 100%);
+  color:#fff;
 }
 .student-dash-progress-track{
   height:8px;
@@ -3314,4 +3436,118 @@ body{
 .admin-users-filters--tight .form-select{
   min-width:7.5rem;
   max-width:11rem;
+}
+
+/* Admin — liste des boursiers */
+.admin-boursiers-page{
+  --boursiers-coral:#C9614A;
+}
+.admin-boursiers-header{
+  padding-bottom:.75rem;
+  border-bottom:3px solid color-mix(in srgb, var(--boursiers-coral) 55%, transparent);
+}
+.admin-boursiers-title{
+  color:#1B4D4A;
+}
+.admin-boursiers-title::after{
+  content:"";
+  display:block;
+  width:3rem;
+  height:3px;
+  margin-top:.35rem;
+  border-radius:2px;
+  background:var(--boursiers-coral);
+}
+.admin-boursiers-stat{
+  border-radius:14px;
+  border:1px solid color-mix(in srgb, #2E7D72 12%, #e8eceb);
+}
+.admin-boursiers-stat--pending{
+  border-left:4px solid var(--boursiers-coral);
+  background:linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--boursiers-coral) 7%, #fff) 0%,
+    #fff 55%
+  );
+}
+.admin-boursiers-stat-label{
+  font-size:.78rem;
+  color:var(--sehily-text-muted);
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  font-weight:600;
+}
+.admin-boursiers-stat-value{
+  font-size:1.45rem;
+  font-weight:700;
+  color:#1B4D4A;
+  line-height:1.2;
+}
+.admin-boursiers-stat-value--accent{ color:#2E7D72; }
+.admin-boursiers-stat-value--ok{ color:#2E7D72; }
+.admin-boursiers-stat-value--coral{ color:var(--boursiers-coral); }
+.admin-boursiers-filters-panel{
+  border-left:4px solid var(--boursiers-coral);
+  background:linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--boursiers-coral) 6%, #FAF7F2) 0%,
+    #fff 42%
+  );
+}
+.admin-boursiers-filter-label{
+  color:#1B4D4A;
+}
+.admin-boursiers-filter-select{
+  border-color:color-mix(in srgb, var(--boursiers-coral) 28%, #dee2e6);
+}
+.admin-boursiers-filter-select:focus{
+  border-color:var(--boursiers-coral);
+  box-shadow:0 0 0 .2rem color-mix(in srgb, var(--boursiers-coral) 22%, transparent);
+}
+.admin-boursiers-table-wrap{
+  border-top:3px solid color-mix(in srgb, var(--boursiers-coral) 40%, transparent);
+}
+.admin-boursiers-table thead th{
+  background:#FAF7F2;
+  color:#1B4D4A;
+  font-size:.78rem;
+  text-transform:uppercase;
+  letter-spacing:.03em;
+  border-bottom:2px solid color-mix(in srgb, var(--boursiers-coral) 35%, transparent);
+}
+.admin-boursiers-page .sehily-badge--coral{
+  background:color-mix(in srgb, var(--boursiers-coral) 12%, #fff);
+  border:1px solid color-mix(in srgb, var(--boursiers-coral) 38%, transparent);
+  color:var(--boursiers-coral);
+  font-weight:600;
+}
+.admin-boursiers-page .btn.sehily-btn-secondary{
+  border-color:color-mix(in srgb, var(--boursiers-coral) 25%, #dee2e6);
+}
+.admin-boursiers-page .btn.sehily-btn-secondary:hover{
+  border-color:var(--boursiers-coral);
+  color:var(--boursiers-coral);
+}
+.admin-boursiers-annee-label{
+  color:#1B4D4A;
+}
+.admin-boursiers-annee-select{
+  min-width:9.5rem;
+  background:#1B4D4A;
+  color:#fff;
+  border:1px solid #1B4D4A;
+  font-weight:600;
+  border-radius:10px;
+  padding-top:.4rem;
+  padding-bottom:.4rem;
+}
+.admin-boursiers-annee-select:focus{
+  background:#1B4D4A;
+  color:#fff;
+  border-color:#2E7D72;
+  box-shadow:0 0 0 .2rem color-mix(in srgb, #2E7D72 35%, transparent);
+}
+.admin-boursiers-annee-select option{
+  background:#fff;
+  color:#1B4D4A;
 }

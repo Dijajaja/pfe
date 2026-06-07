@@ -51,3 +51,12 @@ class AdminUsersImportCsvTests(TestCase):
         self.assertEqual(response.status_code, 200)
         # paginé
         self.assertIn("results", response.data)
+
+    def test_admin_users_list_excludes_admin_accounts(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.get("/api/admin/users/")
+        self.assertEqual(response.status_code, 200)
+        rows = response.data.get("results", response.data)
+        emails = {row["email"] for row in rows}
+        self.assertIn("etudiant@test.mr", emails)
+        self.assertNotIn("admin@test.mr", emails)

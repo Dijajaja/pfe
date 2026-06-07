@@ -163,6 +163,41 @@ class Reclamation(models.Model):
         ordering = ("-date_creation",)
 
 
+class MethodePaiementAttestation(models.TextChoices):
+    BANKILY = "BANKILY", "Bankily"
+    MASRVI = "MASRVI", "Masrvi"
+    SEDAD = "SEDAD", "Sedad"
+
+
+class PaiementAttestation(models.Model):
+    """Paiement 50 MRU pour télécharger l'attestation de bourse (revenu plateforme)."""
+
+    dossier = models.ForeignKey(
+        DossierBourse,
+        on_delete=models.CASCADE,
+        related_name="paiements_attestation",
+    )
+    etudiant = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="paiements_attestation",
+    )
+    methode = models.CharField(max_length=16, choices=MethodePaiementAttestation.choices)
+    telephone = models.CharField(max_length=32)
+    code_transaction = models.CharField(max_length=4)
+    montant = models.DecimalField(max_digits=8, decimal_places=2, default=50)
+    reference = models.CharField(max_length=32, unique=True)
+    paye_le = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "paiement attestation"
+        verbose_name_plural = "paiements attestation"
+        ordering = ("-paye_le",)
+
+    def __str__(self) -> str:
+        return f"Attestation {self.reference} — {self.etudiant_id}"
+
+
 class MessageReclamation(models.Model):
     reclamation = models.ForeignKey(
         Reclamation,

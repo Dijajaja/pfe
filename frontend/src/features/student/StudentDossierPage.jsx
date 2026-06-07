@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, ArrowRight, Folder, GraduationCap, IdCard, Phone, Upload } from "lucide-react";
 
@@ -6,6 +6,7 @@ import { referentialApi, studentApi } from "../api/webFeaturesApi";
 import { useAppToast } from "../../components/ui/AppToastProvider";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { getApiErrorMessage } from "../../lib/apiError";
+import { canSubmitDossierStatut, validateDossierSubmission } from "../../lib/dossierSubmission";
 
 const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg"];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -38,6 +39,8 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
   const [feedback, setFeedback] = useState("");
 
   const headerEmail = (dossier?.etudiant_email || "").trim() || "—";
+  const existingDocuments = dossier?.documents || [];
+  const isEditable = canSubmitDossierStatut(dossier?.statut);
 
   function resolveAnneeUniversitaire() {
     const fromDossier = dossier?.annee_universitaire;
@@ -46,27 +49,44 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
     return null;
   }
 
-  function buildPayloadSoemis() {
+  function buildFieldPayload() {
     const anneeId = resolveAnneeUniversitaire();
     return {
       ...(anneeId != null ? { annee_universitaire: anneeId } : {}),
-      statut: "SOUMIS",
-      numero_cni: form.numero_cni,
-      telephone: form.telephone,
+      numero_cni: form.numero_cni.trim(),
+      telephone: form.telephone.trim(),
       niveau: form.niveau,
     };
   }
 
+  const submissionCheck = useMemo(
+    () =>
+      validateDossierSubmission({
+        numero_cni: form.numero_cni,
+        telephone: form.telephone,
+        niveau: form.niveau,
+        anneeUniversitaireId: resolveAnneeUniversitaire(),
+        existingDocumentsCount: existingDocuments.length,
+        pendingFilesCount: files.length,
+      }),
+    [form.numero_cni, form.telephone, form.niveau, dossier?.annee_universitaire, activeAnnees, existingDocuments.length, files.length],
+  );
+
+  const canSubmit = isEditable && submissionCheck.ok;
+
   const soumettreMutation = useMutation({
     mutationFn: async () => {
-      const payload = buildPayloadSoemis();
-      let nextDossier;
-      if (dossier) {
-        nextDossier = await studentApi.updateDossier(dossier.id, payload);
-      } else {
-        nextDossier = await studentApi.createDossier(payload);
+      if (!submissionCheck.ok) {
+        throw new Error(`Complétez le dossier avant soumission : ${submissionCheck.missing.join(", ")}.`);
       }
-      const dossierId = nextDossier.id;
+      const fieldPayload = buildFieldPayload();
+      let targetDossier;
+      if (dossier?.id) {
+        targetDossier = await studentApi.updateDossier(dossier.id, fieldPayload);
+      } else {
+        targetDossier = await studentApi.createDossier(fieldPayload);
+      }
+      const dossierId = targetDossier.id;
       for (const fichier of files) {
         await studentApi.uploadDocument({
           dossier: dossierId,
@@ -74,7 +94,7 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
           fichier,
         });
       }
-      return dossierId;
+      return studentApi.updateDossier(dossierId, { statut: "SOUMIS" });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["student", "dossiers"] });
@@ -120,7 +140,7 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
     <>
       <div className="col-12">
         <p className="student-dossier-lead mb-3">
-          Renseignez vos informations et déposez les pièces (formats validés — image ou PDF pour la CNI).
+          Renseignez tous les champs obligatoires et déposez au moins une pièce justificative pour pouvoir soumettre.
         </p>
 
         <div className="student-dossier-card-v1">
@@ -141,16 +161,18 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
               <div className="col-12 col-md-6 d-flex flex-column">
                 <div className="student-dossier-v1-section-title">Informations personnelles</div>
                 <div className="d-flex flex-column gap-3 flex-grow-1">
-                  <InfoField label="CNI" icon={<IdCard size={20} strokeWidth={2} aria-hidden />}>
+                  <InfoField label="CNI *" icon={<IdCard size={20} strokeWidth={2} aria-hidden />}>
                     <input
                       className="form-control form-control-sm"
                       value={form.numero_cni}
                       onChange={(e) => setForm((f) => ({ ...f, numero_cni: e.target.value }))}
                       placeholder="Numéro de la carte d’identité"
                       autoComplete="off"
+                      required
+                      disabled={!isEditable}
                     />
                   </InfoField>
-                  <InfoField label="Numéro de téléphone" icon={<Phone size={20} strokeWidth={2} aria-hidden />}>
+                  <InfoField label="Numéro de téléphone *" icon={<Phone size={20} strokeWidth={2} aria-hidden />}>
                     <input
                       className="form-control form-control-sm"
                       type="tel"
@@ -158,13 +180,17 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
                       onChange={(e) => setForm((f) => ({ ...f, telephone: e.target.value }))}
                       placeholder="Ex. 45 XX XX XX"
                       autoComplete="tel"
+                      required
+                      disabled={!isEditable}
                     />
                   </InfoField>
-                  <InfoField label="Niveau d'étude" icon={<GraduationCap size={20} strokeWidth={2} aria-hidden />}>
+                  <InfoField label="Niveau d'étude *" icon={<GraduationCap size={20} strokeWidth={2} aria-hidden />}>
                     <select
                       className="form-select form-select-sm"
                       value={form.niveau}
                       onChange={(e) => setForm((f) => ({ ...f, niveau: e.target.value }))}
+                      required
+                      disabled={!isEditable}
                     >
                       <option value="L1">L1</option>
                       <option value="L2">L2</option>
@@ -175,9 +201,14 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
               </div>
 
               <div className="col-12 col-md-6 d-flex flex-column">
-                <div className="student-dossier-v1-section-title">Pièce justificative</div>
+                <div className="student-dossier-v1-section-title">Pièce justificative *</div>
                 <div className="text-muted small mb-1">Type de document</div>
-                <select className="form-select form-select-sm mb-3" value={typePiece} onChange={(e) => setTypePiece(e.target.value)}>
+                <select
+                  className="form-select form-select-sm mb-3"
+                  value={typePiece}
+                  onChange={(e) => setTypePiece(e.target.value)}
+                  disabled={!isEditable}
+                >
                   <option value="CNI">CNI (carte d’identité / scan)</option>
                   <option value="BAC">Baccalauréat</option>
                   <option value="INSCRIPTION">Attestation d’inscription</option>
@@ -185,8 +216,8 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
                 </select>
 
                 <div
-                  className="student-dossier-dropzone-v1 flex-grow-1 d-flex flex-column"
-                  onDrop={onDrop}
+                  className={`student-dossier-dropzone-v1 flex-grow-1 d-flex flex-column${!isEditable ? " opacity-50 pe-none" : ""}`}
+                  onDrop={isEditable ? onDrop : undefined}
                   onDragOver={(e) => e.preventDefault()}
                 >
                   <div className="student-dossier-upload-icon mx-auto" aria-hidden>
@@ -204,10 +235,23 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
                     accept="application/pdf,image/png,image/jpeg"
                     multiple
                     onChange={(e) => onFileInput(e.target.files)}
+                    disabled={!isEditable}
                   />
                   <div className="small text-muted mt-1 text-center">
-                    {files.length ? `${files.length} fichier${files.length > 1 ? "s" : ""} prêt(s)` : "Aucun fichier sélectionné"}
+                    {files.length || existingDocuments.length
+                      ? `${existingDocuments.length + files.length} fichier${existingDocuments.length + files.length > 1 ? "s" : ""} au total`
+                      : "Aucun fichier sélectionné"}
                   </div>
+                  {existingDocuments.length > 0 ? (
+                    <ul className="student-dossier-file-list small mb-0 ps-3 mt-2 text-start w-100">
+                      {existingDocuments.map((doc) => (
+                        <li key={doc.id} className="text-break">
+                          {doc.nom_fichier || doc.type_piece}{" "}
+                          <span className="text-muted">({doc.type_piece} — déjà déposé)</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                   {files.length > 0 ? (
                     <ul className="student-dossier-file-list small mb-0 ps-3 mt-2 text-start w-100">
                       {files.map((f) => (
@@ -223,17 +267,32 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
           </div>
 
           <footer className="student-dossier-foot">
-            <div className="d-flex align-items-start gap-2 small text-muted">
-              <AlertTriangle size={18} className="flex-shrink-0 student-dossier-foot__warn-icon" aria-hidden />
-              <span>
-                Formats acceptés : <strong className="text-body">PDF, JPG, PNG</strong>
-              </span>
+            <div className="d-flex flex-column gap-2 small text-muted flex-grow-1">
+              <div className="d-flex align-items-start gap-2">
+                <AlertTriangle size={18} className="flex-shrink-0 student-dossier-foot__warn-icon" aria-hidden />
+                <span>
+                  Formats acceptés : <strong className="text-body">PDF, JPG, PNG</strong>
+                </span>
+              </div>
+              {isEditable && !submissionCheck.ok ? (
+                <div className="text-danger">
+                  Champs manquants : {submissionCheck.missing.join(", ")}.
+                </div>
+              ) : null}
             </div>
             <button
               className="btn student-dossier-submit-btn d-inline-flex align-items-center gap-2"
               type="button"
-              disabled={soumettreMutation.isPending}
+              disabled={!canSubmit || soumettreMutation.isPending}
+              title={
+                !isEditable
+                  ? "Dossier déjà soumis"
+                  : !submissionCheck.ok
+                    ? `Complétez : ${submissionCheck.missing.join(", ")}`
+                    : "Soumettre le dossier"
+              }
               onClick={() => {
+                if (!canSubmit) return;
                 setFeedback("");
                 soumettreMutation.mutate();
               }}
@@ -253,6 +312,15 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
           </footer>
         </div>
       </div>
+
+      {!isEditable ? (
+        <div className="col-12">
+          <div className="alert alert-info mb-0">
+            Ce dossier a déjà été soumis (statut : <strong>{dossier?.statut}</strong>). Les modifications ne sont plus possibles
+            depuis cette page.
+          </div>
+        </div>
+      ) : null}
 
       {feedback ? (
         <div className="col-12">

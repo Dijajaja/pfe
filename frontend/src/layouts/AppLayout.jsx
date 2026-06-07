@@ -137,6 +137,7 @@ export function AppLayout() {
   const adminLinks = [
     { to: "/app/admin/dashboard", label: t("menuAdminDashboard"), icon: FiHome },
     { to: "/app/admin/dossiers", label: t("menuAdminDossiers"), icon: FiFolder },
+    { to: "/app/admin/boursiers", label: t("menuAdminBoursiers"), icon: FiBookOpen },
     { to: "/app/admin/reclamations", label: t("menuAdminReclamations"), icon: FiFileText },
     { to: "/app/admin/users", label: t("menuAdminUsers"), icon: FiUsers },
     { to: "/app/admin/exports", label: t("menuAdminExports"), icon: FiFileText },
