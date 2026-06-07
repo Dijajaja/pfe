@@ -1,0 +1,17 @@
+{
+  "@@locale": "fr",
+  "loginTitle": "Connexion",
+  "loginSubtitle": "Connectez-vous pour accéder à votre espace étudiant.",
+  "loginAction": "Se connecter",
+  "goToRegister": "Créer un compte",
+  "registerTitle": "Inscription",
+  "registerAction": "S'inscrire",
+  "backToLogin": "Retour à la connexion",
+  "email": "Email",
+  "password": "Mot de passe",
+  "matricule": "Matricule",
+  "requiredField": "Champ obligatoire",
+  "loginError": "Échec de connexion. Vérifiez vos informations.",
+  "registerError": "Échec d'inscription. Veuillez réessayer."
+}
+

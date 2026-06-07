@@ -1,0 +1,17 @@
+{
+  "@@locale": "en",
+  "loginTitle": "Login",
+  "loginSubtitle": "Sign in to access your student space.",
+  "loginAction": "Sign in",
+  "goToRegister": "Create an account",
+  "registerTitle": "Register",
+  "registerAction": "Register",
+  "backToLogin": "Back to login",
+  "email": "Email",
+  "password": "Password",
+  "matricule": "Student ID",
+  "requiredField": "Required field",
+  "loginError": "Login failed. Please check your credentials.",
+  "registerError": "Registration failed. Please try again."
+}
+

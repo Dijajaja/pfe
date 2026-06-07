@@ -1,0 +1,17 @@
+{
+  "@@locale": "ar",
+  "loginTitle": "تسجيل الدخول",
+  "loginSubtitle": "قم بتسجيل الدخول للوصول إلى مساحة الطالب.",
+  "loginAction": "دخول",
+  "goToRegister": "إنشاء حساب",
+  "registerTitle": "التسجيل",
+  "registerAction": "تسجيل",
+  "backToLogin": "العودة لتسجيل الدخول",
+  "email": "البريد الإلكتروني",
+  "password": "كلمة المرور",
+  "matricule": "الرقم الجامعي",
+  "requiredField": "حقل مطلوب",
+  "loginError": "فشل تسجيل الدخول. تحقق من بياناتك.",
+  "registerError": "فشل التسجيل. حاول مرة أخرى."
+}
+
