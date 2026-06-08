@@ -30,14 +30,6 @@ class LanguageSheet extends ConsumerWidget {
               Navigator.of(context).pop();
             },
           ),
-          ListTile(
-            title: const Text('English'),
-            trailing: current.languageCode == 'en' ? const Icon(Icons.check) : null,
-            onTap: () {
-              ref.read(localeProvider.notifier).state = const Locale('en');
-              Navigator.of(context).pop();
-            },
-          ),
         ],
       ),
     );

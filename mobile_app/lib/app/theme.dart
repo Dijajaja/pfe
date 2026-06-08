@@ -19,7 +19,7 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xFFFAF7F2),
       appBarTheme: const AppBarTheme(
-        centerTitle: true,
+        centerTitle: false,
         backgroundColor: primary,
         foregroundColor: Colors.white,
       ),

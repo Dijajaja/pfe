@@ -113,7 +113,6 @@ function StudentSuiviBody() {
   return (
     <div className="row g-4 student-suivi-pro">
       <div className="col-12">
-        <h1 className="h4 mb-1">Suivi dossier</h1>
         <div className="text-muted">Historique des statuts et actions.</div>
       </div>
       <div className="col-12">

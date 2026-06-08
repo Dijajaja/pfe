@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_endpoints.dart';
 import '../../../core/storage/secure_storage_service.dart';
 import '../domain/auth_tokens.dart';
 
@@ -19,13 +20,25 @@ class AuthRepository {
   final Dio _dio;
   final SecureStorageService _secureStorage;
 
+  Future<void> requestPasswordReset(String email) async {
+    await _dio.post<Map<String, dynamic>>(
+      ApiEndpoints.authPasswordReset,
+      data: {'email': email.trim()},
+    );
+  }
+
+  Future<Map<String, dynamic>> fetchMe() async {
+    final response = await _dio.get<Map<String, dynamic>>(ApiEndpoints.authMe);
+    return response.data ?? const {};
+  }
+
   Future<AuthTokens> login({
     required String email,
     required String password,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/login/',
-      data: {'email': email, 'password': password},
+      ApiEndpoints.authLogin,
+      data: {'email': email.trim(), 'password': password},
     );
     return _tokensFromJson(response.data ?? const {});
   }
@@ -33,36 +46,40 @@ class AuthRepository {
   Future<AuthTokens> register({
     required String email,
     required String password,
-    String? matricule,
-    String? etablissement,
-    String? filiere,
+    required String prenom,
+    required String nom,
+    required String matricule,
+    required String etablissement,
+    required String filiere,
   }) async {
     await _dio.post<Map<String, dynamic>>(
-      '/auth/register/',
+      ApiEndpoints.authRegister,
       data: {
-        'email': email,
+        'email': email.trim(),
         'password': password,
-        if (matricule != null) 'matricule': matricule,
-        if (etablissement != null) 'etablissement': etablissement,
-        if (filiere != null) 'filiere': filiere,
+        'prenom': prenom.trim(),
+        'nom': nom.trim(),
+        'matricule': matricule.trim(),
+        'etablissement': etablissement.trim(),
+        'filiere': filiere.trim(),
       },
     );
-    // Option: auto-login right after register.
-    return login(email: email, password: password);
+    return login(email: email.trim(), password: password);
   }
 
   Future<AuthTokens> refresh(String refreshToken) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      '/auth/refresh/',
+      ApiEndpoints.authRefresh,
       data: {'refresh': refreshToken},
     );
 
     final body = response.data ?? const {};
     final access = (body['access'] ?? '').toString();
+    final refresh = (body['refresh'] ?? refreshToken).toString();
     if (access.isEmpty) {
       throw Exception('Refresh token invalide');
     }
-    return AuthTokens(access: access, refresh: refreshToken);
+    return AuthTokens(access: access, refresh: refresh);
   }
 
   Future<void> persistTokens(AuthTokens tokens) async {
@@ -111,4 +128,3 @@ class AuthRepository {
     }
   }
 }
-

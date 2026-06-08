@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/auth_repository.dart';
+import 'auth_role_provider.dart';
 
 enum AuthStatus {
   unknown,
@@ -20,12 +21,15 @@ class AuthController extends StateNotifier<AuthStatus> {
   Future<void> bootstrap() async {
     final repo = _ref.read(authRepositoryProvider);
     final hasValid = await repo.hasValidSession();
-    if (hasValid) {
-      state = AuthStatus.authenticated;
-      return;
+    if (!hasValid) {
+      final refreshed = await repo.tryRefreshSession();
+      if (!refreshed) {
+        _ref.read(authRoleProvider.notifier).state = null;
+        state = AuthStatus.unauthenticated;
+        return;
+      }
     }
-    final refreshed = await repo.tryRefreshSession();
-    state = refreshed ? AuthStatus.authenticated : AuthStatus.unauthenticated;
+    await _finalizeSession();
   }
 
   Future<void> login({
@@ -33,34 +37,66 @@ class AuthController extends StateNotifier<AuthStatus> {
     required String password,
   }) async {
     final repo = _ref.read(authRepositoryProvider);
-    final tokens = await repo.login(email: email, password: password);
+    final tokens = await repo.login(email: email.trim(), password: password);
     await repo.persistTokens(tokens);
-    state = AuthStatus.authenticated;
+    await _finalizeSession();
+    if (state != AuthStatus.authenticated) {
+      throw Exception('Accès réservé aux comptes étudiants.');
+    }
   }
 
   Future<void> register({
     required String email,
     required String password,
-    String? matricule,
-    String? etablissement,
-    String? filiere,
+    required String prenom,
+    required String nom,
+    required String matricule,
+    required String etablissement,
+    required String filiere,
   }) async {
     final repo = _ref.read(authRepositoryProvider);
     final tokens = await repo.register(
       email: email,
       password: password,
+      prenom: prenom,
+      nom: nom,
       matricule: matricule,
       etablissement: etablissement,
       filiere: filiere,
     );
     await repo.persistTokens(tokens);
-    state = AuthStatus.authenticated;
+    await _finalizeSession();
   }
 
   Future<void> logout() async {
     final repo = _ref.read(authRepositoryProvider);
     await repo.logout();
+    _ref.read(authRoleProvider.notifier).state = null;
     state = AuthStatus.unauthenticated;
   }
-}
 
+  Future<void> handleSessionExpired() async {
+    if (state == AuthStatus.unauthenticated) return;
+    await logout();
+  }
+
+  Future<void> _finalizeSession() async {
+    final repo = _ref.read(authRepositoryProvider);
+    try {
+      final me = await repo.fetchMe();
+      final role = me['role']?.toString();
+      _ref.read(authRoleProvider.notifier).state = role;
+      if (!isStudentRole(role)) {
+        await repo.logout();
+        _ref.read(authRoleProvider.notifier).state = null;
+        state = AuthStatus.unauthenticated;
+        return;
+      }
+      state = AuthStatus.authenticated;
+    } catch (_) {
+      await repo.logout();
+      _ref.read(authRoleProvider.notifier).state = null;
+      state = AuthStatus.unauthenticated;
+    }
+  }
+}

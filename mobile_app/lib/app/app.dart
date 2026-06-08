@@ -20,7 +20,10 @@ class SehilyMobileApp extends ConsumerWidget {
       title: 'SEHILY Mobile',
       theme: AppTheme.light(),
       locale: locale,
-      supportedLocales: AppLocalizations.supportedLocales,
+      supportedLocales: const [
+        Locale('fr'),
+        Locale('ar'),
+      ],
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

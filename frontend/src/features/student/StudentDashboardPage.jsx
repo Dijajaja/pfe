@@ -138,9 +138,9 @@ export function StudentDashboardPage() {
   const anneeDisplay = useMemo(() => {
     if (!dossier) return { main: "", hint: "" };
     const lib = resolveAnneeLibelle(dossier.annee_universitaire, anneesQuery.data || []);
-    if (lib) return { main: lib, hint: t("studentAcademicYearHint") };
+    if (lib) return { main: lib, hint: "" };
     if (dossier.niveau) return { main: dossier.niveau, hint: t("studentLevelStudyHint") };
-    return { main: t("studentAcademicYearUnknown"), hint: t("studentAcademicYearHint") };
+    return { main: t("studentAcademicYearUnknown"), hint: "" };
   }, [dossier, anneesQuery.data, t]);
 
   const progressPct = useMemo(() => {
