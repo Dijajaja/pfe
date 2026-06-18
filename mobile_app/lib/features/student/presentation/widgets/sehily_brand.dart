@@ -2,26 +2,35 @@ import 'package:flutter/material.dart';
 
 import 'student_widgets.dart';
 
-/// Logo SEHILY pour l'AppBar (image + texte blanc sur fond pétrole).
+/// Logo SEHILY pour l'AppBar (icône officielle + texte SEHILY).
 class SehilyAppBarTitle extends StatelessWidget {
-  const SehilyAppBarTitle({super.key});
+  const SehilyAppBarTitle({super.key, this.onLightBackground = true});
+
+  final bool onLightBackground;
+
+  static const _logoAsset = 'assets/images/app_icon.png';
 
   @override
   Widget build(BuildContext context) {
+    final textColor = onLightBackground ? SehilyColors.petrol : Colors.white;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(
-          'assets/images/sehily-logo.png',
-          height: 28,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const Icon(Icons.school, color: Colors.white, size: 24),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            _logoAsset,
+            height: 32,
+            width: 32,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Icon(Icons.school, color: textColor, size: 24),
+          ),
         ),
-        const SizedBox(width: 8),
-        const Text(
+        const SizedBox(width: 10),
+        Text(
           'SEHILY',
           style: TextStyle(
-            color: Colors.white,
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 18,
             letterSpacing: 0.5,
@@ -48,7 +57,7 @@ class SehilyHighlightCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            SehilyColors.cream,
+            SehilyColors.mintBg,
             SehilyColors.creamGreenSoft,
           ],
         ),
@@ -84,7 +93,7 @@ class SehilyTotalRecuCard extends StatelessWidget {
         children: [
           const Text(
             'Total reçu',
-            style: TextStyle(color: Colors.black54, fontSize: 14),
+            style: TextStyle(color: SehilyColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(

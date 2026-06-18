@@ -6,15 +6,38 @@ import '../../../../core/storage/local_storage_service.dart';
 import '../../application/student_providers.dart';
 import '../widgets/student_widgets.dart';
 
+const _cardMuted = Color(0xFFF4F6F5);
+
+String _relativeTime(String? iso) {
+  if (iso == null || iso.isEmpty) return '';
+  final dt = DateTime.tryParse(iso);
+  if (dt == null) return iso;
+  final local = dt.toLocal();
+  final diff = DateTime.now().difference(local);
+  if (diff.inMinutes < 1) return 'À l\'instant';
+  if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
+  if (diff.inHours < 24) return 'Il y a ${diff.inHours} h';
+  if (diff.inDays == 1) return 'Hier à ${DateFormat('HH:mm').format(local)}';
+  if (diff.inDays < 7) return 'Il y a ${diff.inDays} jours';
+  return DateFormat('dd/MM/yyyy').format(local);
+}
+
+({IconData icon, Color bg, Color fg}) _notifStyle(String titre, String message) {
+  final text = '${titre.toUpperCase()} ${message.toUpperCase()}';
+  if (text.contains('PAIEMENT') || text.contains('PAY') || text.contains('VIREMENT')) {
+    return (icon: Icons.account_balance_wallet_outlined, bg: SehilyColors.mintBg, fg: SehilyColors.green);
+  }
+  if (text.contains('DOSSIER') || text.contains('DOCUMENT') || text.contains('PIECE')) {
+    return (icon: Icons.description_outlined, bg: const Color(0xFFE3F2FD), fg: const Color(0xFF1565C0));
+  }
+  if (text.contains('RECLAM') || text.contains('ACTION') || text.contains('COMPLEMENT')) {
+    return (icon: Icons.schedule_outlined, bg: SehilyColors.pendingBg, fg: SehilyColors.pending);
+  }
+  return (icon: Icons.notifications_outlined, bg: SehilyColors.coralBg, fg: SehilyColors.coral);
+}
+
 class StudentNotificationsPage extends ConsumerWidget {
   const StudentNotificationsPage({super.key});
-
-  String _fmtDateShort(String? iso) {
-    if (iso == null) return '';
-    final d = DateTime.tryParse(iso);
-    if (d == null) return iso;
-    return DateFormat('dd/MM/yyyy').format(d.toLocal());
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -25,24 +48,35 @@ class StudentNotificationsPage extends ConsumerWidget {
         ref.invalidate(notificationsProvider);
         await ref.read(notificationsProvider.future);
       },
+      color: SehilyColors.green,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          Text('Notifications', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 4),
-          const Text('Messages système et état non lu.'),
+          Text(
+            'Messages système et état non lu.',
+            style: TextStyle(
+              fontSize: 14,
+              color: SehilyColors.textSecondary,
+              fontWeight: FontWeight.w500,
+              height: 1.55,
+            ),
+          ),
           const SizedBox(height: 16),
           AsyncSection(
             value: notifAsync,
             onRetry: () => ref.invalidate(notificationsProvider),
             builder: (items) {
               final unread = items.where((n) => !n.lu).length;
-              return SehilyCard(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _cardMuted,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
                       children: [
                         if (unread > 0)
                           Container(
@@ -64,7 +98,7 @@ class StudentNotificationsPage extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: SehilyColors.green.withValues(alpha: 0.12),
+                              color: SehilyColors.mintBg,
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Text(
@@ -84,7 +118,7 @@ class StudentNotificationsPage extends ConsumerWidget {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.check, size: 16, color: SehilyColors.coral),
+                              Icon(Icons.done_all, size: 16, color: SehilyColors.coral),
                               SizedBox(width: 4),
                               Text(
                                 'Tout marquer lu',
@@ -95,18 +129,29 @@ class StudentNotificationsPage extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    if (items.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Text('Aucune notification.', textAlign: TextAlign.center),
-                      )
-                    else
-                      ...items.map(
-                        (n) => _NotificationRow(
+                  ),
+                  const SizedBox(height: 12),
+                  if (items.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: _cardMuted,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Text(
+                        'Aucune notification.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
+                      ),
+                    )
+                  else
+                    ...items.map(
+                      (n) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _NotificationRow(
                           titre: n.titre,
                           message: n.message,
-                          date: _fmtDateShort(n.date),
+                          date: _relativeTime(n.date),
                           lu: n.lu,
                           onMarkRead: n.lu
                               ? null
@@ -116,8 +161,8 @@ class StudentNotificationsPage extends ConsumerWidget {
                                 },
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
               );
             },
           ),
@@ -144,90 +189,113 @@ class _NotificationRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: lu ? 0.5 : 1,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        decoration: BoxDecoration(
-          color: lu ? Colors.white : SehilyColors.cream,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.black.withValues(alpha: lu ? 0.05 : 0.08)),
-        ),
-        child: IntrinsicHeight(
+    final style = _notifStyle(titre, message);
+
+    return Material(
+      color: lu ? Colors.white : _cardMuted,
+      borderRadius: BorderRadius.circular(14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onMarkRead,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: lu ? Colors.black.withValues(alpha: 0.06) : SehilyColors.green.withValues(alpha: 0.12),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (!lu)
-                Container(
-                  width: 4,
-                  decoration: BoxDecoration(
-                    color: SehilyColors.coral,
-                    borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-                  ),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: style.bg,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Icon(style.icon, color: style.fg, size: 22),
+              ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 5, right: 8),
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: lu ? Colors.grey.shade400 : SehilyColors.coral,
-                              ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            titre,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              height: 1.5,
+                              color: lu ? SehilyColors.textSecondary : SehilyColors.petrol,
                             ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              titre,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: lu ? Colors.black54 : SehilyColors.petrol,
-                              ),
-                            ),
-                          ),
-                          Text(date, style: const TextStyle(fontSize: 12, color: Colors.black45)),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16),
-                        child: Text(
-                          humanizeNotificationMessage(message),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: lu ? Colors.black45 : Colors.black87,
-                            height: 1.35,
                           ),
                         ),
+                        if (date.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            date,
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.45,
+                              color: SehilyColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      humanizeNotificationMessage(message),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: lu ? SehilyColors.textMuted : SehilyColors.textSecondary,
+                        height: 1.65,
                       ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 16),
-                        child: lu
-                            ? const Text('✓ Lu', style: TextStyle(fontSize: 13, color: SehilyColors.green, fontWeight: FontWeight.w500))
-                            : GestureDetector(
-                                onTap: onMarkRead,
-                                child: const Text(
-                                  'Marquer lu →',
-                                  style: TextStyle(
-                                    color: SehilyColors.coral,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: lu ? SehilyColors.mintBg : SehilyColors.pendingBg,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            lu ? 'Lu' : 'Non lu',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: lu ? SehilyColors.green : SehilyColors.pending,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        if (!lu)
+                          const Text(
+                            'Marquer lu →',
+                            style: TextStyle(
+                              color: SehilyColors.coral,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: SehilyColors.petrol.withValues(alpha: 0.35),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],

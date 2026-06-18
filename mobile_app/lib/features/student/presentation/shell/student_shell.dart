@@ -3,8 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../settings/presentation/sehily_lang_switch.dart';
-import '../profile/student_profile_sheet.dart';
-import '../widgets/sehily_brand.dart';
+import '../../application/student_providers.dart';
 import '../widgets/student_widgets.dart';
 
 class StudentShell extends ConsumerStatefulWidget {
@@ -17,13 +16,21 @@ class StudentShell extends ConsumerStatefulWidget {
 }
 
 class _StudentShellState extends ConsumerState<StudentShell> {
-  static const _mainPaths = [
-    '/student/dashboard',
-    '/student/dossier',
-    '/student/suivi',
+  static const _tabs = [
+    ('/student/dashboard', 'Accueil', Icons.home_outlined),
+    ('/student/dossier', 'Dossier', Icons.folder_outlined),
+    ('/student/suivi', 'Suivi', Icons.track_changes_outlined),
+    ('/student/profil', 'Profil', Icons.person_outline),
   ];
 
-  static const _profilePaths = [
+  static const _tabTitles = {
+    '/student/dashboard': 'Mon tableau de bord',
+    '/student/dossier': 'Mon dossier',
+    '/student/suivi': 'Suivi de mon dossier',
+    '/student/profil': 'Profil',
+  };
+
+  static const _linkedPaths = [
     '/student/paiements',
     '/student/reclamations',
     '/student/attestation',
@@ -32,29 +39,69 @@ class _StudentShellState extends ConsumerState<StudentShell> {
   ];
 
   int _selectedIndex(String location) {
-    for (var i = 0; i < _mainPaths.length; i++) {
-      if (location.startsWith(_mainPaths[i])) return i;
+    for (var i = 0; i < _tabs.length; i++) {
+      if (location.startsWith(_tabs[i].$1)) return i;
     }
-    if (_profilePaths.any(location.startsWith)) return 3;
+    if (_linkedPaths.any(location.startsWith)) return 0;
     return 0;
+  }
+
+  String _title(String location) {
+    for (final entry in _tabTitles.entries) {
+      if (location.startsWith(entry.key)) return entry.value;
+    }
+    if (location.startsWith('/student/paiements')) return 'Paiements';
+    if (location.startsWith('/student/notifications')) return 'Notifications';
+    if (location.startsWith('/student/messages')) return 'Messagerie';
+    if (location.startsWith('/student/reclamations')) return 'Réclamations';
+    if (location.startsWith('/student/attestation')) return 'Attestation';
+    return 'Mon espace';
   }
 
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).uri.toString();
     final selected = _selectedIndex(location);
+    final notifAsync = ref.watch(notificationsProvider);
+    final unread = notifAsync.maybeWhen(
+      data: (items) => items.where((n) => !n.lu).length,
+      orElse: () => 0,
+    );
 
     return Scaffold(
-      backgroundColor: SehilyColors.cream,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const SehilyAppBarTitle(),
-        centerTitle: false,
+        backgroundColor: SehilyColors.header,
+        foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actionsIconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          _title(location),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         actions: [
-          IconButton(
-            tooltip: 'Messagerie',
-            onPressed: () => context.go('/student/messages'),
-            icon: const Icon(Icons.mail_outline),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              IconButton(
+                tooltip: 'Notifications',
+                onPressed: () => context.go('/student/notifications'),
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+              ),
+              if (unread > 0)
+                Positioned(
+                  right: 10,
+                  top: 10,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(color: SehilyColors.coral, shape: BoxShape.circle),
+                  ),
+                ),
+            ],
           ),
           const SehilyLangSwitch(),
         ],
@@ -64,36 +111,26 @@ class _StudentShellState extends ConsumerState<StudentShell> {
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.06))),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
         child: SafeArea(
           child: SizedBox(
             height: 64,
             child: Row(
               children: [
-                _BottomNavItem(
-                  icon: Icons.home_outlined,
-                  label: 'Accueil',
-                  selected: selected == 0,
-                  onTap: () => context.go(_mainPaths[0]),
-                ),
-                _BottomNavItem(
-                  icon: Icons.folder_outlined,
-                  label: 'Dossier',
-                  selected: selected == 1,
-                  onTap: () => context.go(_mainPaths[1]),
-                ),
-                _BottomNavItem(
-                  icon: Icons.timeline_outlined,
-                  label: 'Suivi',
-                  selected: selected == 2,
-                  onTap: () => context.go(_mainPaths[2]),
-                ),
-                _BottomNavItem(
-                  icon: Icons.person_outline,
-                  label: 'Profil',
-                  selected: selected == 3,
-                  onTap: () => showStudentProfileSheet(context),
-                ),
+                for (var i = 0; i < _tabs.length; i++)
+                  _BottomNavItem(
+                    icon: _tabs[i].$3,
+                    label: _tabs[i].$2,
+                    selected: selected == i,
+                    onTap: () => context.go(_tabs[i].$1),
+                  ),
               ],
             ),
           ),
@@ -118,32 +155,21 @@ class _BottomNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = selected ? SehilyColors.coral : SehilyColors.textMuted;
     return Expanded(
       child: InkWell(
         onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (selected)
-              Container(
-                height: 3,
-                width: 36,
-                margin: const EdgeInsets.only(bottom: 4),
-                decoration: BoxDecoration(
-                  color: SehilyColors.coral,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-              )
-            else
-              const SizedBox(height: 7),
-            Icon(icon, size: 22, color: selected ? SehilyColors.coral : SehilyColors.petrol.withValues(alpha: 0.55)),
-            const SizedBox(height: 2),
+            Icon(icon, size: 22, color: color),
+            const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                color: selected ? SehilyColors.coral : SehilyColors.petrol.withValues(alpha: 0.55),
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: color,
               ),
             ),
           ],

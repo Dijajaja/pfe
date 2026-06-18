@@ -33,6 +33,12 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
   int _confettiBurst = 0;
   bool _showConfetti = false;
 
+  int get _activeStep {
+    if (_result != null) return 2;
+    if (_submitting) return 1;
+    return 0;
+  }
+
   @override
   void dispose() {
     _nniCtrl.dispose();
@@ -111,50 +117,87 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
     }
   }
 
-  Widget _successResult() {
-    return SehilyCard(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.check_circle, color: SehilyColors.green, size: 48),
-          const SizedBox(height: 12),
-          const Text(
-            'Éligible à la bourse',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: SehilyColors.petrol),
+  Widget _successResult(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+          decoration: BoxDecoration(
+            color: SehilyColors.mintBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: SehilyColors.green.withValues(alpha: 0.15)),
           ),
-          const SizedBox(height: 8),
-          Text(
-            eligibilityMessage(_result!.i18nKey, params: _result!.i18nParams),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.75)),
+          child: Column(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: const BoxDecoration(
+                  color: SehilyColors.green,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, color: Colors.white, size: 30),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Félicitations !',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: SehilyColors.petrol),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Vous êtes éligible à la bourse',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: SehilyColors.petrol,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Vous pouvez maintenant créer votre compte pour commencer votre demande.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: SehilyColors.textSecondary, height: 1.4),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: SehilyColors.green.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle_outline, color: SehilyColors.green, size: 18),
-                SizedBox(width: 6),
-                Text('Service accordé', style: TextStyle(fontWeight: FontWeight.w600, color: SehilyColors.green)),
-              ],
-            ),
+        ),
+        const SizedBox(height: 16),
+        SehilyCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Prochaines étapes',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SehilyColors.petrol),
+              ),
+              SizedBox(height: 14),
+              _NextStepRow(icon: Icons.person_outline, title: 'Créer votre compte'),
+              SizedBox(height: 12),
+              _NextStepRow(icon: Icons.folder_outlined, title: 'Déposer votre dossier'),
+              SizedBox(height: 12),
+              _NextStepRow(icon: Icons.trending_up, title: 'Suivre le traitement'),
+            ],
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: () => context.go('/register'),
-              style: FilledButton.styleFrom(backgroundColor: SehilyColors.coral),
-              child: const Text('Continuer vers l’inscription'),
-            ),
+        ),
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: () => context.go('/register'),
+          child: const Text('Créer mon compte'),
+        ),
+        const SizedBox(height: 10),
+        OutlinedButton(
+          onPressed: () => context.push('/login'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: SehilyColors.petrol,
+            side: BorderSide(color: SehilyColors.petrol.withValues(alpha: 0.25)),
+            padding: const EdgeInsets.symmetric(vertical: 14),
           ),
-        ],
-      ),
+          child: const Text('Se connecter'),
+        ),
+      ],
     );
   }
 
@@ -179,100 +222,156 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
 
   @override
   Widget build(BuildContext context) {
+    final showForm = _result == null;
+    final pageTitle = _result != null ? 'Résultat d\'éligibilité' : 'Vérification d\'éligibilité';
+
     return PublicPageScaffold(
       showBack: true,
+      pageTitle: pageTitle,
       body: Stack(
         children: [
           ListView(
             controller: _scrollCtrl,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              Text('Vérification d’éligibilité', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              const Text('Renseignez vos informations pour vérifier votre éligibilité rapidement.'),
-              const SizedBox(height: 16),
-              SehilyCard(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextFormField(
-                        controller: _nniCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(labelText: 'NNI *'),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Champ obligatoire' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      InkWell(
-                        onTap: _pickBirthDate,
-                        borderRadius: BorderRadius.circular(12),
-                        child: InputDecorator(
+              _EligibilityStepper(activeStep: _activeStep),
+              const SizedBox(height: 24),
+              if (showForm) ...[
+                const Text(
+                  'Informations personnelles',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: SehilyColors.petrol),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Veuillez renseigner vos informations pour vérifier votre éligibilité.',
+                  style: TextStyle(color: SehilyColors.textSecondary, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                SehilyCard(
+                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextFormField(
+                          controller: _nniCtrl,
+                          keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
-                            labelText: 'Date de naissance *',
-                            suffixIcon: Icon(Icons.calendar_today_outlined),
+                            labelText: 'Numéro NNI *',
+                            hintText: 'Entrez votre NNI',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                           ),
-                          child: Text(
-                            _birthDate == null
-                                ? 'jj/mm/aaaa'
-                                : DateFormat('dd/MM/yyyy').format(_birthDate!),
-                            style: TextStyle(
-                              color: _birthDate == null ? Colors.black45 : Colors.black87,
-                              fontSize: 16,
+                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Champ obligatoire' : null,
+                        ),
+                        const SizedBox(height: 22),
+                        InkWell(
+                          onTap: _pickBirthDate,
+                          borderRadius: BorderRadius.circular(12),
+                          child: InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Date de naissance *',
+                              suffixIcon: Icon(Icons.calendar_today_outlined),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                            ),
+                            child: Text(
+                              _birthDate == null
+                                  ? 'Sélectionner votre date'
+                                  : DateFormat('dd/MM/yyyy').format(_birthDate!),
+                              style: TextStyle(
+                                color: _birthDate == null ? SehilyColors.textMuted : SehilyColors.petrol,
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      if (_age != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(
-                            'Âge calculé : $_age ans',
-                            style: const TextStyle(color: SehilyColors.green, fontWeight: FontWeight.w600),
+                        if (_age != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              'Âge calculé : $_age ans',
+                              style: const TextStyle(color: SehilyColors.green, fontWeight: FontWeight.w600),
+                            ),
                           ),
+                        SizedBox(height: _age != null ? 18 : 22),
+                        DropdownButtonFormField<String>(
+                          value: _wilaya,
+                          decoration: const InputDecoration(
+                            labelText: 'Wilaya du bac *',
+                            hintText: 'Sélectionner votre wilaya',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                          ),
+                          items: [
+                            const DropdownMenuItem(value: null, child: Text('Sélectionner votre wilaya')),
+                            ...EligibilityConstants.wilayas.map(
+                              (w) => DropdownMenuItem(value: w, child: Text(w)),
+                            ),
+                          ],
+                          onChanged: (v) => setState(() => _wilaya = v),
+                          validator: (v) => v == null ? 'Champ obligatoire' : null,
                         ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _wilaya,
-                        decoration: const InputDecoration(labelText: 'Wilaya du bac *'),
-                        items: [
-                          const DropdownMenuItem(value: null, child: Text('Choisir…')),
-                          ...EligibilityConstants.wilayas.map(
-                            (w) => DropdownMenuItem(value: w, child: Text(w)),
+                        const SizedBox(height: 22),
+                        DropdownButtonFormField<String>(
+                          value: _niveau,
+                          decoration: const InputDecoration(
+                            labelText: 'Niveau d\'études *',
+                            hintText: 'Sélectionner votre niveau',
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                           ),
-                        ],
-                        onChanged: (v) => setState(() => _wilaya = v),
-                        validator: (v) => v == null ? 'Champ obligatoire' : null,
-                      ),
-                      const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        value: _niveau,
-                        decoration: const InputDecoration(labelText: 'Niveau actuel *'),
-                        items: EligibilityConstants.niveaux
-                            .map((n) => DropdownMenuItem(value: n.$1, child: Text(n.$2)))
-                            .toList(),
-                        onChanged: (v) => setState(() => _niveau = v ?? 'L1'),
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: _submitting ? null : _submit,
-                        icon: _submitting
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.search),
-                        label: Text(_submitting ? 'Vérification…' : 'Vérifier l’éligibilité'),
-                      ),
-                      TextButton(
-                        onPressed: () => context.push('/login'),
-                        child: const Text('J’ai déjà un compte'),
-                      ),
-                    ],
+                          items: EligibilityConstants.niveaux
+                              .map((n) => DropdownMenuItem(value: n.$1, child: Text(n.$2)))
+                              .toList(),
+                          onChanged: (v) => setState(() => _niveau = v ?? 'L1'),
+                        ),
+                        const SizedBox(height: 28),
+                        FilledButton(
+                          onPressed: _submitting ? null : _submit,
+                          child: _submitting
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text('Continuer'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
+              ] else ...[
+                if (!_result!.ok) ...[
+                  const Text(
+                    'Résultat',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: SehilyColors.petrol),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Voici le résultat de votre vérification d\'éligibilité.',
+                    style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                KeyedSubtree(
+                  key: _resultKey,
+                  child: _result!.ok ? _successResult(context) : _failureResult(),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => setState(() {
+                      _result = null;
+                      _apiError = null;
+                    }),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: SehilyColors.petrol,
+                      side: BorderSide(color: SehilyColors.petrol.withValues(alpha: 0.3)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text('Modifier mes informations'),
+                  ),
+                ),
+              ],
               if (_apiError != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
@@ -281,13 +380,18 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
                     subline: _apiError!,
                   ),
                 ),
-              if (_result != null) ...[
-                const SizedBox(height: 16),
-                KeyedSubtree(
-                  key: _resultKey,
-                  child: _result!.ok ? _successResult() : _failureResult(),
-                ),
-              ],
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.shield_outlined, size: 16, color: SehilyColors.textMuted),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Vos données sont 100% sécurisées',
+                    style: TextStyle(fontSize: 12, color: SehilyColors.textMuted, fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
             ],
           ),
           if (_showConfetti)
@@ -301,6 +405,135 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _NextStepRow extends StatelessWidget {
+  const _NextStepRow({required this.icon, required this.title});
+
+  final IconData icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: SehilyColors.mintBg,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: SehilyColors.green, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w600, color: SehilyColors.petrol),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _EligibilityStepper extends StatelessWidget {
+  const _EligibilityStepper({required this.activeStep});
+
+  final int activeStep;
+
+  static const _steps = [
+    ('Informations', 'Informations'),
+    ('Vérification', 'Verification'),
+    ('Résultat', 'Resultat'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < _steps.length; i++) ...[
+          Expanded(
+            child: _StepDot(
+              index: i + 1,
+              label: _steps[i].$1,
+              active: i == activeStep,
+              completed: i < activeStep,
+            ),
+          ),
+          if (i < _steps.length - 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 15),
+              child: SizedBox(
+                width: 24,
+                child: Container(
+                  height: 2,
+                  color: i < activeStep
+                      ? SehilyColors.green.withValues(alpha: 0.35)
+                      : Colors.black.withValues(alpha: 0.08),
+                ),
+              ),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StepDot extends StatelessWidget {
+  const _StepDot({
+    required this.index,
+    required this.label,
+    required this.active,
+    required this.completed,
+  });
+
+  final int index;
+  final String label;
+  final bool active;
+  final bool completed;
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = active || completed;
+    return Column(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: filled ? SehilyColors.green : Colors.transparent,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: filled ? SehilyColors.green : Colors.black26,
+              width: filled ? 0 : 1.5,
+            ),
+          ),
+          child: Text(
+            '$index',
+            style: TextStyle(
+              color: filled ? Colors.white : SehilyColors.textMuted,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+            color: active ? SehilyColors.green : SehilyColors.textMuted,
+          ),
+        ),
+      ],
     );
   }
 }

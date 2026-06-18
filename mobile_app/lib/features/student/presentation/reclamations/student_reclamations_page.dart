@@ -9,6 +9,53 @@ import '../../domain/dossier_validation.dart';
 import '../../domain/student_models.dart';
 import '../widgets/student_widgets.dart';
 
+const _cardMuted = Color(0xFFF4F6F5);
+
+InputDecoration _fieldDeco({String? hintText}) {
+  return InputDecoration(
+    filled: true,
+    fillColor: Colors.white,
+    hintText: hintText,
+    hintStyle: const TextStyle(
+      color: SehilyColors.textMuted,
+      fontWeight: FontWeight.w500,
+      fontSize: 14,
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.1)),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: SehilyColors.green, width: 1.5),
+    ),
+  );
+}
+
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: SehilyColors.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
 class StudentReclamationsPage extends ConsumerStatefulWidget {
   const StudentReclamationsPage({super.key});
 
@@ -81,25 +128,51 @@ class _StudentReclamationsPageState extends ConsumerState<StudentReclamationsPag
     final recAsync = ref.watch(reclamationsProvider);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
       children: [
-        Text('Réclamations', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 16),
-        SehilyCard(
+        Text(
+          'Déposez une réclamation ou consultez l\'historique.',
+          style: TextStyle(fontSize: 14, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500, height: 1.4),
+        ),
+        const SizedBox(height: 24),
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: _cardMuted,
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(_editing == null ? 'Nouvelle réclamation' : 'Modifier la réclamation',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 12),
-              TextField(controller: _objetCtrl, decoration: const InputDecoration(labelText: 'Objet *')),
-              const SizedBox(height: 8),
+              Text(
+                _editing == null ? 'Nouvelle réclamation' : 'Modifier la réclamation',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SehilyColors.petrol),
+              ),
+              if (_editing == null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'Décrivez votre problème en détail',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: SehilyColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 22),
+              const _FieldLabel('OBJET *'),
+              TextField(
+                controller: _objetCtrl,
+                decoration: _fieldDeco(hintText: 'Ex: Problème de paiement'),
+              ),
+              const SizedBox(height: 22),
+              const _FieldLabel('DESCRIPTION *'),
               TextField(
                 controller: _descCtrl,
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Description *'),
+                maxLines: 4,
+                decoration: _fieldDeco(hintText: 'Expliquez votre situation en détail.......'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 24),
               Row(
                 children: [
                   if (_editing != null)
@@ -118,62 +191,88 @@ class _StudentReclamationsPageState extends ConsumerState<StudentReclamationsPag
                   const Spacer(),
                   FilledButton(
                     onPressed: _busy ? null : _send,
-                    child: Text(_editing == null ? 'Envoyer' : 'Enregistrer'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: SehilyColors.coral,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: _busy
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(_editing == null ? 'Envoyer' : 'Enregistrer'),
                   ),
                 ],
               ),
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 28),
         AsyncSection(
           value: recAsync,
           onRetry: () => ref.invalidate(reclamationsProvider),
           builder: (rows) {
-            if (rows.isEmpty) return const SehilyCard(child: Text('Aucune réclamation.'));
+            if (rows.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      SehilyColors.cream,
+                      SehilyColors.coralBg,
+                      SehilyColors.pendingBg.withValues(alpha: 0.35),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: SehilyColors.coral.withValues(alpha: 0.15)),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'Aucune réclamation pour le moment',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: SehilyColors.petrol,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      'Utilisez le formulaire ci-dessus pour nous signaler un problème. Notre équipe vous répondra dans les meilleurs délais.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: SehilyColors.textSecondary,
+                        height: 1.45,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
             return Column(
               children: rows
                   .map(
                     (r) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: SehilyCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(child: Text(r.objet, style: const TextStyle(fontWeight: FontWeight.bold))),
-                                StatusBadge(status: r.statut),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(r.description),
-                            Text(DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(r.dateCreation).toLocal()),
-                                style: const TextStyle(fontSize: 12, color: Colors.black54)),
-                            if (canEditReclamation(r.statut) || canDeleteReclamation(r.statut))
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  if (canEditReclamation(r.statut))
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined),
-                                      onPressed: () {
-                                        setState(() {
-                                          _editing = r;
-                                          _objetCtrl.text = r.objet;
-                                          _descCtrl.text = r.description;
-                                        });
-                                      },
-                                    ),
-                                  if (canDeleteReclamation(r.statut))
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Color(0xFFC9614A)),
-                                      onPressed: () => _delete(r),
-                                    ),
-                                ],
-                              ),
-                          ],
-                        ),
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _ReclamationCard(
+                        reclamation: r,
+                        onEdit: canEditReclamation(r.statut)
+                            ? () {
+                                setState(() {
+                                  _editing = r;
+                                  _objetCtrl.text = r.objet;
+                                  _descCtrl.text = r.description;
+                                });
+                              }
+                            : null,
+                        onDelete: canDeleteReclamation(r.statut) ? () => _delete(r) : null,
                       ),
                     ),
                   )
@@ -182,6 +281,106 @@ class _StudentReclamationsPageState extends ConsumerState<StudentReclamationsPag
           },
         ),
       ],
+    );
+  }
+}
+
+class _ReclamationCard extends StatelessWidget {
+  const _ReclamationCard({
+    required this.reclamation,
+    this.onEdit,
+    this.onDelete,
+  });
+
+  final Reclamation reclamation;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final date = DateTime.tryParse(reclamation.dateCreation);
+    final dateStr = date != null
+        ? DateFormat('dd/MM/yyyy').format(date.toLocal())
+        : reclamation.dateCreation;
+    final refLabel = 'REC-${date?.year ?? DateTime.now().year}-${reclamation.id.toString().padLeft(3, '0')}';
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      refLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: SehilyColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      reclamation.objet,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: SehilyColors.petrol,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              StatusBadge(status: reclamation.statut),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            reclamation.description,
+            style: TextStyle(
+              fontSize: 13,
+              color: SehilyColors.textSecondary,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Icon(Icons.calendar_today_outlined, size: 13, color: SehilyColors.textMuted),
+              const SizedBox(width: 4),
+              Text(dateStr, style: TextStyle(fontSize: 12, color: SehilyColors.textMuted, fontWeight: FontWeight.w500)),
+              const Spacer(),
+              if (onEdit != null)
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  color: SehilyColors.green,
+                  onPressed: onEdit,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              if (onDelete != null)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 20, color: SehilyColors.coral),
+                  onPressed: onDelete,
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

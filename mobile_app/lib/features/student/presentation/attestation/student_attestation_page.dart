@@ -245,7 +245,7 @@ class _StudentAttestationPageState extends ConsumerState<StudentAttestationPage>
       child: Row(
         children: [
           Icon(ok ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: ok ? const Color(0xFF2E7D32) : Colors.grey, size: 20),
+              color: ok ? SehilyColors.coral : Colors.grey, size: 20),
           const SizedBox(width: 8),
           Expanded(child: Text(label)),
         ],

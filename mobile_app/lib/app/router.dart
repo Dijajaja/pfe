@@ -16,6 +16,7 @@ import '../features/student/presentation/dossier/student_dossier_page.dart';
 import '../features/student/presentation/messages/student_messages_page.dart';
 import '../features/student/presentation/notifications/student_notifications_page.dart';
 import '../features/student/presentation/paiements/student_paiements_page.dart';
+import '../features/student/presentation/profile/student_profile_page.dart';
 import '../features/student/presentation/reclamations/student_reclamations_page.dart';
 import '../features/student/presentation/shell/student_shell.dart';
 import '../features/student/presentation/suivi/student_suivi_page.dart';
@@ -55,6 +56,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/student/dossier', builder: (_, __) => const StudentDossierPage()),
           GoRoute(path: '/student/suivi', builder: (_, __) => const StudentSuiviPage()),
           GoRoute(path: '/student/paiements', builder: (_, __) => const StudentPaiementsPage()),
+          GoRoute(path: '/student/profil', builder: (_, __) => const StudentProfilePage()),
           GoRoute(path: '/student/reclamations', builder: (_, __) => const StudentReclamationsPage()),
           GoRoute(path: '/student/attestation', builder: (_, __) => const StudentAttestationPage()),
           GoRoute(path: '/student/notifications', builder: (_, __) => const StudentNotificationsPage()),

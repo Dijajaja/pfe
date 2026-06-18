@@ -95,7 +95,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
         Text(
           'Si un compte existe pour cette adresse, vous recevrez les instructions par e-mail.',
           textAlign: TextAlign.center,
-          style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.7)),
+          style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 20),
         FilledButton(
@@ -117,7 +117,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
           Text(
             'Saisissez l\'e-mail de votre compte étudiant.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.65)),
+            style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 20),
           if (_error != null) ...[
@@ -136,7 +136,7 @@ class _ResetPasswordPageState extends ConsumerState<ResetPasswordPage> {
           const SizedBox(height: 8),
           Text(
             'Pour les comptes gérés par le CNOU, un administrateur peut aussi réinitialiser l\'accès.',
-            style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.55)),
+            style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 16),
           FilledButton(

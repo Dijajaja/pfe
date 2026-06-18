@@ -7,63 +7,98 @@ import '../../application/student_providers.dart';
 import '../../domain/student_models.dart';
 import '../widgets/student_widgets.dart';
 
-const _orderedSteps = [
-  ('BROUILLON', 'Brouillon créé'),
-  ('SOUMIS', 'Dossier soumis'),
-  ('EN_INSTRUCTION', 'En instruction CNOU'),
-  ('VALIDE', 'Validé CNOU'),
-  ('REJETE', 'Rejeté'),
-];
+const _cardMuted = Color(0xFFF4F6F5);
 
-int _timelineIndex(String? statut) {
-  const map = {
-    'BROUILLON': 0,
-    'SOUMIS': 1,
-    'EN_INSTRUCTION': 2,
-    'COMPLEMENT_DEMANDE': 2,
-    'VALIDE': 3,
-    'REJETE': 4,
-  };
-  return map[statut?.toUpperCase()] ?? 0;
+int _progressPercent(String? statut) {
+  switch (statut?.toUpperCase()) {
+    case 'BROUILLON':
+      return 20;
+    case 'SOUMIS':
+      return 40;
+    case 'EN_INSTRUCTION':
+    case 'COMPLEMENT_DEMANDE':
+      return 60;
+    case 'VALIDE':
+      return 100;
+    case 'REJETE':
+      return 100;
+    default:
+      return 0;
+  }
 }
 
-String _formatMru(double amount) {
-  final raw = amount.toStringAsFixed(0);
-  return raw.replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]} ');
-}
-
-String _folderStatusLabel(String statut) {
+String _statusLabel(String statut) {
   switch (statut.toUpperCase()) {
     case 'EN_INSTRUCTION':
     case 'COMPLEMENT_DEMANDE':
-      return 'En instruction';
+    case 'SOUMIS':
+    case 'BROUILLON':
+      return 'En attente';
     case 'VALIDE':
       return 'Validé';
     case 'REJETE':
       return 'Rejeté';
-    case 'SOUMIS':
-      return 'Soumis';
-    case 'BROUILLON':
-      return 'Brouillon';
     default:
       return statut;
   }
 }
 
-Color _folderStatusColor(String statut) {
+Color _statusColor(String statut) {
   switch (statut.toUpperCase()) {
     case 'VALIDE':
-      return SehilyColors.green;
+      return SehilyColors.coral;
     case 'REJETE':
       return SehilyColors.coral;
+    default:
+      return SehilyColors.pending;
+  }
+}
+
+Color _statusBg(String statut) {
+  switch (statut.toUpperCase()) {
+    case 'VALIDE':
+      return SehilyColors.coralBg;
+    case 'REJETE':
+      return const Color(0xFFFDECEA);
+    default:
+      return SehilyColors.pendingBg;
+  }
+}
+
+String _statusDescription(String statut) {
+  switch (statut.toUpperCase()) {
+    case 'BROUILLON':
+      return 'Complétez votre dossier et soumettez-le pour démarrer l\'instruction.';
+    case 'SOUMIS':
+      return 'Votre dossier a été reçu et sera examiné prochainement.';
     case 'EN_INSTRUCTION':
     case 'COMPLEMENT_DEMANDE':
-      return const Color(0xFFE6A23C);
-    case 'SOUMIS':
-      return SehilyColors.petrol;
+      return 'Votre dossier est en cours d\'étude par nos équipes.';
+    case 'VALIDE':
+      return 'Félicitations ! Votre dossier a été validé.';
+    case 'REJETE':
+      return 'Votre dossier a été rejeté. Consultez les détails pour en savoir plus.';
     default:
-      return Colors.white70;
+      return 'Suivez l\'avancement de votre demande de bourse.';
   }
+}
+
+String _relativeTime(String? iso) {
+  if (iso == null || iso.isEmpty) return '';
+  final dt = DateTime.tryParse(iso);
+  if (dt == null) return iso;
+  final local = dt.toLocal();
+  final diff = DateTime.now().difference(local);
+  if (diff.inMinutes < 1) return 'À l\'instant';
+  if (diff.inMinutes < 60) return 'Il y a ${diff.inMinutes} min';
+  if (diff.inHours < 24) return 'Il y a ${diff.inHours} h';
+  if (diff.inDays == 1) return 'Il y a 1 jour';
+  if (diff.inDays < 7) return 'Il y a ${diff.inDays} jours';
+  if (diff.inDays < 30) {
+    final weeks = (diff.inDays / 7).floor();
+    return weeks == 1 ? 'Il y a 1 semaine' : 'Il y a $weeks semaines';
+  }
+  return DateFormat('dd/MM/yyyy').format(local);
 }
 
 class StudentDashboardPage extends ConsumerWidget {
@@ -72,89 +107,131 @@ class StudentDashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dossiersAsync = ref.watch(dossiersProvider);
-    final anneesAsync = ref.watch(anneesProvider);
-    final attestationAsync = ref.watch(attestationProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final notifAsync = ref.watch(notificationsProvider);
+
+    final displayName = profileAsync.maybeWhen(
+      data: (profile) {
+        final pe = profile['profil_etudiant'] as Map<String, dynamic>?;
+        final prenom = (pe?['prenom'] ?? profile['first_name'] ?? '') as String;
+        if (prenom.trim().isNotEmpty) return prenom.trim();
+        final nom = (pe?['nom'] ?? profile['last_name'] ?? '') as String;
+        final name = nom.trim();
+        return name.isEmpty ? (profile['email'] as String? ?? 'Étudiant') : name;
+      },
+      orElse: () => 'Étudiant',
+    );
 
     return RefreshIndicator(
       onRefresh: () async {
         invalidateStudentData(ref);
         await ref.read(dossiersProvider.future);
       },
+      color: SehilyColors.green,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          Text('Mon espace', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 4),
-          Text('Suivez votre dossier.', style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.65))),
-          const SizedBox(height: 16),
+          Text(
+            'Bonjour, $displayName 👋',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: SehilyColors.petrol,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Voici un aperçu de votre dossier',
+            style: TextStyle(
+              fontSize: 14,
+              color: SehilyColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 22),
           AsyncSection(
             value: dossiersAsync,
             onRetry: () => ref.invalidate(dossiersProvider),
             builder: (dossiers) {
               final dossier = dossiers.isNotEmpty ? dossiers.first : null;
-              final canAttestation = attestationAsync.maybeWhen(
-                data: (s) => s.eligible,
-                orElse: () => false,
-              );
               if (dossier == null) {
-                return SehilyCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text('Aucun dossier pour le moment.'),
-                      const SizedBox(height: 12),
-                      FilledButton(
-                        onPressed: () => context.go('/student/dossier'),
-                        child: const Text('Créer mon dossier'),
-                      ),
-                    ],
+                return _EmptyDossierCard(onCreate: () => context.go('/student/dossier'));
+              }
+              return _StatusCard(dossier: dossier);
+            },
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'Mes actions rapides',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: SehilyColors.petrol,
+            ),
+          ),
+          const SizedBox(height: 14),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.15,
+            children: const [
+              _QuickAction(
+                icon: Icons.note_add_outlined,
+                label: 'Déposer un dossier',
+                route: '/student/dossier',
+              ),
+              _QuickAction(
+                icon: Icons.description_outlined,
+                label: 'Mes documents',
+                route: '/student/dossier',
+              ),
+              _QuickAction(
+                icon: Icons.track_changes_outlined,
+                label: 'Suivre mon dossier',
+                route: '/student/suivi',
+              ),
+              _QuickAction(
+                icon: Icons.credit_card_outlined,
+                label: 'Paiements',
+                route: '/student/paiements',
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          const Text(
+            'Notifications',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: SehilyColors.petrol,
+            ),
+          ),
+          const SizedBox(height: 14),
+          AsyncSection(
+            value: notifAsync,
+            onRetry: () => ref.invalidate(notificationsProvider),
+            builder: (items) {
+              if (items.isEmpty) {
+                return _MutedCard(
+                  child: Text(
+                    'Aucune notification pour le moment.',
+                    style: TextStyle(
+                      color: SehilyColors.textSecondary,
+                      fontSize: 14,
+                    ),
                   ),
                 );
               }
-
-              final anneeLibelle = anneesAsync.maybeWhen(
-                data: (annees) => annees
-                    .where((a) => a.id == dossier.anneeUniversitaire)
-                    .map((a) => a.libelle)
-                    .firstOrNull,
-                orElse: () => null,
-              );
-              final campagne = anneeLibelle ?? dossier.niveau;
-
+              final recent = items.take(3).toList();
               return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _MonDossierCard(
-                    dossier: dossier,
-                    campagne: campagne,
-                    canAttestation: canAttestation,
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: SehilyColors.green.withValues(alpha: 0.12)),
+                  for (var i = 0; i < recent.length; i++)
+                    Padding(
+                      padding: EdgeInsets.only(bottom: i < recent.length - 1 ? 10 : 0),
+                      child: _NotificationTile(item: recent[i]),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                          color: SehilyColors.cream,
-                          child: const Text(
-                            'Suivi détaillé du dossier',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: SehilyColors.petrol),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: _Timeline(dossier: dossier),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               );
             },
@@ -165,329 +242,270 @@ class StudentDashboardPage extends ConsumerWidget {
   }
 }
 
-class _MonDossierCard extends StatelessWidget {
-  const _MonDossierCard({
-    required this.dossier,
-    required this.campagne,
-    required this.canAttestation,
-  });
+class _MutedCard extends StatelessWidget {
+  const _MutedCard({required this.child, this.padding = const EdgeInsets.all(18)});
 
-  final DossierBourse dossier;
-  final String campagne;
-  final bool canAttestation;
+  final Widget child;
+  final EdgeInsets padding;
 
   @override
   Widget build(BuildContext context) {
-    final idx = _timelineIndex(dossier.statut);
-    final pct = (_orderedSteps.length <= 1) ? 0 : ((idx / (_orderedSteps.length - 1)) * 100).round();
-    final statusColor = _folderStatusColor(dossier.statut);
-
     return Container(
+      width: double.infinity,
+      padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _cardMuted,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: SehilyColors.green.withValues(alpha: 0.18)),
-        boxShadow: [
-          BoxShadow(
-            color: SehilyColors.petrol.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            color: SehilyColors.petrol,
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Mon dossier',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 16),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.25),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
-                  ),
-                  child: Text(
-                    _folderStatusLabel(dossier.statut),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _kvRow('Numéro dossier', 'DOS-${dossier.id.toString().padLeft(6, '0')}'),
-                const SizedBox(height: 10),
-                _kvRow('Campagne universitaire', campagne),
-                const SizedBox(height: 14),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: SehilyColors.dossierAlertBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: SehilyColors.coral.withValues(alpha: 0.12)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Expanded(
-                        child: Text('Montant prévu', style: TextStyle(color: Colors.black54, fontSize: 14)),
-                      ),
-                      Text(
-                        '${_formatMru(dossier.montantBourse)} MRU',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: SehilyColors.petrol,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Avancement du dossier', style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.6), fontSize: 13)),
-                    Text('$pct %', style: const TextStyle(fontWeight: FontWeight.bold, color: SehilyColors.petrol)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: pct / 100,
-                    minHeight: 10,
-                    backgroundColor: SehilyColors.cream,
-                    color: SehilyColors.green,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: List.generate(_orderedSteps.length, (i) {
-                    final done = i < idx;
-                    final current = i == idx;
-                    return Expanded(
-                      child: Container(
-                        height: 6,
-                        margin: EdgeInsets.only(right: i < _orderedSteps.length - 1 ? 4 : 0),
-                        decoration: BoxDecoration(
-                          color: done || current ? SehilyColors.green : SehilyColors.cream,
-                          borderRadius: BorderRadius.circular(999),
-                          border: current ? Border.all(color: SehilyColors.petrol, width: 1) : null,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 16),
-                const Divider(height: 1),
-                const SizedBox(height: 14),
-                const SizedBox(height: 14),
-                if (canAttestation)
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: FilledButton(
-                          onPressed: () => context.go('/student/attestation'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: SehilyColors.petrol,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: const Text('Obtenir mon attestation', textAlign: TextAlign.center),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: OutlinedButton(
-                          onPressed: () => context.go('/student/dossier'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: SehilyColors.petrol,
-                            side: const BorderSide(color: SehilyColors.petrol),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                          child: const Text('Voir le dossier'),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () => context.go('/student/dossier'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: SehilyColors.petrol,
-                        side: const BorderSide(color: SehilyColors.petrol),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Voir le dossier'),
-                    ),
-                  ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => context.go('/student/reclamations'),
-                    style: TextButton.styleFrom(
-                      backgroundColor: SehilyColors.dossierAlertBg,
-                      foregroundColor: SehilyColors.coral,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Passer une réclamation'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _kvRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 2,
-          child: Text(label, style: const TextStyle(color: Colors.black54, fontSize: 14)),
-        ),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value,
-            textAlign: TextAlign.end,
-            style: const TextStyle(fontWeight: FontWeight.bold, color: SehilyColors.petrol, fontSize: 14),
-          ),
-        ),
-      ],
+      child: child,
     );
   }
 }
 
-class _Timeline extends StatelessWidget {
-  const _Timeline({required this.dossier});
+class _EmptyDossierCard extends StatelessWidget {
+  const _EmptyDossierCard({required this.onCreate});
+
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    return _MutedCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Statut de mon dossier',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SehilyColors.petrol),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Aucun dossier pour le moment. Créez votre dossier pour commencer votre demande de bourse.',
+            style: TextStyle(
+              color: SehilyColors.textSecondary,
+              height: 1.45,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onCreate,
+              style: TextButton.styleFrom(
+                foregroundColor: SehilyColors.green,
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'Créer mon dossier →',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({required this.dossier});
+
   final DossierBourse dossier;
 
   @override
   Widget build(BuildContext context) {
-    final idx = _timelineIndex(dossier.statut);
-    final isRejected = dossier.statut.toUpperCase() == 'REJETE';
+    final pct = _progressPercent(dossier.statut);
+    final label = _statusLabel(dossier.statut);
+    final color = _statusColor(dossier.statut);
+    final bg = _statusBg(dossier.statut);
+    final description = _statusDescription(dossier.statut);
 
-    return Column(
-      children: List.generate(_orderedSteps.length, (i) {
-        final step = _orderedSteps[i];
-        final done = i < idx;
-        final current = i == idx;
-        final isRejectStep = step.$1 == 'REJETE' && current && isRejected;
-
-        Color iconColor;
-        Color bgColor;
-        IconData icon;
-        String pill;
-        Color pillColor;
-        Color pillBg;
-
-        if (isRejectStep) {
-          icon = Icons.cancel;
-          iconColor = SehilyColors.coral;
-          bgColor = SehilyColors.coral.withValues(alpha: 0.1);
-          pill = 'Actuel';
-          pillColor = SehilyColors.coral;
-          pillBg = SehilyColors.coral.withValues(alpha: 0.12);
-        } else if (done) {
-          icon = Icons.check_circle;
-          iconColor = SehilyColors.green;
-          bgColor = SehilyColors.green.withValues(alpha: 0.08);
-          pill = 'Terminé';
-          pillColor = SehilyColors.green;
-          pillBg = SehilyColors.green.withValues(alpha: 0.12);
-        } else if (current) {
-          icon = Icons.arrow_forward;
-          iconColor = SehilyColors.petrol;
-          bgColor = SehilyColors.petrol.withValues(alpha: 0.08);
-          pill = 'En cours';
-          pillColor = SehilyColors.petrol;
-          pillBg = SehilyColors.petrol.withValues(alpha: 0.1);
-        } else {
-          icon = Icons.circle_outlined;
-          iconColor = Colors.grey.shade400;
-          bgColor = SehilyColors.cream;
-          pill = 'À venir';
-          pillColor = Colors.black54;
-          pillBg = SehilyColors.cream;
-        }
-
-        String? dateLabel;
-        if (step.$1 == 'BROUILLON') dateLabel = _fmt(dossier.creeLe);
-        if (step.$1 == 'SOUMIS') dateLabel = _fmt(dossier.dateSoumission);
-        if (current && (step.$1 == 'EN_INSTRUCTION' || step.$1 == 'VALIDE' || step.$1 == 'REJETE')) {
-          dateLabel = _fmt(dossier.modifieLe);
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
+    return _MutedCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Statut de mon dossier',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SehilyColors.petrol),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Progression',
+            style: TextStyle(
+              color: SehilyColors.textSecondary,
+              fontSize: 13,
             ),
-            child: Row(
-              children: [
-                Icon(icon, color: iconColor, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: pct / 100,
+                    minHeight: 8,
+                    backgroundColor: Colors.white,
+                    color: SehilyColors.green,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '$pct%',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: SehilyColors.green,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            description,
+            style: TextStyle(
+              color: SehilyColors.textSecondary,
+              fontSize: 14,
+              height: 1.45,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => context.go('/student/suivi'),
+              style: TextButton.styleFrom(
+                foregroundColor: SehilyColors.green,
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'Voir les détails →',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({required this.icon, required this.label, required this.route});
+
+  final IconData icon;
+  final String label;
+  final String route;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: _cardMuted,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.go(route),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: SehilyColors.green, size: 28),
+              const SizedBox(height: 10),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: SehilyColors.green,
+                  height: 1.25,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NotificationTile extends StatelessWidget {
+  const _NotificationTile({required this.item});
+
+  final StudentNotificationItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final relative = _relativeTime(item.date);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const ColoredBox(
+              color: SehilyColors.green,
+              child: SizedBox(width: 5),
+            ),
+            Expanded(
+              child: ColoredBox(
+                color: SehilyColors.mintBg,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(step.$2, style: const TextStyle(fontWeight: FontWeight.w600, color: SehilyColors.petrol)),
-                      const SizedBox(height: 2),
                       Text(
-                        dateLabel ?? 'Date à confirmer',
-                        style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.55)),
+                        humanizeNotificationMessage(item.message),
+                        style: TextStyle(
+                          fontWeight: item.lu ? FontWeight.w500 : FontWeight.bold,
+                          color: SehilyColors.petrol,
+                          fontSize: 14,
+                          height: 1.35,
+                        ),
                       ),
+                      if (relative.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          relative,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: SehilyColors.textMuted,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: pillBg,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(pill, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: pillColor)),
-                ),
-              ],
+              ),
             ),
-          ),
-        );
-      }),
+          ],
+        ),
+      ),
     );
-  }
-
-  String? _fmt(String? iso) {
-    if (iso == null || iso.isEmpty) return null;
-    final d = DateTime.tryParse(iso);
-    if (d == null) return null;
-    return DateFormat('dd/MM/yyyy HH:mm').format(d.toLocal());
   }
 }

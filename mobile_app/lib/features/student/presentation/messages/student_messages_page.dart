@@ -14,7 +14,7 @@ class StudentMessagesPage extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           'Échangez avec le support CNOU depuis votre espace étudiant.',
-          style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.65)),
+          style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 16),
         SehilyCard(
@@ -38,7 +38,7 @@ class StudentMessagesPage extends StatelessWidget {
               Text(
                 'La messagerie intégrée arrive prochainement. En attendant, utilisez les réclamations pour contacter le support.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.7), height: 1.4),
+                style: TextStyle(color: SehilyColors.textSecondary, height: 1.4),
               ),
               const SizedBox(height: 16),
               FilledButton.icon(
@@ -49,7 +49,7 @@ class StudentMessagesPage extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Fonctionnalité en cours de déploiement.',
-                style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -78,7 +78,7 @@ class StudentMessagesPage extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text('• ', style: TextStyle(color: SehilyColors.green, fontWeight: FontWeight.bold)),
-                      Expanded(child: Text(item, style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.8)))),
+                      Expanded(child: Text(item, style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500))),
                     ],
                   ),
                 ),

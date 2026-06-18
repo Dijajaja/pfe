@@ -8,7 +8,18 @@ import '../../../../core/network/api_errors.dart';
 abstract final class SehilyColors {
   static const petrol = Color(0xFF1B4D4A);
   static const green = Color(0xFF2E7D72);
+  /// En-têtes AppBar (aligné bandeau footer web).
+  static const header = Color(0xFF2D7A70);
+  /// Sous-titres et textes secondaires (contraste renforcé).
+  static const textSecondary = Color(0xFF3A5552);
+  /// Dates, hints, légendes (lisible sur fond clair).
+  static const textMuted = Color(0xFF4D6562);
+  static const mint = Color(0xFF9FE1CB);
+  static const mintBg = Color(0xFFE8F5E9);
+  static const pending = Color(0xFFF57C00);
+  static const pendingBg = Color(0xFFFFF3E0);
   static const coral = Color(0xFFC9614A);
+  static const coralBg = Color(0xFFFDECEA);
   static const cream = Color(0xFFFAF7F2);
   /// Crème + vert très clair (carte Total reçu).
   static const creamGreenSoft = Color(0xFFF0F7F4);
@@ -57,7 +68,7 @@ class StatusBadge extends StatelessWidget {
       return _BadgeStyle('Réclamation', AppTheme.accent.withValues(alpha: 0.15), AppTheme.accent);
     }
     if (['VALIDE', 'EFFECTUE', 'PAYE', 'TRAITEE'].contains(u)) {
-      return _BadgeStyle(_label(u), const Color(0xFFE8F5E9), const Color(0xFF2E7D32));
+      return _BadgeStyle(_label(u), SehilyColors.coralBg, SehilyColors.coral);
     }
     if (['REJETE', 'REJETEE', 'ECHEC'].contains(u)) {
       return _BadgeStyle(_label(u), const Color(0xFFFDECEA), AppTheme.accent);

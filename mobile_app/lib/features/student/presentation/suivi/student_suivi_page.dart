@@ -4,8 +4,106 @@ import 'package:intl/intl.dart';
 
 import '../../application/student_providers.dart';
 import '../../domain/student_models.dart';
-import '../widgets/sehily_brand.dart';
 import '../widgets/student_widgets.dart';
+
+const _cardMuted = Color(0xFFF4F6F5);
+
+/// Étapes du workflow dossier (aligné web / backend).
+const _workflowSteps = [
+  'BROUILLON',
+  'SOUMIS',
+  'EN_INSTRUCTION',
+  'VALIDE',
+  'REJETE',
+];
+
+int _timelineIndex(String statut) {
+  const map = {
+    'BROUILLON': 0,
+    'SOUMIS': 1,
+    'EN_INSTRUCTION': 2,
+    'COMPLEMENT_DEMANDE': 2,
+    'VALIDE': 3,
+    'REJETE': 4,
+  };
+  return map[statut.toUpperCase()] ?? 0;
+}
+
+/// Progression réelle : position dans le workflow + paiement si dossier validé.
+int _realProgressPercent(DossierBourse dossier) {
+  final statut = dossier.statut.toUpperCase();
+  final paiement = dossier.statutPaiement?.toUpperCase();
+
+  if (statut == 'VALIDE') {
+    if (paiement == 'EFFECTUE') return 100;
+    if (paiement == 'ENVOYE' || paiement == 'EN_COURS') {
+      // Validé, paiement en cours d'acheminement.
+      return 90;
+    }
+    // Validé, en attente de paiement.
+    return 75;
+  }
+
+  final idx = _timelineIndex(statut);
+  if (_workflowSteps.length <= 1) return 0;
+  return ((idx / (_workflowSteps.length - 1)) * 100).round();
+}
+
+String _statusLabel(DossierBourse dossier) {
+  final statut = dossier.statut.toUpperCase();
+  final paiement = dossier.statutPaiement?.toUpperCase();
+
+  if (statut == 'VALIDE' && paiement == 'EFFECTUE') {
+    return 'Paiement effectué';
+  }
+  if (statut == 'VALIDE' && (paiement == 'ENVOYE' || paiement == 'EN_COURS')) {
+    return 'Paiement en cours';
+  }
+
+  switch (statut) {
+    case 'EN_INSTRUCTION':
+    case 'COMPLEMENT_DEMANDE':
+      return 'En cours de traitement';
+    case 'SOUMIS':
+      return 'Dossier soumis';
+    case 'BROUILLON':
+      return 'Brouillon';
+    case 'VALIDE':
+      return 'Validé';
+    case 'REJETE':
+      return 'Rejeté';
+    default:
+      return dossier.statut;
+  }
+}
+
+String _statusDescription(DossierBourse dossier) {
+  final statut = dossier.statut.toUpperCase();
+  final paiement = dossier.statutPaiement?.toUpperCase();
+
+  if (statut == 'VALIDE' && paiement == 'EFFECTUE') {
+    return 'Votre bourse a été versée. Consultez vos paiements pour le détail.';
+  }
+  if (statut == 'VALIDE' && (paiement == 'ENVOYE' || paiement == 'EN_COURS')) {
+    return 'Votre dossier est validé. Le virement est en cours de traitement.';
+  }
+
+  switch (statut) {
+    case 'BROUILLON':
+      return 'Complétez et soumettez votre dossier pour démarrer l\'instruction.';
+    case 'SOUMIS':
+      return 'Votre dossier a été reçu et sera examiné prochainement.';
+    case 'EN_INSTRUCTION':
+    case 'COMPLEMENT_DEMANDE':
+      return 'Votre dossier est en cours d\'étude par nos équipes.';
+    case 'VALIDE':
+      return 'Votre dossier a été validé par l\'administration.';
+    case 'REJETE':
+      return 'Votre dossier a été rejeté. Consultez les détails ci-dessous.';
+    default:
+      return 'Suivez l\'avancement de votre demande de bourse.';
+  }
+}
 
 class StudentSuiviPage extends ConsumerWidget {
   const StudentSuiviPage({super.key});
@@ -21,10 +119,14 @@ class StudentSuiviPage extends ConsumerWidget {
         ref.invalidate(dossiersProvider);
         await ref.read(suiviProvider.future);
       },
+      color: SehilyColors.green,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
         children: [
-          const Text('Historique des statuts et réclamations.'),
+          Text(
+            'Historique des statuts et réclamations.',
+            style: TextStyle(fontSize: 14, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
+          ),
           const SizedBox(height: 16),
           AsyncSection(
             value: suiviAsync,
@@ -39,7 +141,18 @@ class StudentSuiviPage extends ConsumerWidget {
               );
 
               if (primary == null && rows.isEmpty) {
-                return const SehilyCard(child: Text('Aucun historique.'));
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: _cardMuted,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Text(
+                    'Aucun historique.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
+                  ),
+                );
               }
 
               final auteurValidation = primary != null && primary.statut.toUpperCase() == 'VALIDE'
@@ -49,20 +162,16 @@ class StudentSuiviPage extends ConsumerWidget {
               return Column(
                 children: [
                   if (primary != null)
-                    SehilyHighlightCard(
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Statut actuel',
-                            style: TextStyle(color: Colors.black54, fontSize: 14),
-                          ),
-                          const SizedBox(height: 8),
-                          StatusBadge(status: primary.statut, large: true, showCheck: true),
-                        ],
-                      ),
-                    )
+                    _StatusHeroCard(dossier: primary)
                   else
-                    const SehilyCard(child: Text('Aucun dossier.')),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _cardMuted,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Text('Aucun dossier.'),
+                    ),
                   if (primary != null) ...[
                     const SizedBox(height: 12),
                     _SuiviStatCard(
@@ -71,29 +180,155 @@ class StudentSuiviPage extends ConsumerWidget {
                     ),
                   ],
                   if (rows.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    SehilyCard(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const Text(
-                            'Historique',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                          ),
-                          const SizedBox(height: 12),
-                          _SuiviTimeline(rows: rows),
-                        ],
+                    const SizedBox(height: 16),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Historique',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SehilyColors.petrol),
                       ),
                     ),
-                  ] else if (primary != null)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 12),
-                      child: SehilyCard(child: Text('Aucun historique.')),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: _cardMuted,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: _SuiviTimeline(rows: rows),
                     ),
+                  ] else if (primary != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: _cardMuted,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Text(
+                          'Aucun historique.',
+                          style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: SehilyColors.mintBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: SehilyColors.green.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.shield_outlined, color: SehilyColors.green),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Besoin d\'aide ?',
+                                style: TextStyle(fontWeight: FontWeight.bold, color: SehilyColors.petrol),
+                              ),
+                              Text(
+                                'Contactez le support CNOU pour toute question.',
+                                style: TextStyle(fontSize: 13, color: SehilyColors.textSecondary, height: 1.35),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusHeroCard extends StatelessWidget {
+  const _StatusHeroCard({required this.dossier});
+
+  final DossierBourse dossier;
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = _realProgressPercent(dossier);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: SehilyColors.header,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Statut actuel',
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 13),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _statusLabel(dossier),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _statusDescription(dossier),
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 58,
+            height: 58,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: pct / 100,
+                  strokeWidth: 5,
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white,
+                ),
+                Text(
+                  '$pct%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -105,7 +340,7 @@ String _formatDateTime(String? iso) {
   if (iso == null) return '—';
   final d = DateTime.tryParse(iso);
   if (d == null) return iso;
-  return DateFormat('dd/MM/yyyy HH:mm:ss').format(d.toLocal());
+  return DateFormat('dd/MM/yyyy HH:mm').format(d.toLocal());
 }
 
 class _SuiviStatCard extends StatelessWidget {
@@ -118,29 +353,22 @@ class _SuiviStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE3EAE8)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0E322F).withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: Colors.black.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.3,
-              color: Color(0xFF7A8B87),
+              color: SehilyColors.textMuted,
             ),
           ),
           const SizedBox(height: 4),
@@ -149,7 +377,7 @@ class _SuiviStatCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1A2E2C),
+              color: SehilyColors.petrol,
               height: 1.35,
             ),
           ),
@@ -172,6 +400,7 @@ class _SuiviTimeline extends StatelessWidget {
           _SuiviTimelineItem(
             row: rows[i],
             isLast: i == rows.length - 1,
+            isLatest: i == 0,
           ),
       ],
     );
@@ -179,29 +408,41 @@ class _SuiviTimeline extends StatelessWidget {
 }
 
 class _SuiviTimelineItem extends StatelessWidget {
-  const _SuiviTimelineItem({required this.row, required this.isLast});
+  const _SuiviTimelineItem({
+    required this.row,
+    required this.isLast,
+    required this.isLatest,
+  });
 
   final SuiviEntry row;
   final bool isLast;
+  final bool isLatest;
 
   @override
   Widget build(BuildContext context) {
     final showAuteur = row.auteur == 'Admin' || row.auteur == 'Support';
+    final u = row.statut.toUpperCase();
+    final isDone = ['VALIDE', 'EFFECTUE', 'PAYE', 'TRAITEE', 'SOUMIS'].contains(u);
+    final isPending = ['EN_INSTRUCTION', 'EN_COURS', 'COMPLEMENT_DEMANDE', 'EN_ATTENTE'].any(u.contains);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 36),
+            padding: const EdgeInsets.only(left: 40),
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isLatest && isPending ? SehilyColors.pendingBg.withValues(alpha: 0.5) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE3EAE8)),
+                border: Border.all(
+                  color: isLatest && isPending
+                      ? SehilyColors.pending.withValues(alpha: 0.25)
+                      : Colors.black.withValues(alpha: 0.06),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -212,7 +453,7 @@ class _SuiviTimelineItem extends StatelessWidget {
                       Expanded(
                         child: Text(
                           _formatDateTime(row.date),
-                          style: const TextStyle(fontSize: 12, color: Colors.black54),
+                          style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
                         ),
                       ),
                       StatusBadge(status: row.statut),
@@ -222,11 +463,11 @@ class _SuiviTimelineItem extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text.rich(
                       TextSpan(
-                        style: const TextStyle(fontSize: 13, color: Color(0xFF5A6B67), height: 1.35),
+                        style: TextStyle(fontSize: 13, color: SehilyColors.textSecondary, height: 1.35),
                         children: [
                           TextSpan(
                             text: row.auteur,
-                            style: const TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF1A2E2C)),
+                            style: const TextStyle(fontWeight: FontWeight.w600, color: SehilyColors.petrol),
                           ),
                           if (row.commentaire.isNotEmpty) ...[
                             const TextSpan(text: ' · '),
@@ -239,7 +480,7 @@ class _SuiviTimelineItem extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       row.commentaire,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF5A6B67), height: 1.35),
+                      style: TextStyle(fontSize: 13, color: SehilyColors.textSecondary, height: 1.35),
                     ),
                   ],
                 ],
@@ -248,79 +489,56 @@ class _SuiviTimelineItem extends StatelessWidget {
           ),
           Positioned(
             left: 0,
-            top: 2,
-            bottom: 0,
-            width: 24,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return CustomPaint(
-                  size: Size(24, constraints.maxHeight),
-                  painter: _SuiviRailPainter(drawLine: constraints.maxHeight > 26),
-                );
-              },
+            top: 0,
+            bottom: isLast ? null : 0,
+            child: Column(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: isDone
+                        ? SehilyColors.green.withValues(alpha: 0.12)
+                        : isLatest && isPending
+                            ? SehilyColors.pendingBg
+                            : Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDone
+                          ? SehilyColors.green
+                          : isLatest && isPending
+                              ? SehilyColors.pending
+                              : Colors.black26,
+                      width: 2,
+                    ),
+                  ),
+                  child: Icon(
+                    isDone
+                        ? Icons.check
+                        : isLatest && isPending
+                            ? Icons.schedule
+                            : Icons.circle,
+                    size: isDone ? 16 : isLatest && isPending ? 14 : 8,
+                    color: isDone
+                        ? SehilyColors.green
+                        : isLatest && isPending
+                            ? SehilyColors.pending
+                            : Colors.black26,
+                  ),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: isDone ? SehilyColors.green.withValues(alpha: 0.35) : Colors.black12,
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-}
-
-/// Pastille grise + trait sous le cercle (comme le web), indépendant du ListView.
-class _SuiviRailPainter extends CustomPainter {
-  _SuiviRailPainter({required this.drawLine});
-
-  final bool drawLine;
-
-  static const _dotFill = Color(0xFFF6F8F7);
-  static const _dotBorder = Color(0xFFCFD8D6);
-  static const _lineTop = Color(0xFFE8ECE9);
-  static const _lineBottom = Color(0xFFE2E8E6);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    const dotCenter = Offset(12, 12);
-    const dotRadius = 10.0;
-    const lineX = 12.0;
-    const lineStartY = 24.0;
-
-    if (drawLine && size.height > lineStartY) {
-      final linePaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.lerp(SehilyColors.petrol, _lineTop, 0.78)!,
-            _lineBottom,
-          ],
-        ).createShader(Rect.fromLTWH(lineX - 1, lineStartY, 2, size.height - lineStartY))
-        ..strokeWidth = 2
-        ..strokeCap = StrokeCap.round;
-      canvas.drawLine(
-        Offset(lineX, lineStartY),
-        Offset(lineX, size.height),
-        linePaint,
-      );
-    }
-
-    canvas.drawCircle(
-      dotCenter,
-      dotRadius,
-      Paint()
-        ..color = _dotFill
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawCircle(
-      dotCenter,
-      dotRadius,
-      Paint()
-        ..color = _dotBorder
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _SuiviRailPainter oldDelegate) =>
-      oldDelegate.drawLine != drawLine;
 }

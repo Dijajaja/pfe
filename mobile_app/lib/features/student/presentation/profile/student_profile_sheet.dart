@@ -107,7 +107,7 @@ class StudentProfileSheet extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(email, style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.65))),
+                              Text(email, style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500)),
                               const SizedBox(height: 16),
                               _ProfileRow(label: 'Matricule', value: matricule),
                               _ProfileRow(label: 'Établissement', value: etablissement),
@@ -217,7 +217,7 @@ class _ProfileRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(label, style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.6), fontSize: 13)),
+            child: Text(label, style: TextStyle(color: SehilyColors.textSecondary, fontSize: 13)),
           ),
           Expanded(
             child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, color: SehilyColors.petrol)),
@@ -275,7 +275,7 @@ class _NavTile extends StatelessWidget {
                       style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                     ),
                   ),
-                Icon(Icons.chevron_right, color: SehilyColors.petrol.withValues(alpha: 0.4)),
+                Icon(Icons.chevron_right, color: SehilyColors.textMuted),
               ],
             ),
           ),

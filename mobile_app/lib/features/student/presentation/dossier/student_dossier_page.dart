@@ -149,7 +149,7 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
           children: [
             Text(
               'Renseignez tous les champs obligatoires et déposez au moins une pièce justificative pour pouvoir soumettre.',
-              style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.7), height: 1.4),
+              style: TextStyle(color: SehilyColors.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 16),
             Container(
@@ -267,7 +267,7 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                         const SizedBox(height: 20),
                         const _SectionTitle('Pièce justificative *'),
                         const SizedBox(height: 8),
-                        Text('Type de document', style: TextStyle(fontSize: 13, color: SehilyColors.petrol.withValues(alpha: 0.6))),
+                        Text('Type de document', style: TextStyle(fontSize: 13, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<String>(
                           value: _typePiece,
@@ -290,13 +290,13 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.upload_outlined, size: 28, color: SehilyColors.petrol.withValues(alpha: 0.55)),
+                                  Icon(Icons.upload_outlined, size: 28, color: SehilyColors.textSecondary),
                                   const SizedBox(height: 8),
                                   const Text('Déposer le fichier', style: TextStyle(fontWeight: FontWeight.w600)),
                                   const SizedBox(height: 4),
-                                  Text('Glissez-déposez ici', style: TextStyle(fontSize: 13, color: SehilyColors.petrol.withValues(alpha: 0.55))),
+                                  Text('Glissez-déposez ici', style: TextStyle(fontSize: 13, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500)),
                                   const SizedBox(height: 2),
-                                  Text('PDF / JPG / PNG — max 5 MB', style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.45))),
+                                  Text('PDF / JPG / PNG — max 5 MB', style: TextStyle(fontSize: 12, color: SehilyColors.textMuted, fontWeight: FontWeight.w500)),
                                 ],
                               ),
                             ),
@@ -319,7 +319,7 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                               ? 'Aucun fichier sélectionné'
                               : '$totalFiles fichier${totalFiles > 1 ? 's' : ''} au total',
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.55)),
+                          style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
                         ),
                         if (dossier != null && dossier.documents.isNotEmpty) ...[
                           const SizedBox(height: 8),
@@ -328,7 +328,7 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                               padding: const EdgeInsets.only(bottom: 4),
                               child: Text(
                                 '${d.nomFichier ?? d.typePiece} (${d.typePiece} — déjà déposé)',
-                                style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.75)),
+                                style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
                               ),
                             ),
                           ),
@@ -339,7 +339,7 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                               padding: const EdgeInsets.only(bottom: 4),
                               child: Text(
                                 '${f.name} (en attente)',
-                                style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.75)),
+                                style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
                               ),
                             ),
                           ),
@@ -364,45 +364,41 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                     decoration: BoxDecoration(
                       border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.06))),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(
-                          child: Row(
-                            children: [
-                              Icon(Icons.warning_amber_rounded, size: 18, color: SehilyColors.coral.withValues(alpha: 0.85)),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text.rich(
-                                  TextSpan(
-                                    style: TextStyle(fontSize: 12, color: SehilyColors.petrol.withValues(alpha: 0.7)),
-                                    children: const [
-                                      TextSpan(text: 'Formats acceptés : '),
-                                      TextSpan(text: 'PDF, JPG, PNG', style: TextStyle(fontWeight: FontWeight.bold)),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                        Text.rich(
+                          TextSpan(
+                            style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
+                            children: const [
+                              TextSpan(text: 'Formats acceptés : '),
+                              TextSpan(text: 'PDF, JPG, PNG', style: TextStyle(fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        FilledButton.icon(
+                        const SizedBox(height: 12),
+                        FilledButton(
                           onPressed: editable && check.ok && !_submitting
                               ? () => _submit(dossier, anneeId)
                               : null,
                           style: FilledButton.styleFrom(
-                            backgroundColor: SehilyColors.petrol,
+                            backgroundColor: SehilyColors.coral,
                             disabledBackgroundColor: Colors.grey.shade300,
                           ),
-                          icon: _submitting
+                          child: _submitting
                               ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
+                                  height: 20,
+                                  width: 20,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 )
-                              : const Icon(Icons.arrow_forward, size: 18),
-                          label: const Text('Soumettre'),
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text('Soumettre'),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward, size: 18),
+                                  ],
+                                ),
                         ),
                       ],
                     ),
@@ -436,7 +432,7 @@ class _SectionTitle extends StatelessWidget {
         fontSize: 12,
         fontWeight: FontWeight.bold,
         letterSpacing: 0.6,
-        color: SehilyColors.petrol.withValues(alpha: 0.55),
+        color: SehilyColors.textSecondary,
       ),
     );
   }
@@ -471,7 +467,7 @@ class _InfoField extends StatelessWidget {
             children: [
               Text(
                 label.toUpperCase(),
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SehilyColors.petrol.withValues(alpha: 0.5)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SehilyColors.textSecondary),
               ),
               const SizedBox(height: 6),
               child,

@@ -54,81 +54,38 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   Widget build(BuildContext context) {
     return PublicPageScaffold(
       showBack: true,
+      pageTitle: 'Connexion',
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: SehilyColors.petrol,
+              color: SehilyColors.mintBg,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: SehilyColors.green.withValues(alpha: 0.15)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.verified_user_outlined, color: Colors.white, size: 14),
-                      SizedBox(width: 6),
-                      Text('Espace étudiant sécurisé', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                RichText(
-                  text: const TextSpan(
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, height: 1.2),
-                    children: [
-                      TextSpan(text: 'Gérez votre bourse en '),
-                      TextSpan(text: 'toute simplicité', style: TextStyle(color: Color(0xFF9FE1CB))),
-                    ],
-                  ),
+                const Text(
+                  'Espace étudiant sécurisé',
+                  style: TextStyle(color: SehilyColors.green, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  'Accédez à votre dossier, suivez vos paiements et recevez des notifications en temps réel sur l\'état de votre demande.',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.82), height: 1.4),
-                ),
-                const SizedBox(height: 14),
-                ...[
-                  'Suivi en temps réel des dossiers',
-                  'Paiements bancaires sécurisés',
-                  'Support dédié 24/7',
-                ].map(
-                  (b) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.check_circle, color: Color(0xFF9FE1CB), size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(b, style: const TextStyle(color: Colors.white))),
-                      ],
-                    ),
+                RichText(
+                  text: const TextSpan(
+                    style: TextStyle(color: SehilyColors.petrol, fontSize: 22, fontWeight: FontWeight.bold, height: 1.2),
+                    children: [
+                      TextSpan(text: 'Gérez votre bourse en '),
+                      TextSpan(text: 'toute simplicité', style: TextStyle(color: SehilyColors.green)),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: ['Traitement rapide', 'Flux sécurisé', 'Assistance continue']
-                      .map(
-                        (m) => Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(m, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                        ),
-                      )
-                      .toList(),
+                Text(
+                  'Accédez à votre dossier, suivez vos paiements et recevez des notifications en temps réel.',
+                  style: TextStyle(color: SehilyColors.textSecondary, height: 1.4),
                 ),
               ],
             ),
@@ -142,7 +99,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   Text('Connexion', textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
-                  Text('Heureux de vous revoir !', textAlign: TextAlign.center, style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.65))),
+                  Text('Heureux de vous revoir !', textAlign: TextAlign.center, style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 20),
                   if (_error != null) ...[
                     Text(_error!, style: const TextStyle(color: Colors.red)),
@@ -209,7 +166,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     alignment: WrapAlignment.center,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Text('Vous souhaitez vérifier votre statut ? ', style: TextStyle(color: SehilyColors.petrol.withValues(alpha: 0.65), fontSize: 13)),
+                      Text('Vous souhaitez vérifier votre statut ? ', style: TextStyle(color: SehilyColors.textSecondary, fontSize: 13)),
                       TextButton(
                         onPressed: () => context.push('/eligibilite'),
                         style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
