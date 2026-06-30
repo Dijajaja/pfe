@@ -91,9 +91,12 @@ export function FaqSection() {
                 <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-[240px]">
                   {t("faqHelpText")}
                 </p>
-                <button className="bg-[#004d40] hover:bg-[#003d33] text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98]">
+                <a
+                  href="#support"
+                  className="bg-[#004d40] hover:bg-[#003d33] text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-emerald-900/20 active:scale-[0.98] no-underline inline-block"
+                >
                   {t("faqHelpCta")}
-                </button>
+                </a>
               </div>
             </div>
           </div>

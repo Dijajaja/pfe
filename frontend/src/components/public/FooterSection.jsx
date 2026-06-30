@@ -48,7 +48,7 @@ export function FooterSection() {
             </ul>
           </div>
 
-          <div className="text-center md:text-left">
+          <div id="support" className="text-center md:text-left scroll-mt-24">
             <h4 className="font-bold mb-4 md:mb-6">{t("footerSupport")}</h4>
             <ul className="space-y-3 md:space-y-4 text-sm" style={{ color: "#9FE1CB" }}>
               {[t("footerHelpCenter"), t("footerContactUs"), t("footerLegal"), t("footerPrivacy")].map((item) => (
