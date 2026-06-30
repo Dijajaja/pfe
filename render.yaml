@@ -3,13 +3,14 @@ databases:
     databaseName: sehily
     user: sehily
     plan: free
+    region: oregon
 
 services:
   - type: web
     name: sehily-backend
     env: python
     plan: free
-    region: frankfurt
+    region: oregon
     buildCommand: "cd backend && bash build.sh"
     startCommand: "cd backend && python manage.py migrate && python manage.py create_default_admin && python manage.py seed_etudiants_reference && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
@@ -24,7 +25,7 @@ services:
       - key: DATABASE_URL
         fromDatabase:
           name: sehily-db
-          property: connectionString
+          property: internalConnectionString
       - key: CORS_ALLOWED_ORIGINS
         value: "https://dijajaja.github.io"
       - key: DB_ENGINE
