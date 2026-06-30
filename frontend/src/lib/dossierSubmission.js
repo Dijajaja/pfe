@@ -20,9 +20,6 @@ export function validateDossierSubmission({ numero_cni, telephone, niveau, annee
   if (!String(niveau || "").trim()) {
     missing.push("Niveau d'étude");
   }
-  if (anneeUniversitaireId == null || anneeUniversitaireId === "") {
-    missing.push("Année universitaire");
-  }
   const totalDocs = Number(existingDocumentsCount || 0) + Number(pendingFilesCount || 0);
   if (totalDocs < 1) {
     missing.push("Au moins une pièce justificative");
