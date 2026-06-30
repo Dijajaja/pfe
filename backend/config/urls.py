@@ -17,5 +17,5 @@ urlpatterns = [
     path("api/v1/", include("reports.urls")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Servir les fichiers media en dev et en prod (demo PFE)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
