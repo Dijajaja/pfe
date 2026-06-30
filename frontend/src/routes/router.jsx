@@ -30,8 +30,11 @@ import { RequireAuth, RequireRole } from "./guards";
 import { ForbiddenPage } from "../app/errors/ForbiddenPage";
 import { NotFoundPage } from "../app/errors/NotFoundPage";
 
+const basename = import.meta.env.PROD ? "/pfe" : "/";
+
 export const router = createBrowserRouter([
   { path: "/admin", element: <Navigate to="/app/admin/dashboard" replace /> },
+
   { path: "/admin/dossiers", element: <Navigate to="/app/admin/dossiers" replace /> },
   { path: "/admin/etudiants", element: <Navigate to="/app/admin/users" replace /> },
   { path: "/admin/exports", element: <Navigate to="/app/admin/exports" replace /> },
@@ -112,5 +115,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+], { basename });
 
