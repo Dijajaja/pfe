@@ -138,6 +138,8 @@ export function LoginPage() {
                     value={password}
                     onChange={(e) => { setPassword(e.target.value); setPwdTouched(true); }}
                     onBlur={() => setPwdTouched(true)}
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
                     placeholder="••••••••"
                   />
                   <button

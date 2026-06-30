@@ -232,10 +232,17 @@ export function EligibilitePage() {
                 </div>
                 <p className="eligibility-pro-result-detail text-muted mb-0 mt-3">{result.message}</p>
                 <div className="eligibility-pro-result-actions mt-3">
-                  <Link className="btn sehily-btn-primary px-4 d-inline-flex align-items-center gap-2" to="/auth/register?from=eligibilite">
-                    Créer mon compte
-                    <ArrowRight size={16} />
-                  </Link>
+                  {result.has_account ? (
+                    <Link className="btn sehily-btn-primary px-4 d-inline-flex align-items-center gap-2" to="/auth/login?from=eligibilite">
+                      Se connecter
+                      <ArrowRight size={16} />
+                    </Link>
+                  ) : (
+                    <Link className="btn sehily-btn-primary px-4 d-inline-flex align-items-center gap-2" to="/auth/register?from=eligibilite">
+                      Créer mon compte
+                      <ArrowRight size={16} />
+                    </Link>
+                  )}
                 </div>
               </div>
             </Motion.div>

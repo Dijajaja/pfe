@@ -173,6 +173,8 @@ export function RegisterPage() {
                       value={form.password}
                       onChange={(e) => { setField("password", e.target.value); touch("password"); }}
                       onBlur={() => touch("password")}
+                      onCopy={(e) => e.preventDefault()}
+                      onCut={(e) => e.preventDefault()}
                     />
                   </div>
                   <ValidationHint touched={touched.password} result={pwdV} />
@@ -188,6 +190,8 @@ export function RegisterPage() {
                       value={form.password_confirm}
                       onChange={(e) => { setField("password_confirm", e.target.value); touch("password_confirm"); }}
                       onBlur={() => touch("password_confirm")}
+                      onCopy={(e) => e.preventDefault()}
+                      onCut={(e) => e.preventDefault()}
                     />
                   </div>
                   <ValidationHint touched={touched.password_confirm} result={pwdCfmV} />

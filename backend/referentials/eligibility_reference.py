@@ -85,6 +85,12 @@ def _student_payload(ref: EtudiantReference) -> dict:
     }
 
 
+def _has_account(nni: str) -> bool:
+    """Vérifie si un étudiant possède déjà un compte via son NNI."""
+    from accounts.models import EtudiantProfile
+    return EtudiantProfile.objects.filter(nni=nni).exists()
+
+
 def lookup_etudiant_reference(*, nni, matricule):
     """
     Recherche (NNI + matricule) dans EtudiantReference.
@@ -98,6 +104,7 @@ def lookup_etudiant_reference(*, nni, matricule):
             "found": False,
             "ok": False,
             "eligible": False,
+            "has_account": False,
             "code": "CHAMPS_MANQUANTS",
             "message": NOT_FOUND_MESSAGE,
         }
@@ -108,18 +115,21 @@ def lookup_etudiant_reference(*, nni, matricule):
             "found": False,
             "ok": False,
             "eligible": False,
+            "has_account": False,
             "code": "NOT_FOUND",
             "message": NOT_FOUND_MESSAGE,
         }
 
     etudiant = _student_payload(ref)
     eligible, motif = _compute_eligibility(ref)
+    has_account = _has_account(nni_norm)
 
     if eligible:
         return {
             "found": True,
             "ok": True,
             "eligible": True,
+            "has_account": has_account,
             "code": "ELIGIBLE",
             "message": motif,
             "etudiant": etudiant,
@@ -129,6 +139,7 @@ def lookup_etudiant_reference(*, nni, matricule):
         "found": True,
         "ok": False,
         "eligible": False,
+        "has_account": has_account,
         "code": "NON_ELIGIBLE",
         "message": motif,
         "motif": motif,
