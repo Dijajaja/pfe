@@ -7,7 +7,6 @@ import {
   ArrowRight,
   Banknote,
   CheckCircle2,
-  Clock3,
   Search,
   ShieldCheck,
 } from "lucide-react";
@@ -36,8 +35,6 @@ export function EligibilitePage() {
   const [result, setResult] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState("");
-  const [apiLatencyMs, setApiLatencyMs] = useState(null);
-  const [apiLatencyState, setApiLatencyState] = useState("idle");
   const [petalBurst, setPetalBurst] = useState(0);
   const outcomesAnchorRef = useRef(null);
 
@@ -50,11 +47,8 @@ export function EligibilitePage() {
     setNniTouched(true);
     setMatriculeTouched(true);
     if (!formValid) return;
-    const startedAt = performance.now();
     setIsSubmitting(true);
     setApiError("");
-    setApiLatencyMs(null);
-    setApiLatencyState("idle");
     setResult(null);
     try {
       const apiResult = await evaluerEligibiliteBackend({ nni, matricule });
@@ -65,14 +59,10 @@ export function EligibilitePage() {
       } else {
         saveEligibilityRef(null);
       }
-      setApiLatencyMs(Math.round(performance.now() - startedAt));
-      setApiLatencyState("ok");
     } catch (error) {
       setResult(null);
       saveEligibilityRef(null);
       setApiError(error?.response?.data?.detail || "API Django indisponible. Réessaie dans un instant.");
-      setApiLatencyMs(Math.round(performance.now() - startedAt));
-      setApiLatencyState("error");
     } finally {
       setIsSubmitting(false);
       window.setTimeout(() => {
@@ -103,11 +93,6 @@ export function EligibilitePage() {
             <p className="text-muted mb-0">Saisissez votre NNI et votre matricule pour vérifier votre éligibilité.</p>
           </div>
           <div className="d-flex align-items-start align-items-lg-center gap-2">
-            {apiLatencyMs !== null && (
-              <span className={`sehily-badge ${apiLatencyState === "ok" ? "sehily-badge--ok" : "sehily-badge--danger"}`}>
-                <Clock3 size={15} /> {apiLatencyMs} ms
-              </span>
-            )}
             <Link to="/" className="btn sehily-btn-secondary">
               {t("backHome")}
             </Link>
