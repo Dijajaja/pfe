@@ -15,8 +15,18 @@ import {
 } from "../../lib/attestationConstants";
 import { generateAttestationPdf } from "../../lib/generateAttestationPdf";
 import { StatutDossier, StatutPaiement } from "../../lib/statuts";
+import { inputState, vTelephone } from "../../lib/validators";
 
 const TX_CODE_RE = /^\d{4}$/;
+
+function ValidationHint({ touched, result }) {
+  if (!touched || !result) return null;
+  return (
+    <div className={`small mt-1 ${result.valid ? "text-success" : "text-danger"}`}>
+      {result.msg}
+    </div>
+  );
+}
 
 function normalizePhone(value) {
   return String(value || "").replace(/\D/g, "");
@@ -29,6 +39,7 @@ export function StudentAttestationPage() {
 
   const [method, setMethod] = useState("");
   const [telephone, setTelephone] = useState("");
+  const [phoneTouched, setPhoneTouched] = useState(false);
   const [codeTransaction, setCodeTransaction] = useState("");
 
   const statusQuery = useQuery({
@@ -59,10 +70,15 @@ export function StudentAttestationPage() {
   const codeCommercant = status?.code_commercant ?? SEHILY_MERCHANT_CODE;
   const selectedMethod = PAYMENT_METHODS.find((m) => m.id === method);
 
+  const phoneValidation = vTelephone(normalizePhone(telephone));
+
   const canSubmit = useMemo(() => {
-    const phone = normalizePhone(telephone);
-    return Boolean(method && phone.length >= 8 && TX_CODE_RE.test(codeTransaction.trim()));
-  }, [method, telephone, codeTransaction]);
+    return Boolean(
+      method &&
+      phoneValidation.valid &&
+      TX_CODE_RE.test(codeTransaction.trim()),
+    );
+  }, [method, phoneValidation.valid, codeTransaction]);
 
   function handleConfirm(e) {
     e.preventDefault();
@@ -220,13 +236,20 @@ export function StudentAttestationPage() {
                     </label>
                     <input
                       id="attestation-phone"
-                      className="form-control"
-                      inputMode="tel"
+                      className={`form-control ${inputState(phoneTouched, phoneValidation.valid)}`}
+                      inputMode="numeric"
+                      maxLength={8}
                       placeholder="Ex: 22222222"
                       value={telephone}
-                      onChange={(e) => setTelephone(e.target.value)}
+                      onChange={(e) => {
+                        setTelephone(e.target.value.replace(/\D/g, "").slice(0, 8));
+                        setPhoneTouched(true);
+                      }}
+                      onBlur={() => setPhoneTouched(true)}
                       required
                     />
+                    <div className="form-text">{t("attestationPhoneHint")}</div>
+                    <ValidationHint touched={phoneTouched} result={phoneValidation} />
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-semibold" htmlFor="attestation-code">

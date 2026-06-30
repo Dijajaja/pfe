@@ -36,7 +36,9 @@ class _StudentAttestationPageState extends ConsumerState<StudentAttestationPage>
   bool _canSubmit() {
     final phone = _normalizePhone(_phoneCtrl.text);
     final code = _codeCtrl.text.trim();
-    return _method != null && phone.length >= 8 && RegExp(r'^\d{4}$').hasMatch(code);
+    return _method != null &&
+        RegExp(r'^[234]\d{7}$').hasMatch(phone) &&
+        RegExp(r'^\d{4}$').hasMatch(code);
   }
 
   Future<void> _confirm() async {
@@ -207,8 +209,15 @@ class _StudentAttestationPageState extends ConsumerState<StudentAttestationPage>
                       const SizedBox(height: 12),
                       TextField(
                         controller: _phoneCtrl,
-                        keyboardType: TextInputType.phone,
-                        decoration: const InputDecoration(labelText: 'Téléphone utilisé *'),
+                        keyboardType: TextInputType.number,
+                        maxLength: 8,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: const InputDecoration(
+                          labelText: 'Téléphone utilisé *',
+                          hintText: 'Ex: 22222222',
+                          helperText: 'Exactement 8 chiffres, commençant par 2, 3 ou 4.',
+                          counterText: '',
+                        ),
                         onChanged: (_) => setState(() {}),
                       ),
                       const SizedBox(height: 12),
