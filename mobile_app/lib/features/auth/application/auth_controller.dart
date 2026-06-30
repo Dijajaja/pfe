@@ -48,21 +48,19 @@ class AuthController extends StateNotifier<AuthStatus> {
   Future<void> register({
     required String email,
     required String password,
-    required String prenom,
-    required String nom,
+    required String passwordConfirm,
+    required String telephone,
+    required String nni,
     required String matricule,
-    required String etablissement,
-    required String filiere,
   }) async {
     final repo = _ref.read(authRepositoryProvider);
     final tokens = await repo.register(
       email: email,
       password: password,
-      prenom: prenom,
-      nom: nom,
+      passwordConfirm: passwordConfirm,
+      telephone: telephone,
+      nni: nni,
       matricule: matricule,
-      etablissement: etablissement,
-      filiere: filiere,
     );
     await repo.persistTokens(tokens);
     await _finalizeSession();

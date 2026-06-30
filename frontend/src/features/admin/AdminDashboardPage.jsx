@@ -85,7 +85,7 @@ function QuickActionCard({ to, label, icon: Icon, tone = "primary", badge }) {
 export function AdminDashboardPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const { pushError, pushSuccess, pushInfo } = useAppToast();
+  const { pushError, pushSuccess } = useAppToast();
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortBy, setSortBy] = useState("date_desc");
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,7 +94,6 @@ export function AdminDashboardPage() {
   const [nextStatus, setNextStatus] = useState("EN_INSTRUCTION");
   const [adminComment, setAdminComment] = useState("");
   const [actionHistory, setActionHistory] = useState([]);
-  const [readAlertIds, setReadAlertIds] = useState([]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "dashboard"],
@@ -156,7 +155,6 @@ export function AdminDashboardPage() {
     { id: "expired-docs", title: "Documents expirés", detail: `${expiredDocuments} documents à vérifier`, count: expiredDocuments },
     { id: "active-users", title: "Utilisateurs actifs", detail: `${activeUsersCount} comptes actifs`, count: activeUsersCount },
   ];
-  const unreadAlerts = alerts.filter((a) => !readAlertIds.includes(a.id));
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredRows = allDossiers
@@ -204,11 +202,6 @@ export function AdminDashboardPage() {
     });
   }
 
-  function markAlertRead(alertId) {
-    if (readAlertIds.includes(alertId)) return;
-    setReadAlertIds((prev) => [...prev, alertId]);
-    pushInfo("Alerte marquée comme lue.");
-  }
 
   return (
     <div className="row g-3 admin-dashboard-pro">
@@ -224,19 +217,19 @@ export function AdminDashboardPage() {
         </div>
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label={t("kpiTotalDossiers")} value={dossiers.total || 0} tone="petrole" trend={12.5} variant="admin" />
+        <DashboardKpiCard label={t("kpiTotalDossiers")} value={dossiers.total || 0} tone="petrole" variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label={t("kpiSubmittedDossiers")} value={dossiers.SOUMIS || 0} tone="warning" trend={8.2} variant="admin" />
+        <DashboardKpiCard label={t("kpiSubmittedDossiers")} value={dossiers.SOUMIS || 0} tone="warning" variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label={t("kpiValidatedDossiers")} value={dossiers.VALIDE || 0} tone="success" trend={15.7} variant="admin" />
+        <DashboardKpiCard label={t("kpiValidatedDossiers")} value={dossiers.VALIDE || 0} tone="success" variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label={t("kpiRejectedDossiers")} value={dossiers.REJETE || 0} tone="danger" trend={-5.3} variant="admin" />
+        <DashboardKpiCard label={t("kpiRejectedDossiers")} value={dossiers.REJETE || 0} tone="danger" variant="admin" />
       </div>
       <div className="col-12 col-md-6 col-xl-3">
-        <DashboardKpiCard label={t("kpiPaymentsDone")} value={paiements.EFFECTUE || 0} tone="info" trend={18.3} variant="admin" />
+        <DashboardKpiCard label={t("kpiPaymentsDone")} value={paiements.EFFECTUE || 0} tone="info" variant="admin" />
       </div>
 
       <div className="col-12">
@@ -381,14 +374,21 @@ export function AdminDashboardPage() {
                           <StatusBadge status={d.workflow_statut || d.statut} />
                         </td>
                         <td>
-                          <button
-                            className="btn btn-sm sehily-btn-primary d-flex align-items-center gap-2"
-                            onClick={() => openActionModal(d)}
-                            disabled={updateDossierMutation.isPending}
-                          >
-                            {updateDossierMutation.isPending && selectedDossier?.id === d.id ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
-                            <span>Traiter</span>
-                          </button>
+                          {(() => {
+                            const statut = d.workflow_statut || d.statut;
+                            const isPaid = statut === "PAYE" || statut === "ENVOYE";
+                            return (
+                              <button
+                                className="btn btn-sm sehily-btn-primary d-flex align-items-center gap-2"
+                                onClick={() => openActionModal(d)}
+                                disabled={updateDossierMutation.isPending || isPaid}
+                                title={isPaid ? "Dossier déjà payé — aucune action possible" : undefined}
+                              >
+                                {updateDossierMutation.isPending && selectedDossier?.id === d.id ? <span className="spinner-border spinner-border-sm" aria-hidden="true" /> : null}
+                                <span>Traiter</span>
+                              </button>
+                            );
+                          })()}
                         </td>
                       </tr>
                     ))}
@@ -420,23 +420,17 @@ export function AdminDashboardPage() {
             <div className="row g-3">
               <div className="col-12 col-lg-4">
                 <div className="sehily-surface p-3 h-100">
-                  <div className="d-flex justify-content-between align-items-center mb-2">
+                  <div className="mb-2">
                     <div className="fw-bold">Alertes</div>
-                    <span className="sehily-badge sehily-badge--warn">{unreadAlerts.length} non lues</span>
                   </div>
                   <div className="admin-alert-list">
                     {alerts.map((alert) => (
-                      <div key={alert.id} className={`admin-alert-item ${readAlertIds.includes(alert.id) ? "" : "admin-alert-item--unread"}`}>
+                      <div key={alert.id} className="admin-alert-item">
                         <div>
                           <div className="fw-semibold">{alert.title}</div>
                           <div className="small text-muted">{alert.detail}</div>
                         </div>
-                        <div className="d-flex flex-column align-items-end gap-1">
-                          <span className="admin-alert-badge">{alert.count}</span>
-                          <button type="button" className="btn btn-sm sehily-btn-secondary" disabled={readAlertIds.includes(alert.id)} onClick={() => markAlertRead(alert.id)}>
-                            {readAlertIds.includes(alert.id) ? "Lue" : "Lire"}
-                          </button>
-                        </div>
+                        <span className="admin-alert-badge">{alert.count}</span>
                       </div>
                     ))}
                   </div>

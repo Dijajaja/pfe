@@ -78,7 +78,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (authStatus == AuthStatus.unauthenticated) {
-        if (path == '/register' && eligibility.loaded && !eligibility.verified) {
+        if (path == '/register' &&
+            eligibility.loaded &&
+            (!eligibility.verified || eligibility.lastResult?.etudiant == null)) {
           return '/eligibilite';
         }
         if (isPublic || isAuthRoute) return null;

@@ -86,6 +86,7 @@ export function StudentAttestationPage() {
         anneeUniversitaire: status.dossier?.annee_universitaire,
         montantBourse: status.dossier?.montant_bourse,
         reference: status.attestation?.reference,
+        dateEmission: status.attestation?.paye_le,
       });
     } catch {
       pushError(t("attestationPdfError"));
@@ -142,7 +143,9 @@ export function StudentAttestationPage() {
       {eligible && paid ? (
         <div className="col-12">
           <div className="sehily-surface p-4 attestation-block attestation-block--success text-center">
-            <CheckCircle2 size={48} className="attestation-success-icon mb-3" strokeWidth={1.5} />
+            <div className="attestation-success-icon-wrap mb-3" aria-hidden>
+              <CheckCircle2 size={48} className="attestation-success-icon" strokeWidth={1.5} />
+            </div>
             <h2 className="h5 fw-bold mb-2">{t("attestationPaymentSuccess")}</h2>
             <p className="text-muted mb-1">{t("attestationReadyHint")}</p>
             {status?.attestation?.reference ? (

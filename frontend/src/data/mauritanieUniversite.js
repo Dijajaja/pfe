@@ -381,3 +381,69 @@ export function getFilieresPourEtablissement(etablissement) {
   if (!keys) return [];
   return toSortedOptions(keys);
 }
+
+function extractAbbrFromLabel(label) {
+  const m = String(label || "").match(/\(([A-Za-z0-9]{2,16})\)/);
+  return m ? m[1].toUpperCase() : null;
+}
+
+/** Map clé normalisée → abréviation (ISCAE, UNA, …). */
+const ETAB_ABBR_BY_KEY = (() => {
+  const map = new Map();
+  for (const { value } of ETABLISSEMENTS_MAURITANIE) {
+    const abbr = extractAbbrFromLabel(value);
+    if (!abbr) continue;
+    map.set(normalizeKey(value), abbr);
+    map.set(normalizeKey(abbr), abbr);
+    const base = value.replace(/\s*[—–-]\s*.+$/, "").trim();
+    if (base !== value) map.set(normalizeKey(base), abbr);
+  }
+  return map;
+})();
+
+const ETAB_ABBR_HEURISTICS = [
+  ["iscae", "ISCAE"],
+  ["issat", "ISSAT"],
+  ["isgi", "ISGI"],
+  ["iseri", "ISERI"],
+  ["inpn", "INPN"],
+  ["iset", "ISET"],
+  ["isem", "ISEM"],
+  ["ulim", "ULIM"],
+  ["enajm", "ENAJM"],
+  ["esp", "ESP"],
+  ["una", "UNA"],
+  ["ussn", "USSN"],
+  ["usia", "USIA"],
+];
+
+/**
+ * Abréviation affichée sur l'attestation (ex. ISCAE, jamais le libellé complet).
+ * @param {string|null|undefined} value
+ * @returns {string}
+ */
+export function getEtablissementAbbreviation(value) {
+  if (value == null || value === "") return "—";
+  const s = String(value).trim();
+  if (/^[A-Z0-9]{2,12}$/.test(s)) return s;
+
+  const n = normalizeKey(s);
+  const fromMap = ETAB_ABBR_BY_KEY.get(n);
+  if (fromMap) return fromMap;
+
+  const direct = extractAbbrFromLabel(s);
+  if (direct) return direct;
+
+  for (const { value: ref } of ETABLISSEMENTS_MAURITANIE) {
+    const refKey = normalizeKey(ref);
+    const abbr = ETAB_ABBR_BY_KEY.get(refKey);
+    if (!abbr) continue;
+    if (n === refKey || n.includes(refKey) || refKey.includes(n)) return abbr;
+  }
+
+  for (const [needle, abbr] of ETAB_ABBR_HEURISTICS) {
+    if (n.includes(needle)) return abbr;
+  }
+
+  return s.length > 16 ? `${s.slice(0, 16)}…` : s;
+}

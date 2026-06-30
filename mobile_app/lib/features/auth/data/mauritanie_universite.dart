@@ -253,3 +253,63 @@ List<String> getFilieresPourEtablissement(String? etablissement) {
   if (keys == null) return const [];
   return _toSortedOptions(keys);
 }
+
+String? _extractAbbrFromLabel(String label) {
+  final m = RegExp(r'\(([A-Za-z0-9]{2,16})\)').firstMatch(label);
+  return m != null ? m.group(1)!.toUpperCase() : null;
+}
+
+final Map<String, String> _etabAbbrByKey = () {
+  final map = <String, String>{};
+  for (final label in etablissementsMauritanie) {
+    final abbr = _extractAbbrFromLabel(label);
+    if (abbr == null) continue;
+    map[_normalizeKey(label)] = abbr;
+    map[_normalizeKey(abbr)] = abbr;
+    final base = label.replaceAll(RegExp(r'\s*[—–-]\s*.+$'), '').trim();
+    if (base != label) map[_normalizeKey(base)] = abbr;
+  }
+  return map;
+}();
+
+const _etabAbbrHeuristics = [
+  ('iscae', 'ISCAE'),
+  ('issat', 'ISSAT'),
+  ('isgi', 'ISGI'),
+  ('iseri', 'ISERI'),
+  ('inpn', 'INPN'),
+  ('iset', 'ISET'),
+  ('isem', 'ISEM'),
+  ('ulim', 'ULIM'),
+  ('enajm', 'ENAJM'),
+  ('ussn', 'USSN'),
+  ('usia', 'USIA'),
+  ('al-aasriya', 'UNA'),
+];
+
+/// Abréviation pour l'attestation (ex. ISCAE, pas le libellé complet).
+String getEtablissementAbbreviation(String? value) {
+  if (value == null || value.trim().isEmpty) return '—';
+  final s = value.trim();
+  if (RegExp(r'^[A-Z0-9]{2,12}$').hasMatch(s)) return s;
+
+  final n = _normalizeKey(s);
+  final fromMap = _etabAbbrByKey[n];
+  if (fromMap != null) return fromMap;
+
+  final direct = _extractAbbrFromLabel(s);
+  if (direct != null) return direct;
+
+  for (final label in etablissementsMauritanie) {
+    final refKey = _normalizeKey(label);
+    final abbr = _etabAbbrByKey[refKey];
+    if (abbr == null) continue;
+    if (n == refKey || n.contains(refKey) || refKey.contains(n)) return abbr;
+  }
+
+  for (final (needle, abbr) in _etabAbbrHeuristics) {
+    if (n.contains(needle)) return abbr;
+  }
+
+  return s.length > 16 ? '${s.substring(0, 16)}…' : s;
+}

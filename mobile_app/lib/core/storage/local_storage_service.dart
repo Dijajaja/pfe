@@ -10,6 +10,7 @@ final localStorageServiceProvider = Provider<LocalStorageService>((_) {
 class LocalStorageService {
   static const _notificationReadIdsKey = 'notif_read_ids';
   static const _eligibilityVerifiedKey = 'eligibility_verified';
+  static const _eligibilityPayloadKey = 'eligibility_payload';
 
   Future<void> setEligibilityVerified(bool value) async {
     final prefs = await SharedPreferences.getInstance();
@@ -21,9 +22,25 @@ class LocalStorageService {
     return prefs.getBool(_eligibilityVerifiedKey) ?? false;
   }
 
+  Future<void> saveEligibilityPayload(Map<String, dynamic> payload) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_eligibilityPayloadKey, jsonEncode(payload));
+    await prefs.setBool(_eligibilityVerifiedKey, payload['eligible'] == true);
+  }
+
+  Future<Map<String, dynamic>?> loadEligibilityPayload() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_eligibilityPayloadKey);
+    if (raw == null || raw.isEmpty) return null;
+    final decoded = jsonDecode(raw);
+    if (decoded is Map<String, dynamic>) return decoded;
+    return null;
+  }
+
   Future<void> clearEligibilityVerified() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_eligibilityVerifiedKey);
+    await prefs.remove(_eligibilityPayloadKey);
   }
 
   Future<void> markNotificationAsRead(String notificationId) async {

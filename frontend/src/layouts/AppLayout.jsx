@@ -26,6 +26,7 @@ import mauripostLogo from "../assets/mauripost-logo.svg";
 import { logout } from "../app/auth";
 import { useEffectiveRole } from "../app/session";
 import { FallbackBanner } from "../components/ui/FallbackBanner";
+import { StudentHelpChatbot } from "../components/student/StudentHelpChatbot";
 import { partnerApi } from "../features/api/webFeaturesApi";
 import { buildPartnerNotificationsFeed, countUnreadPartnerNotifications } from "../lib/partnerNotificationsFeed";
 import { getReadPartnerNotificationIds } from "../lib/partnerNotificationRead";
@@ -408,6 +409,8 @@ export function AppLayout() {
         </div>
         {renderSidebar()}
       </aside>
+
+      {role === "ETUDIANT" ? <StudentHelpChatbot /> : null}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../settings/presentation/sehily_lang_switch.dart';
 import '../../application/student_providers.dart';
+import '../widgets/student_help_chatbot.dart';
 import '../widgets/student_widgets.dart';
 
 class StudentShell extends ConsumerStatefulWidget {
@@ -106,7 +107,12 @@ class _StudentShellState extends ConsumerState<StudentShell> {
           const SehilyLangSwitch(),
         ],
       ),
-      body: widget.child,
+      body: Stack(
+        children: [
+          widget.child,
+          const StudentHelpChatbot(),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,

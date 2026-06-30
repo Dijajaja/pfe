@@ -64,11 +64,14 @@ class EtudiantProfile(models.Model):
         related_name="profil_etudiant",
     )
     matricule = models.CharField(max_length=64, unique=True)
+    nni = models.CharField("NNI", max_length=20, blank=True, default="")
     prenom = models.CharField("prénom", max_length=150, blank=True, default="")
     nom = models.CharField("nom", max_length=150, blank=True, default="")
     etablissement = models.CharField(max_length=255)
     filiere = models.CharField(max_length=255)
     wilaya = models.CharField(max_length=120, blank=True, default="")
+    telephone = models.CharField(max_length=32, blank=True, default="")
+    annee_courante = models.CharField("année courante", max_length=20, blank=True, default="")
 
     class Meta:
         verbose_name = "profil étudiant"

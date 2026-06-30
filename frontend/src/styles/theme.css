@@ -479,6 +479,12 @@ body{
 .student-attestation-page .attestation-block--success{
   border:1px solid color-mix(in srgb, #2E7D72 35%, #fff);
 }
+.student-attestation-page .attestation-success-icon-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+}
 .student-attestation-page .attestation-success-icon{
   color:#2E7D72;
 }
@@ -621,6 +627,215 @@ body{
   height:6px;
   border-radius:50%;
   background:var(--sehily-vert-pro, #2e7d72);
+}
+
+/* —— Assistant étudiant (chatbot aide) —— */
+.student-help-chatbot{
+  position:fixed;
+  right:1.25rem;
+  bottom:1.25rem;
+  z-index:1080;
+}
+.student-help-chatbot__fab{
+  width:3.25rem;
+  height:3.25rem;
+  border-radius:999px;
+  border:none;
+  background:var(--sehily-corail, #c85a3a);
+  color:#fff;
+  box-shadow:0 8px 24px rgba(200, 90, 58, .35);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.student-help-chatbot__fab:hover{
+  filter:brightness(.96);
+}
+.student-help-chatbot__panel{
+  position:absolute;
+  right:0;
+  bottom:4rem;
+  width:min(92vw, 23.5rem);
+  max-height:min(78vh, 32rem);
+  background:#fff;
+  border-radius:20px;
+  border:1px solid color-mix(in srgb, #9fe1cb 35%, #fff);
+  box-shadow:0 20px 48px rgba(15, 76, 69, .2);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.student-help-chatbot__header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.65rem;
+  padding:.9rem 1rem;
+  background:var(--sehily-petrole, #0f4c45);
+  color:#fff;
+}
+.student-help-chatbot__header--home{
+  padding:.85rem .85rem .85rem 1rem;
+}
+.student-help-chatbot__header-text{
+  flex:1;
+  min-width:0;
+}
+.student-help-chatbot__avatar{
+  width:2.5rem;
+  height:2.5rem;
+  border-radius:999px;
+  background:color-mix(in srgb, #9fe1cb 55%, #fff);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.25rem;
+  flex-shrink:0;
+}
+.student-help-chatbot__title{
+  font-weight:700;
+  font-size:1rem;
+  line-height:1.2;
+}
+.student-help-chatbot__subtitle{
+  margin-top:.15rem;
+  font-size:.72rem;
+  opacity:.85;
+}
+.student-help-chatbot__online{
+  display:flex;
+  align-items:center;
+  gap:.35rem;
+  margin-top:.2rem;
+  font-size:.72rem;
+  font-weight:600;
+  color:#9fe1cb;
+}
+.student-help-chatbot__online-dot{
+  width:.45rem;
+  height:.45rem;
+  border-radius:999px;
+  background:#4ade80;
+  box-shadow:0 0 0 2px color-mix(in srgb, #4ade80 25%, transparent);
+}
+.student-help-chatbot__close{
+  border:none;
+  background:transparent;
+  color:#fff;
+  padding:.15rem;
+  line-height:1;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.student-help-chatbot__body{
+  padding:1rem;
+  overflow:auto;
+  background:#fff;
+}
+.student-help-chatbot__body--home{
+  background:#f7f6f2;
+}
+.student-help-chatbot__bubble{
+  border-radius:14px;
+  padding:.85rem 1rem;
+  font-size:.875rem;
+  line-height:1.5;
+  color:#2a3d3a;
+}
+.student-help-chatbot__bubble--home{
+  background:#fff;
+  border:none;
+  box-shadow:0 4px 16px rgba(15, 76, 69, .08);
+}
+.student-help-chatbot__bubble--bot{
+  background:#faf8f2;
+  border:1px solid color-mix(in srgb, #9fe1cb 55%, #fff);
+  color:#333;
+}
+.student-help-chatbot__line-title{
+  font-weight:700;
+  color:var(--sehily-petrole, #0f4c45);
+}
+.student-help-chatbot__loading{
+  margin-top:.5rem;
+}
+.student-help-chatbot__actions{
+  display:flex;
+  flex-direction:column;
+  gap:.55rem;
+  margin-top:.85rem;
+}
+.student-help-chatbot__actions--home{
+  gap:.65rem;
+  margin-top:1rem;
+}
+.student-help-chatbot__menu-card{
+  display:flex;
+  align-items:center;
+  gap:.75rem;
+  width:100%;
+  text-align:left;
+  border:none;
+  background:#fff;
+  color:var(--sehily-petrole, #0f4c45);
+  border-radius:14px;
+  padding:.7rem .85rem;
+  font-size:.9rem;
+  font-weight:700;
+  box-shadow:0 4px 14px rgba(15, 76, 69, .07);
+  cursor:pointer;
+}
+.student-help-chatbot__menu-card:hover{
+  box-shadow:0 6px 18px rgba(15, 76, 69, .11);
+  transform:translateY(-1px);
+}
+.student-help-chatbot__menu-icon{
+  width:2.25rem;
+  height:2.25rem;
+  border-radius:10px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+  background:color-mix(in srgb, #9fe1cb 22%, #fff);
+  color:var(--sehily-petrole, #0f4c45);
+}
+.student-help-chatbot__menu-icon--check{
+  background:color-mix(in srgb, #4ade80 18%, #fff);
+  color:#15803d;
+}
+.student-help-chatbot__menu-icon--wallet{
+  background:color-mix(in srgb, #fbbf24 22%, #fff);
+  color:#b45309;
+}
+.student-help-chatbot__menu-icon--help{
+  background:color-mix(in srgb, #f87171 18%, #fff);
+  color:#b91c1c;
+}
+.student-help-chatbot__menu-label{
+  flex:1;
+}
+.student-help-chatbot__btn{
+  display:block;
+  width:100%;
+  text-align:center;
+  border:1px solid color-mix(in srgb, #9fe1cb 70%, #fff);
+  background:#fff;
+  color:var(--sehily-petrole, #0f4c45);
+  border-radius:999px;
+  padding:.62rem .85rem;
+  font-size:.84rem;
+  font-weight:600;
+  text-decoration:none;
+  cursor:pointer;
+}
+.student-help-chatbot__btn--pill{
+  box-shadow:0 2px 8px rgba(15, 76, 69, .04);
+}
+.student-help-chatbot__btn:hover{
+  background:color-mix(in srgb, #9fe1cb 12%, #fff);
+  color:var(--sehily-petrole, #0f4c45);
 }
 
 .admin-alert-badge{

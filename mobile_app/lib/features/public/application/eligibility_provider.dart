@@ -41,12 +41,18 @@ class EligibilityGateNotifier extends StateNotifier<EligibilityGateState> {
   Future<void> load() async {
     final storage = _ref.read(localStorageServiceProvider);
     final verified = await storage.isEligibilityVerified();
-    state = state.copyWith(loaded: true, verified: verified);
+    final payload = await storage.loadEligibilityPayload();
+    EligibilityResult? result;
+    if (payload != null) {
+      result = EligibilityResult.fromJson(payload);
+    }
+    state = state.copyWith(loaded: true, verified: verified && (result?.ok ?? false), lastResult: result);
   }
 
   Future<void> markVerified(EligibilityResult result) async {
-    await _ref.read(localStorageServiceProvider).setEligibilityVerified(true);
-    state = state.copyWith(verified: true, lastResult: result);
+    final storage = _ref.read(localStorageServiceProvider);
+    await storage.saveEligibilityPayload(result.toJson());
+    state = state.copyWith(verified: result.ok, lastResult: result);
   }
 
   Future<void> clear() async {

@@ -46,22 +46,20 @@ class AuthRepository {
   Future<AuthTokens> register({
     required String email,
     required String password,
-    required String prenom,
-    required String nom,
+    required String passwordConfirm,
+    required String telephone,
+    required String nni,
     required String matricule,
-    required String etablissement,
-    required String filiere,
   }) async {
     await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.authRegister,
       data: {
         'email': email.trim(),
         'password': password,
-        'prenom': prenom.trim(),
-        'nom': nom.trim(),
+        'password_confirm': passwordConfirm,
+        'telephone': telephone.trim(),
+        'nni': nni.trim(),
         'matricule': matricule.trim(),
-        'etablissement': etablissement.trim(),
-        'filiere': filiere.trim(),
       },
     );
     return login(email: email.trim(), password: password);

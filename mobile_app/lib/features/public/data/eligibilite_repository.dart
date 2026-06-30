@@ -16,17 +16,13 @@ class EligibiliteRepository {
 
   Future<EligibilityResult> evaluate({
     required String nni,
-    required String dateNaissance,
-    required String wilayaBac,
-    required String niveau,
+    required String matricule,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.publicEligibilite,
       data: {
         'nni': nni.trim(),
-        'date_naissance': dateNaissance,
-        'wilaya_bac': wilayaBac,
-        'niveau': niveau,
+        'matricule': matricule.trim(),
       },
       options: Options(extra: const {'skipAuth': true}),
     );

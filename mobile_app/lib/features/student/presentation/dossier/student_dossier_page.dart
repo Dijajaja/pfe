@@ -9,12 +9,6 @@ import '../../domain/dossier_validation.dart';
 import '../../domain/student_models.dart';
 import '../widgets/student_widgets.dart';
 
-const _pieceTypes = {
-  'CNI': 'CNI (carte d\'identité / scan)',
-  'BAC': 'Baccalauréat',
-  'INSCRIPTION': 'Attestation d\'inscription',
-  'RELEVE': 'Relevé',
-};
 
 class StudentDossierPage extends ConsumerStatefulWidget {
   const StudentDossierPage({super.key});
@@ -31,12 +25,31 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
   final List<PlatformFile> _pendingFiles = [];
   bool _submitting = false;
   String? _feedback;
+  bool _profileLoaded = false;
 
   @override
   void dispose() {
     _cniCtrl.dispose();
     _phoneCtrl.dispose();
     super.dispose();
+  }
+
+  /// Pré-remplissage depuis le profil CNOU (une seule fois au premier chargement).
+  void _loadFromProfile(Map<String, dynamic>? profile) {
+    if (_profileLoaded || profile == null) return;
+    _profileLoaded = true;
+    final pe = profile['profil_etudiant'];
+    if (pe is! Map) return;
+    if (_cniCtrl.text.isEmpty) {
+      final nni = pe['nni']?.toString() ?? '';
+      if (nni.isNotEmpty) _cniCtrl.text = nni;
+    }
+    if (_phoneCtrl.text.isEmpty) {
+      final tel = pe['telephone']?.toString() ?? '';
+      if (tel.isNotEmpty) _phoneCtrl.text = tel;
+    }
+    final annee = pe['annee_courante']?.toString() ?? '';
+    if (annee.isNotEmpty) _niveau = annee;
   }
 
   void _loadFromDossier(DossierBourse? dossier) {
@@ -123,12 +136,22 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
   Widget build(BuildContext context) {
     final dossiersAsync = ref.watch(dossiersProvider);
     final anneesAsync = ref.watch(anneesProvider);
+    final profileAsync = ref.watch(profileProvider);
+    final profile = profileAsync.valueOrNull;
+    final pe = profile?['profil_etudiant'];
+    final profileNni = pe is Map ? (pe['nni']?.toString() ?? '') : '';
+    final profileNiveau = pe is Map ? (pe['annee_courante']?.toString() ?? '') : '';
+
+    // Pré-remplir depuis profil au premier build si pas de dossier existant
+    _loadFromProfile(profile);
 
     return AsyncSection(
       value: dossiersAsync,
       onRetry: () => ref.invalidate(dossiersProvider),
       builder: (dossiers) {
         final dossier = dossiers.isNotEmpty ? dossiers.first : null;
+        final cniReadOnly = profileNni.isNotEmpty && (dossier == null || dossier.numeroCni.isEmpty);
+        final niveauReadOnly = profileNiveau.isNotEmpty && dossier == null;
         _loadFromDossier(dossier);
         final editable = dossier == null || canSubmitDossierStatut(dossier.statut);
         final anneeId = dossier?.anneeUniversitaire ??
@@ -221,16 +244,24 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                         const SizedBox(height: 12),
                         _InfoField(
                           icon: Icons.badge_outlined,
-                          label: 'CNI *',
-                          child: TextField(
-                            controller: _cniCtrl,
-                            enabled: editable,
-                            decoration: const InputDecoration(
-                              hintText: 'Numéro de la carte d\'identité',
-                              isDense: true,
-                              border: OutlineInputBorder(),
-                            ),
-                            onChanged: (_) => setState(() {}),
+                          label: 'NNI *',
+                          lockBadge: cniReadOnly,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TextField(
+                                controller: _cniCtrl,
+                                enabled: editable && !cniReadOnly,
+                                readOnly: cniReadOnly,
+                                keyboardType: TextInputType.number,
+                                decoration: const InputDecoration(
+                                  hintText: 'Votre NNI (10 chiffres)',
+                                  isDense: true,
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (_) => setState(() {}),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -253,15 +284,28 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                         _InfoField(
                           icon: Icons.school_outlined,
                           label: 'Niveau d\'étude *',
-                          child: DropdownButtonFormField<String>(
-                            value: _niveau,
-                            decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
-                            items: const [
-                              DropdownMenuItem(value: 'L1', child: Text('L1')),
-                              DropdownMenuItem(value: 'L2', child: Text('L2')),
-                              DropdownMenuItem(value: 'L3', child: Text('L3')),
+                          lockBadge: niveauReadOnly,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (niveauReadOnly || !editable)
+                                TextField(
+                                  controller: TextEditingController(text: _niveau),
+                                  enabled: false,
+                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                                )
+                              else
+                                DropdownButtonFormField<String>(
+                                  value: _niveau,
+                                  decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
+                                  items: const [
+                                    DropdownMenuItem(value: 'L1', child: Text('L1')),
+                                    DropdownMenuItem(value: 'L2', child: Text('L2')),
+                                    DropdownMenuItem(value: 'L3', child: Text('L3')),
+                                  ],
+                                  onChanged: (v) => setState(() => _niveau = v ?? 'L1'),
+                                ),
                             ],
-                            onChanged: editable ? (v) => setState(() => _niveau = v ?? 'L1') : null,
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -269,13 +313,13 @@ class _StudentDossierPageState extends ConsumerState<StudentDossierPage> {
                         const SizedBox(height: 8),
                         Text('Type de document', style: TextStyle(fontSize: 13, color: SehilyColors.textSecondary, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 6),
-                        DropdownButtonFormField<String>(
-                          value: _typePiece,
-                          decoration: const InputDecoration(isDense: true, border: OutlineInputBorder()),
-                          items: _pieceTypes.entries
-                              .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
-                              .toList(),
-                          onChanged: editable ? (v) => setState(() => _typePiece = v ?? 'CNI') : null,
+                        const TextField(
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            hintText: 'CNI (carte d\'identité / scan)',
+                            isDense: true,
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                         const SizedBox(height: 12),
                         Opacity(
@@ -439,11 +483,12 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _InfoField extends StatelessWidget {
-  const _InfoField({required this.icon, required this.label, required this.child});
+  const _InfoField({required this.icon, required this.label, required this.child, this.lockBadge = false});
 
   final IconData icon;
   final String label;
   final Widget child;
+  final bool lockBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -465,9 +510,17 @@ class _InfoField extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                label.toUpperCase(),
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SehilyColors.textSecondary),
+              Row(
+                children: [
+                  Text(
+                    label.toUpperCase(),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: SehilyColors.textSecondary),
+                  ),
+                  if (lockBadge) ...[
+                    const SizedBox(width: 4),
+                    Icon(Icons.lock_outline, size: 11, color: SehilyColors.textMuted),
+                  ],
+                ],
               ),
               const SizedBox(height: 6),
               child,

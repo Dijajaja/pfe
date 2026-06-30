@@ -10,9 +10,39 @@ from dossiers.models import DossierBourse, StatutDossier
 
 
 class EtudiantProfileSerializer(serializers.ModelSerializer):
+    nni = serializers.SerializerMethodField()
+    annee_courante = serializers.SerializerMethodField()
+    wilaya = serializers.SerializerMethodField()
+
     class Meta:
         model = EtudiantProfile
-        fields = ("matricule", "prenom", "nom", "etablissement", "filiere", "wilaya")
+        fields = ("matricule", "nni", "prenom", "nom", "etablissement", "filiere", "wilaya", "telephone", "annee_courante")
+
+    def _get_reference(self, obj):
+        cache = self.context.setdefault("_etudiant_ref_cache", {})
+        mat = (obj.matricule or "").strip().upper()
+        if mat not in cache:
+            from referentials.models import EtudiantReference
+            cache[mat] = EtudiantReference.objects.filter(matricule__iexact=mat).first()
+        return cache[mat]
+
+    def get_nni(self, obj):
+        if obj.nni:
+            return obj.nni
+        ref = self._get_reference(obj)
+        return ref.nni if ref else ""
+
+    def get_annee_courante(self, obj):
+        if obj.annee_courante:
+            return obj.annee_courante
+        ref = self._get_reference(obj)
+        return ref.annee_courante if ref else ""
+
+    def get_wilaya(self, obj):
+        if obj.wilaya:
+            return obj.wilaya
+        ref = self._get_reference(obj)
+        return ref.wilaya if ref else ""
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,12 +57,10 @@ class UserSerializer(serializers.ModelSerializer):
 class InscriptionEtudiantSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
-    prenom = serializers.CharField(max_length=150)
-    nom = serializers.CharField(max_length=150)
+    password_confirm = serializers.CharField(write_only=True, min_length=8)
+    telephone = serializers.CharField(max_length=32)
+    nni = serializers.CharField(max_length=20)
     matricule = serializers.CharField(max_length=64)
-    etablissement = serializers.CharField(max_length=255)
-    filiere = serializers.CharField(max_length=255)
-    wilaya = serializers.CharField(max_length=120, required=False, allow_blank=True)
 
     def validate_email(self, value):
         if User.objects.filter(email__iexact=value).exists():
@@ -43,33 +71,51 @@ class InscriptionEtudiantSerializer(serializers.Serializer):
         validate_password(value)
         return value
 
+    def validate(self, attrs):
+        if attrs.get("password") != attrs.get("password_confirm"):
+            raise serializers.ValidationError({"password_confirm": ["Les mots de passe ne correspondent pas."]})
+        phone_digits = "".join(ch for ch in str(attrs.get("telephone") or "") if ch.isdigit())
+        if len(phone_digits) < 8:
+            raise serializers.ValidationError({"telephone": ["Le numéro de téléphone doit contenir au moins 8 chiffres."]})
+        attrs["telephone"] = phone_digits
+
+        from referentials.eligibility_reference import lookup_etudiant_reference, split_nom_complet
+
+        lookup = lookup_etudiant_reference(nni=attrs.get("nni"), matricule=attrs.get("matricule"))
+        if not lookup.get("found"):
+            raise serializers.ValidationError({"non_field_errors": [lookup.get("message", "Étudiant introuvable.")]})
+        if not lookup.get("eligible"):
+            raise serializers.ValidationError(
+                {"non_field_errors": [lookup.get("motif") or lookup.get("message") or "Non éligible."]}
+            )
+
+        etudiant = lookup["etudiant"]
+        prenom, nom = split_nom_complet(etudiant["nom_complet"])
+        attrs["_reference_profile"] = {
+            "matricule": etudiant["matricule"],
+            "nni": attrs.get("nni", ""),
+            "prenom": prenom,
+            "nom": nom,
+            "etablissement": etudiant["etablissement"],
+            "filiere": etudiant["formation"],
+            "wilaya": etudiant.get("wilaya", ""),
+            "telephone": attrs["telephone"],
+            "annee_courante": etudiant.get("annee_courante", ""),
+        }
+        return attrs
+
     def validate_matricule(self, value):
-        normalized = (value or "").strip()
+        normalized = (value or "").strip().upper()
         if EtudiantProfile.objects.filter(matricule__iexact=normalized).exists():
             raise serializers.ValidationError("Ce matricule est déjà utilisé.")
         return normalized
 
-    def validate_prenom(self, value):
-        normalized = (value or "").strip()
-        if not normalized:
-            raise serializers.ValidationError("Le prénom est obligatoire.")
-        return normalized
-
-    def validate_nom(self, value):
-        normalized = (value or "").strip()
-        if not normalized:
-            raise serializers.ValidationError("Le nom est obligatoire.")
-        return normalized
-
     def create(self, validated_data):
-        profile_data = {
-            "matricule": validated_data.pop("matricule"),
-            "prenom": validated_data.pop("prenom"),
-            "nom": validated_data.pop("nom"),
-            "etablissement": validated_data.pop("etablissement"),
-            "filiere": validated_data.pop("filiere"),
-            "wilaya": validated_data.pop("wilaya", ""),
-        }
+        profile_data = validated_data.pop("_reference_profile")
+        validated_data.pop("password_confirm", None)
+        validated_data.pop("nni", None)
+        validated_data.pop("matricule", None)
+        validated_data.pop("telephone", None)
         password = validated_data.pop("password")
         validated_data["first_name"] = profile_data["prenom"]
         validated_data["last_name"] = profile_data["nom"]

@@ -3,12 +3,139 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/network/api_errors.dart';
-import '../../../l10n/l10n_ext.dart';
 import '../../public/application/eligibility_provider.dart';
 import '../../public/presentation/widgets/public_page_scaffold.dart';
 import '../../student/presentation/widgets/student_widgets.dart';
 import '../application/auth_controller.dart';
-import '../data/mauritanie_universite.dart';
+
+// ─── Validateurs CNOU ────────────────────────────────────────────────────────
+
+final _reEmail = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+final _reTel   = RegExp(r'^(?:\+222|00222)?[234567]\d{7}$');
+
+String? _validateEmail(String? v) {
+  final s = v?.trim() ?? '';
+  if (s.isEmpty) return 'L\'email est obligatoire.';
+  if (!_reEmail.hasMatch(s)) return 'Adresse email invalide (ex : nom@domaine.mr).';
+  return null;
+}
+
+String? _validateTel(String? v) {
+  final s = v?.trim() ?? '';
+  if (s.isEmpty) return 'Le numéro de téléphone est obligatoire.';
+  if (!_reTel.hasMatch(s)) return 'Numéro mauritanien invalide (ex : 41234567 ou +22241234567).';
+  return null;
+}
+
+String? _validatePassword(String? v) {
+  final s = v ?? '';
+  if (s.isEmpty) return 'Le mot de passe est obligatoire.';
+  if (s.length < 8) return 'Minimum 8 caractères requis.';
+  if (!RegExp(r'[a-z]').hasMatch(s)) return 'Au moins une lettre minuscule (a-z) requise.';
+  if (!RegExp(r'[A-Z]').hasMatch(s)) return 'Au moins une lettre majuscule (A-Z) requise.';
+  if (!RegExp(r'\d').hasMatch(s))    return 'Au moins un chiffre (0-9) requis.';
+  if (!RegExp(r'[@$!%*?&]').hasMatch(s)) return 'Au moins un caractère spécial (@\$!%*?&) requis.';
+  return null;
+}
+
+String? Function(String?) _validateConfirm(TextEditingController pwdCtrl) {
+  return (v) {
+    if (v == null || v.isEmpty) return 'Veuillez confirmer votre mot de passe.';
+    if (v != pwdCtrl.text) return 'Les mots de passe ne correspondent pas.';
+    return null;
+  };
+}
+
+// ─── Champ validé avec bordure colorée ───────────────────────────────────────
+
+class _ValidatedField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final String? hint;
+  final TextInputType keyboardType;
+  final bool obscureText;
+  final Widget? suffixIcon;
+  final String? Function(String?) validator;
+
+  const _ValidatedField({
+    required this.controller,
+    required this.label,
+    required this.validator,
+    this.hint,
+    this.keyboardType = TextInputType.text,
+    this.obscureText  = false,
+    this.suffixIcon,
+  });
+
+  @override
+  State<_ValidatedField> createState() => _ValidatedFieldState();
+}
+
+class _ValidatedFieldState extends State<_ValidatedField> {
+  bool _touched = false;
+
+  String? get _error => _touched ? widget.validator(widget.controller.text) : null;
+  bool   get _isValid => _touched && widget.validator(widget.controller.text) == null;
+
+  OutlineInputBorder _border(Color color, {double width = 1.2}) =>
+      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: color, width: width));
+
+  @override
+  Widget build(BuildContext context) {
+    final validIcon = _touched
+        ? Icon(
+            _isValid ? Icons.check_circle_outline : Icons.cancel_outlined,
+            color: _isValid ? const Color(0xFF2E8B57) : Colors.red.shade600,
+            size: 20,
+          )
+        : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: widget.controller,
+          keyboardType: widget.keyboardType,
+          obscureText: widget.obscureText,
+          decoration: InputDecoration(
+            labelText: widget.label,
+            hintText: widget.hint,
+            suffixIcon: widget.suffixIcon ?? validIcon,
+            enabledBorder: _isValid
+                ? _border(const Color(0xFF2E8B57))
+                : _border(Colors.grey.shade300),
+            focusedBorder: _isValid
+                ? _border(const Color(0xFF2E8B57), width: 2)
+                : _border(const Color(0xFF1B6CA8), width: 2),
+            errorBorder: _border(Colors.red.shade500),
+            focusedErrorBorder: _border(Colors.red.shade700, width: 2),
+            errorText: _error,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          ),
+          onChanged: (_) => setState(() => _touched = true),
+          onTapOutside: (_) => setState(() => _touched = true),
+          validator: widget.validator,
+        ),
+        if (_touched && _isValid)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green.shade600, size: 13),
+                const SizedBox(width: 4),
+                Text(
+                  '${widget.label.replaceAll(' *', '')} valide.',
+                  style: TextStyle(color: Colors.green.shade700, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─── Page d'inscription ───────────────────────────────────────────────────────
 
 class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
@@ -18,85 +145,47 @@ class RegisterPage extends ConsumerStatefulWidget {
 }
 
 class _RegisterPageState extends ConsumerState<RegisterPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _prenomController = TextEditingController();
-  final _nomController = TextEditingController();
-  final _matriculeController = TextEditingController();
+  final _emailController          = TextEditingController();
+  final _phoneController          = TextEditingController();
+  final _passwordController       = TextEditingController();
+  final _passwordConfirmController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  String? _etablissement;
-  String? _filiere;
-  bool _isLoading = false;
+  bool _isLoading    = false;
   bool _showPassword = false;
   String? _error;
-
-  static const _fieldSpacing = 20.0;
-
-  List<String> get _filieres => getFilieresPourEtablissement(_etablissement);
-
-  InputDecoration _fieldDecoration({
-    required String label,
-    String? helperText,
-    Widget? suffixIcon,
-  }) {
-    return InputDecoration(
-      labelText: label,
-      helperText: helperText,
-      suffixIcon: suffixIcon,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.black.withValues(alpha: 0.12)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: SehilyColors.green, width: 1.5),
-      ),
-      floatingLabelBehavior: FloatingLabelBehavior.auto,
-    );
-  }
 
   @override
   void dispose() {
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
-    _prenomController.dispose();
-    _nomController.dispose();
-    _matriculeController.dispose();
+    _passwordConfirmController.dispose();
     super.dispose();
-  }
-
-  void _onEtablissementChanged(String? value) {
-    setState(() {
-      _etablissement = value;
-      if (_filiere != null && !_filieres.contains(_filiere)) {
-        _filiere = null;
-      }
-    });
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    final gate     = ref.read(eligibilityGateProvider);
+    final etudiant = gate.lastResult?.etudiant;
+    if (etudiant == null || !gate.verified) {
+      setState(() => _error = 'Vérifiez d\'abord votre éligibilité.');
+      return;
+    }
 
+    setState(() { _isLoading = true; _error = null; });
     try {
       await ref.read(authControllerProvider.notifier).register(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            prenom: _prenomController.text.trim(),
-            nom: _nomController.text.trim(),
-            matricule: _matriculeController.text.trim(),
-            etablissement: _etablissement!,
-            filiere: _filiere!,
+            email:           _emailController.text.trim(),
+            password:        _passwordController.text,
+            passwordConfirm: _passwordConfirmController.text,
+            telephone:       _phoneController.text.trim(),
+            nni:             etudiant.nni,
+            matricule:       etudiant.matricule,
           );
       await ref.read(eligibilityGateProvider.notifier).clear();
       if (mounted) context.go('/student/dashboard');
     } catch (e) {
-      setState(() => _error = apiErrorMessage(e, context.t.registerError));
+      setState(() => _error = apiErrorMessage(e, 'Inscription impossible.'));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -104,122 +193,100 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final gate     = ref.watch(eligibilityGateProvider);
+    final etudiant = gate.lastResult?.etudiant;
+
+    if (!gate.loaded) {
+      return const PublicPageScaffold(
+        showBack: true,
+        pageTitle: 'Inscription',
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (etudiant == null || !gate.verified) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/eligibilite');
+      });
+      return const SizedBox.shrink();
+    }
+
     return PublicPageScaffold(
       showBack: true,
       pageTitle: 'Inscription',
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: SehilyColors.mintBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: SehilyColors.green.withValues(alpha: 0.25)),
+            ),
+            child: const Text(
+              'Éligibilité confirmée — complétez votre compte.',
+              style: TextStyle(color: SehilyColors.petrol, height: 1.35),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SehilyCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Nom : ${etudiant.nomComplet}'),
+                Text('Wilaya : ${etudiant.wilaya}'),
+                Text('Établissement : ${etudiant.etablissement}'),
+                Text('Formation : ${etudiant.formation}'),
+                Text('Année : ${etudiant.anneeCourante}'),
+                Text('Matricule : ${etudiant.matricule}'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.disabled,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: SehilyColors.mintBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: SehilyColors.green.withValues(alpha: 0.25)),
-                  ),
-                  child: const Text(
-                    'Éligibilité vérifiée — vous pouvez créer votre compte.',
-                    style: TextStyle(color: SehilyColors.petrol, height: 1.35),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Les champs marqués d\'un astérisque (*) sont obligatoires.',
-                  style: TextStyle(fontSize: 12, color: SehilyColors.textSecondary, height: 1.35),
+                _ValidatedField(
+                  controller: _emailController,
+                  label: 'Email *',
+                  keyboardType: TextInputType.emailAddress,
+                  validator: _validateEmail,
                 ),
                 const SizedBox(height: 20),
-                const _SectionTitle(title: 'Informations personnelles'),
-                const SizedBox(height: 14),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: _fieldDecoration(label: 'Email *'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? context.t.requiredField : null,
+                _ValidatedField(
+                  controller: _phoneController,
+                  label: 'Téléphone *',
+                  hint: 'Ex : 41234567',
+                  keyboardType: TextInputType.phone,
+                  validator: _validateTel,
                 ),
-                const SizedBox(height: _fieldSpacing),
-                TextFormField(
-                  controller: _prenomController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: _fieldDecoration(label: 'Prénom *'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? context.t.requiredField : null,
-                ),
-                const SizedBox(height: _fieldSpacing),
-                TextFormField(
-                  controller: _nomController,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: _fieldDecoration(label: 'Nom *'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? context.t.requiredField : null,
-                ),
-                const SizedBox(height: _fieldSpacing),
-                TextFormField(
-                  controller: _matriculeController,
-                  decoration: _fieldDecoration(label: 'Matricule *'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? context.t.requiredField : null,
-                ),
-                const _SectionDivider(),
-                const _SectionTitle(title: 'Scolarité'),
-                const SizedBox(height: 14),
-                DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: _etablissement,
-                  decoration: _fieldDecoration(label: 'Établissement *'),
-                  hint: const Text('Choisir un établissement'),
-                  items: etablissementsMauritanie
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e, overflow: TextOverflow.ellipsis)))
-                      .toList(),
-                  onChanged: _onEtablissementChanged,
-                  validator: (v) => (v == null || v.isEmpty) ? context.t.requiredField : null,
-                ),
-                const SizedBox(height: _fieldSpacing),
-                DropdownButtonFormField<String>(
-                  isExpanded: true,
-                  value: _filiere,
-                  decoration: _fieldDecoration(label: 'Filière *'),
-                  hint: Text(
-                    _etablissement == null ? 'Choisissez d\'abord l\'établissement' : 'Choisir une filière',
-                    style: TextStyle(
-                      color: _etablissement == null ? SehilyColors.textMuted : SehilyColors.textSecondary,
-                    ),
-                  ),
-                  items: _filieres
-                      .map((f) => DropdownMenuItem(value: f, child: Text(f, overflow: TextOverflow.ellipsis)))
-                      .toList(),
-                  onChanged: _etablissement == null ? null : (v) => setState(() => _filiere = v),
-                  validator: (v) => (v == null || v.isEmpty) ? context.t.requiredField : null,
-                ),
-                const _SectionDivider(),
-                const _SectionTitle(title: 'Sécurité'),
-                const SizedBox(height: 14),
-                TextFormField(
+                const SizedBox(height: 20),
+                _ValidatedField(
                   controller: _passwordController,
+                  label: 'Mot de passe *',
                   obscureText: !_showPassword,
-                  decoration: _fieldDecoration(
-                    label: 'Mot de passe *',
-                    helperText: '8 caractères minimum',
-                    suffixIcon: IconButton(
-                      onPressed: () => setState(() => _showPassword = !_showPassword),
-                      icon: Icon(
-                        _showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                        color: SehilyColors.textSecondary,
-                      ),
-                    ),
+                  validator: _validatePassword,
+                  suffixIcon: IconButton(
+                    onPressed: () => setState(() => _showPassword = !_showPassword),
+                    icon: Icon(_showPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return context.t.requiredField;
-                    if (v.length < 8) return 'Mot de passe trop court (8 min.)';
-                    return null;
-                  },
+                ),
+                const SizedBox(height: 20),
+                _ValidatedField(
+                  controller: _passwordConfirmController,
+                  label: 'Confirmer le mot de passe *',
+                  obscureText: !_showPassword,
+                  validator: _validateConfirm(_passwordController),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 16),
                   SehilyAlertBanner(headline: 'Erreur —', subline: _error!),
                 ],
-                const SizedBox(height: 28),
+                const SizedBox(height: 24),
                 FilledButton(
                   onPressed: _isLoading ? null : _submit,
                   child: _isLoading
@@ -228,51 +295,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
-                      : const Text('S\'inscrire'),
-                ),
-                const SizedBox(height: 12),
-                Center(
-                  child: TextButton(
-                    onPressed: () => context.go('/login'),
-                    style: TextButton.styleFrom(foregroundColor: SehilyColors.petrol),
-                    child: const Text('Retour à la connexion'),
-                  ),
+                      : const Text('Créer mon compte'),
                 ),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontWeight: FontWeight.bold,
-        fontSize: 16,
-        color: SehilyColors.petrol,
-      ),
-    );
-  }
-}
-
-class _SectionDivider extends StatelessWidget {
-  const _SectionDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Divider(color: Colors.black.withValues(alpha: 0.08), height: 1),
     );
   }
 }

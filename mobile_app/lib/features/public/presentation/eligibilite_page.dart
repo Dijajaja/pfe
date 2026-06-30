@@ -1,16 +1,126 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../../core/network/api_errors.dart';
 import '../../student/presentation/widgets/student_widgets.dart';
 import '../application/eligibility_provider.dart';
-import '../data/eligibility_constants.dart';
 import '../data/eligibilite_repository.dart';
 import '../domain/eligibility_result.dart';
 import 'widgets/eligibility_confetti.dart';
 import 'widgets/public_page_scaffold.dart';
+
+// ─── Validateurs CNOU ────────────────────────────────────────────────────────
+
+final _reMatricule = RegExp(r'^[A-Za-z]\d{5}$');
+
+String? _validateNni(String? v) {
+  final s = v?.trim() ?? '';
+  if (s.isEmpty) return 'Le NNI est obligatoire.';
+  if (!RegExp(r'^\d+$').hasMatch(s)) return 'Le NNI ne doit contenir que des chiffres.';
+  if (s.length < 10) return 'NNI : ${s.length}/10 chiffres saisis.';
+  if (s.length > 10) return 'Le NNI ne doit pas dépasser 10 chiffres.';
+  return null; // valide
+}
+
+String? _validateMatricule(String? v) {
+  final s = v?.trim() ?? '';
+  if (s.isEmpty) return 'Le matricule est obligatoire.';
+  if (!_reMatricule.hasMatch(s)) return 'Format attendu : 1 lettre + 5 chiffres (ex : I25099).';
+  return null;
+}
+
+// ─── Widget validé avec bordure colorée ──────────────────────────────────────
+
+class _ValidatedField extends StatefulWidget {
+  final TextEditingController controller;
+  final String label;
+  final String hint;
+  final TextInputType keyboardType;
+  final int? maxLength;
+  final String? Function(String?) validator;
+  final bool autoFocus;
+
+  const _ValidatedField({
+    required this.controller,
+    required this.label,
+    required this.hint,
+    required this.validator,
+    this.keyboardType = TextInputType.text,
+    this.maxLength,
+    this.autoFocus = false,
+  });
+
+  @override
+  State<_ValidatedField> createState() => _ValidatedFieldState();
+}
+
+class _ValidatedFieldState extends State<_ValidatedField> {
+  bool _touched = false;
+
+  String? get _error => _touched ? widget.validator(widget.controller.text) : null;
+  bool get _isValid  => _touched && widget.validator(widget.controller.text) == null;
+
+  OutlineInputBorder _border(Color color, {double width = 1.2}) =>
+      OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: color, width: width));
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: widget.controller,
+          keyboardType: widget.keyboardType,
+          maxLength: widget.maxLength,
+          autofocus: widget.autoFocus,
+          buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+          decoration: InputDecoration(
+            labelText: widget.label,
+            hintText: widget.hint,
+            counterText: '',
+            suffixIcon: _touched
+                ? Icon(
+                    _isValid ? Icons.check_circle_outline : Icons.cancel_outlined,
+                    color: _isValid ? const Color(0xFF2E8B57) : Colors.red.shade600,
+                    size: 20,
+                  )
+                : null,
+            enabledBorder: _isValid
+                ? _border(const Color(0xFF2E8B57))
+                : _border(Colors.grey.shade300),
+            focusedBorder: _isValid
+                ? _border(const Color(0xFF2E8B57), width: 2)
+                : _border(const Color(0xFF1B6CA8), width: 2),
+            errorBorder: _border(Colors.red.shade500),
+            focusedErrorBorder: _border(Colors.red.shade700, width: 2),
+            errorText: _error,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          ),
+          onChanged: (_) => setState(() => _touched = true),
+          onTapOutside: (_) => setState(() => _touched = true),
+          validator: widget.validator,
+        ),
+        if (_touched && _isValid)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 4),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.green.shade600, size: 13),
+                const SizedBox(width: 4),
+                Text(
+                  '${widget.label.replaceAll(' *', '')} valide.',
+                  style: TextStyle(color: Colors.green.shade700, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// ─── Page principale ─────────────────────────────────────────────────────────
 
 class EligibilitePage extends ConsumerStatefulWidget {
   const EligibilitePage({super.key});
@@ -20,84 +130,35 @@ class EligibilitePage extends ConsumerStatefulWidget {
 }
 
 class _EligibilitePageState extends ConsumerState<EligibilitePage> {
-  final _nniCtrl = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  final _scrollCtrl = ScrollController();
-  final _resultKey = GlobalKey();
-  DateTime? _birthDate;
-  String? _wilaya;
-  String _niveau = 'L1';
+  final _nniCtrl       = TextEditingController();
+  final _matriculeCtrl = TextEditingController();
+  final _formKey       = GlobalKey<FormState>();
   EligibilityResult? _result;
-  bool _submitting = false;
+  bool _submitting  = false;
   String? _apiError;
-  int _confettiBurst = 0;
-  bool _showConfetti = false;
-
-  int get _activeStep {
-    if (_result != null) return 2;
-    if (_submitting) return 1;
-    return 0;
-  }
+  int  _confettiBurst = 0;
+  bool _showConfetti  = false;
 
   @override
   void dispose() {
     _nniCtrl.dispose();
-    _scrollCtrl.dispose();
+    _matriculeCtrl.dispose();
     super.dispose();
   }
 
-  int? get _age {
-    if (_birthDate == null) return null;
-    final now = DateTime.now();
-    var age = now.year - _birthDate!.year;
-    if (now.month < _birthDate!.month ||
-        (now.month == _birthDate!.month && now.day < _birthDate!.day)) {
-      age--;
-    }
-    return age;
-  }
-
-  Future<void> _pickBirthDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ?? DateTime(2002, 1, 1),
-      firstDate: DateTime(1970),
-      lastDate: DateTime.now(),
-      locale: const Locale('fr'),
-    );
-    if (picked != null) setState(() => _birthDate = picked);
-  }
-
-  void _scrollToResult() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _resultKey.currentContext;
-      if (ctx != null && mounted) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 550),
-          curve: Curves.easeOutCubic,
-          alignment: 0.08,
-        );
-      }
-    });
-  }
-
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _birthDate == null || _wilaya == null) return;
-
+    if (!_formKey.currentState!.validate()) return;
     setState(() {
-      _submitting = true;
-      _apiError = null;
-      _result = null;
-      _showConfetti = false;
+      _submitting    = true;
+      _apiError      = null;
+      _result        = null;
+      _showConfetti  = false;
     });
 
     try {
       final result = await ref.read(eligibiliteRepositoryProvider).evaluate(
-            nni: _nniCtrl.text,
-            dateNaissance: DateFormat('yyyy-MM-dd').format(_birthDate!),
-            wilayaBac: _wilaya!,
-            niveau: _niveau,
+            nni: _nniCtrl.text.trim(),
+            matricule: _matriculeCtrl.text.trim(),
           );
       if (result.ok) {
         await ref.read(eligibilityGateProvider.notifier).markVerified(result);
@@ -109,221 +170,74 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
           _showConfetti = true;
         }
       });
-      _scrollToResult();
     } catch (e) {
-      setState(() => _apiError = apiErrorMessage(e, 'Impossible de vérifier l’éligibilité.'));
+      setState(() => _apiError = apiErrorMessage(e, 'Impossible de vérifier l\'éligibilité.'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  Widget _successResult(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-          decoration: BoxDecoration(
-            color: SehilyColors.mintBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: SehilyColors.green.withValues(alpha: 0.15)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: SehilyColors.green,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 30),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Félicitations !',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: SehilyColors.petrol),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Vous êtes éligible à la bourse',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                  color: SehilyColors.petrol,
-                  height: 1.2,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Vous pouvez maintenant créer votre compte pour commencer votre demande.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: SehilyColors.textSecondary, height: 1.4),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        SehilyCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                'Prochaines étapes',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SehilyColors.petrol),
-              ),
-              SizedBox(height: 14),
-              _NextStepRow(icon: Icons.person_outline, title: 'Créer votre compte'),
-              SizedBox(height: 12),
-              _NextStepRow(icon: Icons.folder_outlined, title: 'Déposer votre dossier'),
-              SizedBox(height: 12),
-              _NextStepRow(icon: Icons.trending_up, title: 'Suivre le traitement'),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        FilledButton(
-          onPressed: () => context.go('/register'),
-          child: const Text('Créer mon compte'),
-        ),
-        const SizedBox(height: 10),
-        OutlinedButton(
-          onPressed: () => context.push('/login'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: SehilyColors.petrol,
-            side: BorderSide(color: SehilyColors.petrol.withValues(alpha: 0.25)),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-          ),
-          child: const Text('Se connecter'),
-        ),
-      ],
-    );
-  }
-
-  Widget _failureResult() {
-    return SehilyCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.info_outline, color: SehilyColors.coral),
-              SizedBox(width: 8),
-              Text('Non éligible', style: TextStyle(fontWeight: FontWeight.bold, color: SehilyColors.coral)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(eligibilityMessage(_result!.i18nKey, params: _result!.i18nParams)),
-        ],
+  Widget _readOnlyField(String label, String value) {
+    return TextFormField(
+      initialValue: value,
+      readOnly: true,
+      enabled: false,
+      decoration: InputDecoration(
+        labelText: label,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final showForm = _result == null;
-    final pageTitle = _result != null ? 'Résultat d\'éligibilité' : 'Vérification d\'éligibilité';
+    final etudiant  = _result?.etudiant;
+    final showForm  = _result == null;
 
     return PublicPageScaffold(
       showBack: true,
-      pageTitle: pageTitle,
+      pageTitle: showForm ? 'Vérifier mon éligibilité' : 'Résultat d\'éligibilité',
       body: Stack(
         children: [
           ListView(
-            controller: _scrollCtrl,
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              _EligibilityStepper(activeStep: _activeStep),
-              const SizedBox(height: 24),
               if (showForm) ...[
                 const Text(
-                  'Informations personnelles',
+                  'Vérification d\'identité',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: SehilyColors.petrol),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
-                  'Veuillez renseigner vos informations pour vérifier votre éligibilité.',
+                  'Saisissez uniquement votre NNI et votre matricule.',
                   style: TextStyle(color: SehilyColors.textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 16),
                 SehilyCard(
-                  padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
                   child: Form(
                     key: _formKey,
+                    autovalidateMode: AutovalidateMode.disabled,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        TextFormField(
+                        _ValidatedField(
                           controller: _nniCtrl,
+                          label: 'NNI *',
+                          hint: 'Ex: 0123456789',
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Numéro NNI *',
-                            hintText: 'Entrez votre NNI',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                          ),
-                          validator: (v) => (v == null || v.trim().isEmpty) ? 'Champ obligatoire' : null,
+                          maxLength: 10,
+                          validator: _validateNni,
+                          autoFocus: true,
                         ),
-                        const SizedBox(height: 22),
-                        InkWell(
-                          onTap: _pickBirthDate,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InputDecorator(
-                            decoration: const InputDecoration(
-                              labelText: 'Date de naissance *',
-                              suffixIcon: Icon(Icons.calendar_today_outlined),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                            ),
-                            child: Text(
-                              _birthDate == null
-                                  ? 'Sélectionner votre date'
-                                  : DateFormat('dd/MM/yyyy').format(_birthDate!),
-                              style: TextStyle(
-                                color: _birthDate == null ? SehilyColors.textMuted : SehilyColors.petrol,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
+                        const SizedBox(height: 20),
+                        _ValidatedField(
+                          controller: _matriculeCtrl,
+                          label: 'Matricule *',
+                          hint: 'Ex: I25099',
+                          maxLength: 6,
+                          validator: _validateMatricule,
                         ),
-                        if (_age != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Text(
-                              'Âge calculé : $_age ans',
-                              style: const TextStyle(color: SehilyColors.green, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        SizedBox(height: _age != null ? 18 : 22),
-                        DropdownButtonFormField<String>(
-                          value: _wilaya,
-                          decoration: const InputDecoration(
-                            labelText: 'Wilaya du bac *',
-                            hintText: 'Sélectionner votre wilaya',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                          ),
-                          items: [
-                            const DropdownMenuItem(value: null, child: Text('Sélectionner votre wilaya')),
-                            ...EligibilityConstants.wilayas.map(
-                              (w) => DropdownMenuItem(value: w, child: Text(w)),
-                            ),
-                          ],
-                          onChanged: (v) => setState(() => _wilaya = v),
-                          validator: (v) => v == null ? 'Champ obligatoire' : null,
-                        ),
-                        const SizedBox(height: 22),
-                        DropdownButtonFormField<String>(
-                          value: _niveau,
-                          decoration: const InputDecoration(
-                            labelText: 'Niveau d\'études *',
-                            hintText: 'Sélectionner votre niveau',
-                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                          ),
-                          items: EligibilityConstants.niveaux
-                              .map((n) => DropdownMenuItem(value: n.$1, child: Text(n.$2)))
-                              .toList(),
-                          onChanged: (v) => setState(() => _niveau = v ?? 'L1'),
-                        ),
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 24),
                         FilledButton(
                           onPressed: _submitting ? null : _submit,
                           child: _submitting
@@ -332,66 +246,103 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
                                   width: 20,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 )
-                              : const Text('Continuer'),
+                              : const Text('Vérifier mon éligibilité'),
                         ),
                       ],
                     ),
                   ),
                 ),
               ] else ...[
-                if (!_result!.ok) ...[
-                  const Text(
-                    'Résultat',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: SehilyColors.petrol),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Voici le résultat de votre vérification d\'éligibilité.',
-                    style: TextStyle(color: SehilyColors.textSecondary, fontWeight: FontWeight.w500),
+                if (!_result!.found) ...[
+                  SehilyAlertBanner(
+                    headline: 'Étudiant introuvable —',
+                    subline: _result!.message ??
+                        'Vérifiez votre NNI et votre matricule ou contactez votre établissement.',
                   ),
                   const SizedBox(height: 16),
-                ],
-                KeyedSubtree(
-                  key: _resultKey,
-                  child: _result!.ok ? _successResult(context) : _failureResult(),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => setState(() {
-                      _result = null;
-                      _apiError = null;
-                    }),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: SehilyColors.petrol,
-                      side: BorderSide(color: SehilyColors.petrol.withValues(alpha: 0.3)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                  FilledButton(onPressed: null, child: const Text('Créer mon compte')),
+                ] else if (etudiant != null) ...[
+                  SehilyCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Informations étudiant',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: SehilyColors.petrol),
+                        ),
+                        const SizedBox(height: 16),
+                        _readOnlyField('Nom complet', etudiant.nomComplet),
+                        const SizedBox(height: 14),
+                        _readOnlyField('Wilaya', etudiant.wilaya),
+                        const SizedBox(height: 14),
+                        _readOnlyField('Établissement', etudiant.etablissement),
+                        const SizedBox(height: 14),
+                        _readOnlyField('Formation', etudiant.formation),
+                        const SizedBox(height: 14),
+                        _readOnlyField('Année courante', etudiant.anneeCourante),
+                      ],
                     ),
-                    child: const Text('Modifier mes informations'),
                   ),
+                  const SizedBox(height: 16),
+                  if (_result!.ok) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: SehilyColors.mintBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: SehilyColors.green.withValues(alpha: 0.25)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: SehilyColors.green,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: const Text(
+                              'Éligible',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _result!.message ??
+                                'Félicitations, vous êtes éligible à la bourse. Vous pouvez créer votre compte.',
+                            style: const TextStyle(color: SehilyColors.petrol, height: 1.45),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => context.go('/register'),
+                      child: const Text('Créer mon compte'),
+                    ),
+                  ] else ...[
+                    SehilyAlertBanner(
+                      headline: 'Non éligible —',
+                      subline: _result!.motif ?? _result!.message ?? 'Vous n\'êtes pas éligible.',
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(onPressed: null, child: const Text('Créer mon compte')),
+                  ],
+                ],
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () => setState(() {
+                    _result   = null;
+                    _apiError = null;
+                  }),
+                  child: const Text('Nouvelle vérification'),
                 ),
               ],
               if (_apiError != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 12),
-                  child: SehilyAlertBanner(
-                    headline: 'Erreur —',
-                    subline: _apiError!,
-                  ),
+                  child: SehilyAlertBanner(headline: 'Erreur —', subline: _apiError!),
                 ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shield_outlined, size: 16, color: SehilyColors.textMuted),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Vos données sont 100% sécurisées',
-                    style: TextStyle(fontSize: 12, color: SehilyColors.textMuted, fontWeight: FontWeight.w500),
-                  ),
-                ],
-              ),
             ],
           ),
           if (_showConfetti)
@@ -405,135 +356,6 @@ class _EligibilitePageState extends ConsumerState<EligibilitePage> {
             ),
         ],
       ),
-    );
-  }
-}
-
-class _NextStepRow extends StatelessWidget {
-  const _NextStepRow({required this.icon, required this.title});
-
-  final IconData icon;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: SehilyColors.mintBg,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: SehilyColors.green, size: 22),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600, color: SehilyColors.petrol),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _EligibilityStepper extends StatelessWidget {
-  const _EligibilityStepper({required this.activeStep});
-
-  final int activeStep;
-
-  static const _steps = [
-    ('Informations', 'Informations'),
-    ('Vérification', 'Verification'),
-    ('Résultat', 'Resultat'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < _steps.length; i++) ...[
-          Expanded(
-            child: _StepDot(
-              index: i + 1,
-              label: _steps[i].$1,
-              active: i == activeStep,
-              completed: i < activeStep,
-            ),
-          ),
-          if (i < _steps.length - 1)
-            Padding(
-              padding: const EdgeInsets.only(top: 15),
-              child: SizedBox(
-                width: 24,
-                child: Container(
-                  height: 2,
-                  color: i < activeStep
-                      ? SehilyColors.green.withValues(alpha: 0.35)
-                      : Colors.black.withValues(alpha: 0.08),
-                ),
-              ),
-            ),
-        ],
-      ],
-    );
-  }
-}
-
-class _StepDot extends StatelessWidget {
-  const _StepDot({
-    required this.index,
-    required this.label,
-    required this.active,
-    required this.completed,
-  });
-
-  final int index;
-  final String label;
-  final bool active;
-  final bool completed;
-
-  @override
-  Widget build(BuildContext context) {
-    final filled = active || completed;
-    return Column(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: filled ? SehilyColors.green : Colors.transparent,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: filled ? SehilyColors.green : Colors.black26,
-              width: filled ? 0 : 1.5,
-            ),
-          ),
-          child: Text(
-            '$index',
-            style: TextStyle(
-              color: filled ? Colors.white : SehilyColors.textMuted,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-            color: active ? SehilyColors.green : SehilyColors.textMuted,
-          ),
-        ),
-      ],
     );
   }
 }

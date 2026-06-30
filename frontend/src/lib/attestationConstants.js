@@ -8,9 +8,14 @@ export const PAYMENT_METHODS = [
 ];
 
 export const SEHILY_COLORS = {
-  petrol: "#1B4D4A",
+  petrol: "#0F4C45",
   green: "#2E7D72",
   lightGreen: "#9FE1CB",
-  coral: "#C9614A",
-  cream: "#FAF7F2",
+  mintSoft: "#E8F4F1",
+  coral: "#C85A3A",
+  cream: "#FAF8F2",
+  border: "#D4E0DE",
+  grey: "#5C6570",
+  subtitleGrey: "#888888",
+  accentSoft: "#FFF5F2",
 };

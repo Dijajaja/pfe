@@ -1,12 +1,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, ArrowRight, Folder, GraduationCap, IdCard, Phone, Upload } from "lucide-react";
+import { AlertTriangle, ArrowRight, Folder, GraduationCap, IdCard, Lock, Phone, Upload } from "lucide-react";
 
 import { referentialApi, studentApi } from "../api/webFeaturesApi";
 import { useAppToast } from "../../components/ui/AppToastProvider";
 import { LoadingSkeleton } from "../../components/ui/LoadingSkeleton";
 import { getApiErrorMessage } from "../../lib/apiError";
 import { canSubmitDossierStatut, validateDossierSubmission } from "../../lib/dossierSubmission";
+import { authApi } from "../../lib/api";
 
 const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg"];
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -27,13 +28,24 @@ function InfoField({ icon, label, children }) {
   );
 }
 
-function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pushSuccess, pushInfo }) {
+function StudentDossierForm({ dossier, profile, activeAnnees, queryClient, pushError, pushSuccess, pushInfo }) {
   const fileInputRef = useRef(null);
+  const profil = profile?.profil_etudiant || {};
+
+  // Pré-remplissage priorité : dossier existant > profil CNOU
+  const initialCni = dossier?.numero_cni || profil.nni || "";
+  const initialTel = dossier?.telephone || profil.telephone || "";
+  const initialNiveau = dossier?.niveau || profil.annee_courante || "L1";
+
   const [form, setForm] = useState({
-    numero_cni: dossier?.numero_cni ?? "",
-    telephone: dossier?.telephone ?? "",
-    niveau: dossier?.niveau ?? "L1",
+    numero_cni: initialCni,
+    telephone: initialTel,
+    niveau: initialNiveau,
   });
+
+  // CNI et niveau verrouillés si provenant du profil officiel
+  const cniFromProfile = Boolean(profil.nni) && !dossier?.numero_cni;
+  const niveauFromProfile = Boolean(profil.annee_courante) && !dossier?.niveau;
   const [typePiece, setTypePiece] = useState("CNI");
   const [files, setFiles] = useState([]);
   const [feedback, setFeedback] = useState("");
@@ -161,16 +173,19 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
               <div className="col-12 col-md-6 d-flex flex-column">
                 <div className="student-dossier-v1-section-title">Informations personnelles</div>
                 <div className="d-flex flex-column gap-3 flex-grow-1">
-                  <InfoField label="CNI *" icon={<IdCard size={20} strokeWidth={2} aria-hidden />}>
+                  <InfoField label="NNI *" icon={<IdCard size={20} strokeWidth={2} aria-hidden />}>
                     <input
                       className="form-control form-control-sm"
                       value={form.numero_cni}
                       onChange={(e) => setForm((f) => ({ ...f, numero_cni: e.target.value }))}
-                      placeholder="Numéro de la carte d’identité"
+                      placeholder="Votre NNI (10 chiffres)"
                       autoComplete="off"
                       required
+                      readOnly={cniFromProfile}
                       disabled={!isEditable}
+                      title={cniFromProfile ? "NNI récupéré automatiquement — non modifiable" : undefined}
                     />
+
                   </InfoField>
                   <InfoField label="Numéro de téléphone *" icon={<Phone size={20} strokeWidth={2} aria-hidden />}>
                     <input
@@ -184,18 +199,28 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
                       disabled={!isEditable}
                     />
                   </InfoField>
-                  <InfoField label="Niveau d'étude *" icon={<GraduationCap size={20} strokeWidth={2} aria-hidden />}>
-                    <select
-                      className="form-select form-select-sm"
-                      value={form.niveau}
-                      onChange={(e) => setForm((f) => ({ ...f, niveau: e.target.value }))}
-                      required
-                      disabled={!isEditable}
-                    >
-                      <option value="L1">L1</option>
-                      <option value="L2">L2</option>
-                      <option value="L3">L3</option>
-                    </select>
+                  <InfoField label="Niveau d’étude *" icon={<GraduationCap size={20} strokeWidth={2} aria-hidden />}>
+                    {niveauFromProfile || !isEditable ? (
+                      <input
+                        className="form-control form-control-sm"
+                        value={form.niveau}
+                        readOnly
+                        disabled={!isEditable}
+                        title="Niveau officiel CNOU — non modifiable"
+                      />
+                    ) : (
+                      <select
+                        className="form-select form-select-sm"
+                        value={form.niveau}
+                        onChange={(e) => setForm((f) => ({ ...f, niveau: e.target.value }))}
+                        required
+                      >
+                        <option value="L1">L1</option>
+                        <option value="L2">L2</option>
+                        <option value="L3">L3</option>
+                      </select>
+                    )}
+
                   </InfoField>
                 </div>
               </div>
@@ -203,17 +228,12 @@ function StudentDossierForm({ dossier, activeAnnees, queryClient, pushError, pus
               <div className="col-12 col-md-6 d-flex flex-column">
                 <div className="student-dossier-v1-section-title">Pièce justificative *</div>
                 <div className="text-muted small mb-1">Type de document</div>
-                <select
-                  className="form-select form-select-sm mb-3"
-                  value={typePiece}
-                  onChange={(e) => setTypePiece(e.target.value)}
+                <input
+                  className="form-control form-control-sm mb-3"
+                  value="CNI (carte d’identité / scan)"
+                  readOnly
                   disabled={!isEditable}
-                >
-                  <option value="CNI">CNI (carte d’identité / scan)</option>
-                  <option value="BAC">Baccalauréat</option>
-                  <option value="INSCRIPTION">Attestation d’inscription</option>
-                  <option value="RELEVE">Relevé</option>
-                </select>
+                />
 
                 <div
                   className={`student-dossier-dropzone-v1 flex-grow-1 d-flex flex-column${!isEditable ? " opacity-50 pe-none" : ""}`}
@@ -343,12 +363,20 @@ export function StudentDossierPage() {
     queryKey: ["student", "dossiers"],
     queryFn: () => studentApi.listDossiers(),
   });
+  const profileQuery = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: async () => {
+      const r = await authApi.me();
+      return r.data;
+    },
+    staleTime: 60_000,
+  });
 
   const dossiers = dossiersQuery.data?.results || dossiersQuery.data || [];
   const currentDossier = dossiers[0] || null;
   const activeAnnees = anneesQuery.data || [];
 
-  if (anneesQuery.isLoading || dossiersQuery.isLoading) {
+  if (anneesQuery.isLoading || dossiersQuery.isLoading || profileQuery.isLoading) {
     return <LoadingSkeleton lines={8} />;
   }
 
@@ -360,6 +388,7 @@ export function StudentDossierPage() {
         <StudentDossierForm
           key={formKey}
           dossier={currentDossier}
+          profile={profileQuery.data || null}
           activeAnnees={activeAnnees}
           queryClient={qc}
           pushError={pushError}

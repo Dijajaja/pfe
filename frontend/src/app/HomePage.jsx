@@ -8,7 +8,7 @@ import { FooterSection } from "../components/public/FooterSection";
 
 export function HomePage() {
   return (
-    <div className="bg-white min-h-screen public-modern">
+    <div className="public-modern min-h-screen bg-white">
       <Navbar />
       <HeroSection />
       <StepsSection />

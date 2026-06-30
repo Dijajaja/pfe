@@ -2,11 +2,22 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
-import { ArrowRight, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
 
 import { fetchMe, login } from "../../app/auth";
 import { getHomePathForRole, normalizeRole } from "../../app/session";
 import { getApiErrorMessage } from "../../lib/apiError";
+import { vEmailLogin, vPasswordLogin, inputState } from "../../lib/validators";
+
+function ValidationHint({ touched, result }) {
+  if (!touched || !result) return null;
+  return (
+    <div className={`small mt-1 d-flex align-items-center gap-1 ${result.valid ? "text-success" : "text-danger"}`}>
+      {result.valid ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+      {result.msg}
+    </div>
+  );
+}
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -17,9 +28,17 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [pwdTouched, setPwdTouched] = useState(false);
+
+  const emailV = vEmailLogin(email);
+  const pwdV   = vPasswordLogin(password);
 
   async function onSubmit(e) {
     e.preventDefault();
+    setEmailTouched(true);
+    setPwdTouched(true);
+    if (!emailV.valid || !pwdV.valid) return;
     setError("");
     setLoading(true);
     try {
@@ -91,15 +110,16 @@ export function LoginPage() {
                 <div className="login-pro-input-wrap">
                   <Mail size={18} className="login-pro-input-icon" />
                   <input
-                    className="form-control login-pro-input"
+                    className={`form-control login-pro-input ${inputState(emailTouched, emailV.valid)}`}
                     type="email"
                     autoComplete="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nom@example.mr"
-                    required
+                    onChange={(e) => { setEmail(e.target.value); setEmailTouched(true); }}
+                    onBlur={() => setEmailTouched(true)}
+                    placeholder="nom@gmail.com"
                   />
                 </div>
+                <ValidationHint touched={emailTouched} result={emailV} />
               </div>
 
               <div>
@@ -112,13 +132,12 @@ export function LoginPage() {
                 <div className="login-pro-input-wrap">
                   <Lock size={18} className="login-pro-input-icon" />
                   <input
-                    className="form-control login-pro-input"
+                    className={`form-control login-pro-input ${inputState(pwdTouched, pwdV.valid)}`}
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    minLength={8}
+                    onChange={(e) => { setPassword(e.target.value); setPwdTouched(true); }}
+                    onBlur={() => setPwdTouched(true)}
                     placeholder="••••••••"
                   />
                   <button
@@ -130,6 +149,7 @@ export function LoginPage() {
                     {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                   </button>
                 </div>
+                <ValidationHint touched={pwdTouched} result={pwdV} />
               </div>
 
               <div className="d-flex align-items-center justify-content-between mt-1">

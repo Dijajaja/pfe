@@ -77,6 +77,7 @@ class _StudentAttestationPageState extends ConsumerState<StudentAttestationPage>
           anneeUniversitaire: status.anneeUniversitaire,
           montantBourse: status.montantBourse,
           reference: status.reference,
+          dateEmission: status.payeLe,
         ),
       );
     } catch (e) {
@@ -129,6 +130,7 @@ class _StudentAttestationPageState extends ConsumerState<StudentAttestationPage>
             if (status.eligible && status.paiementAttestation) ...[
               SehilyCard(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const Icon(Icons.check_circle, color: SehilyColors.green, size: 56),
                     const SizedBox(height: 8),
@@ -245,7 +247,7 @@ class _StudentAttestationPageState extends ConsumerState<StudentAttestationPage>
       child: Row(
         children: [
           Icon(ok ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: ok ? SehilyColors.coral : Colors.grey, size: 20),
+              color: ok ? const Color(0xFF2E7D32) : Colors.grey, size: 20),
           const SizedBox(width: 8),
           Expanded(child: Text(label)),
         ],

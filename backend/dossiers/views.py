@@ -403,10 +403,17 @@ class PublicEligibiliteView(APIView):
     """
     Endpoint public pour la page de vérification:
     POST /api/public/eligibilite/
+    Corps: { "nni": "...", "matricule": "..." }
     """
 
     permission_classes = (AllowAny,)
 
     def post(self, request):
-        payload = _eligibility_payload(request.data or {})
-        return Response({**payload, "eligible": payload["ok"]})
+        from referentials.eligibility_reference import lookup_etudiant_reference
+
+        data = request.data or {}
+        payload = lookup_etudiant_reference(
+            nni=data.get("nni"),
+            matricule=data.get("matricule"),
+        )
+        return Response(payload)

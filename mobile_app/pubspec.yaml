@@ -72,6 +72,8 @@ flutter:
   assets:
     - assets/images/sehily-logo.png
     - assets/images/app_icon.png
+    - assets/images/cnou-logo.png
+    - assets/graduation-cap.png
 
 flutter_launcher_icons:
   android: true
